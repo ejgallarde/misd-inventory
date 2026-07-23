@@ -77,14 +77,14 @@ public class FleetController {
         return "redirect:/fleet";
     }
 
-    @GetMapping("/fleet/{id}")
+    @GetMapping("/{id}")
     public ResponseEntity<FleetVehicle> getVehicleDetails(@PathVariable Integer id) {
         return fleetRepo.findById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @PostMapping("/fleet/update")
+    @PostMapping("/update")
     public ResponseEntity<String> updateVehicle(@RequestBody FleetVehicle updatedVehicle) {
         if (fleetRepo.existsById(updatedVehicle.getVehicleID())) {
             fleetRepo.save(updatedVehicle);

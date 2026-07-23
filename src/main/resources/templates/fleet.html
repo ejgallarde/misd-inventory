@@ -53,8 +53,8 @@
                     <tbody>
                         <tr th:each="v : ${allVehicles}">
                             <td>
-                                <a href="javascript:void(0)" th:onclick="|loadAssetDetails('fleet','${v.vehicleId}')|"
-                                    th:text="${vehicle.plateNumber}" class="text-decoration-none fw-bold">
+                                <a href="javascript:void(0)" th:onclick="|loadFleetDetails(${v.vehicleID})|"
+                                    th:text="${v.plateNumber}" class="text-decoration-none fw-bold">
                                 </a>
                             </td>
                             <td class="fw-bold" th:text="${v.plateNumber}"></td>
@@ -294,8 +294,70 @@
                 $('#retireVehicleID').val(vId);
                 $('#retirePlateDisplay').text(plate);
             });
+
+            window.loadFleetDetails = function (vehicleId) {
+                $.get('/fleet/' + vehicleId, function (data) {
+                    $('#fleetDetailPlate').text(data.plateNumber || 'N/A');
+                    $('#fleetDetailType').text(data.vehicleType || 'N/A');
+                    $('#fleetDetailMakeModel').text(((data.make || '') + ' ' + (data.model || '')).trim() || 'N/A');
+                    $('#fleetDetailYear').text(data.manufactureYear || 'N/A');
+                    $('#fleetDetailDriver').text(data.assignedDriverID || 'Unassigned');
+                    $('#fleetDetailRegExpiry').text(data.registrationExpiry || 'N/A');
+                    $('#fleetDetailStatus').text(data.currentStatus || 'N/A');
+                    $('#fleetDetailModal').modal('show');
+                }).fail(function () {
+                    alert('Unable to load fleet vehicle details.');
+                });
+            };
         });
     </script>
+
+    <!-- Fleet Detail Modal -->
+    <div class="modal fade" id="fleetDetailModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Fleet Vehicle Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row gy-2">
+                        <div class="col-sm-6">
+                            <label class="form-label fw-semibold">Plate Number</label>
+                            <div id="fleetDetailPlate" class="form-control-plaintext"></div>
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label fw-semibold">Vehicle Type</label>
+                            <div id="fleetDetailType" class="form-control-plaintext"></div>
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label fw-semibold">Make & Model</label>
+                            <div id="fleetDetailMakeModel" class="form-control-plaintext"></div>
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label fw-semibold">Manufacture Year</label>
+                            <div id="fleetDetailYear" class="form-control-plaintext"></div>
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label fw-semibold">Assigned Driver</label>
+                            <div id="fleetDetailDriver" class="form-control-plaintext"></div>
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label fw-semibold">Registration Expiry</label>
+                            <div id="fleetDetailRegExpiry" class="form-control-plaintext"></div>
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label fw-semibold">Current Status</label>
+                            <div id="fleetDetailStatus" class="form-control-plaintext"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 
 </html>
