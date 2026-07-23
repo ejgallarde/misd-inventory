@@ -13,6 +13,27 @@
                     Broad Unified Resource & Asset Tracker
                 </span>
             </div>
+
+            <div class="d-flex align-items-center gap-2">
+                <div class="dropdown">
+                    <button class="btn btn-outline-light btn-sm dropdown-toggle d-flex align-items-center gap-2"
+                        type="button" id="userProfileMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+                        <span
+                            class="rounded-circle bg-light text-dark d-inline-flex justify-content-center align-items-center"
+                            style="width: 32px; height: 32px; font-size: 0.9rem; font-weight: 600;"
+                            th:text="${#strings.toUpperCase(#strings.substring(userDisplayName, 0, 1))}">U</span>
+                        <span class="d-none d-md-inline"
+                            th:text="${userDisplayName != null ? userDisplayName : 'User'}">User</span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userProfileMenuButton">
+                        <li>
+                            <form th:action="@{/logout}" method="post" class="d-inline w-100">
+                                <button type="submit" class="dropdown-item">Logout</button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
+            </div>
         </div>
     </nav>
 

@@ -10,9 +10,10 @@
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css"
         rel="stylesheet" />
+    <link th:href="@{/css/app-theme.css}" rel="stylesheet" />
 </head>
 
-<body class="bg-light">
+<body class="theme-app" data-theme="light">
 
     <!-- FLOATING TOAST NOTIFICATION -->
     <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1055;">
@@ -32,11 +33,23 @@
                 onclick="sessionStorage.setItem('dashboardActiveTab', 'fleet');">
                 &larr; Back to Dashboard
             </a>
-            <span class="navbar-text text-white">Master Fleet Registry</span>
+            <div class="d-flex align-items-center gap-2">
+                <button class="btn btn-sm theme-toggle-btn fw-semibold" type="button" id="themeToggleBtn"
+                    title="Switch theme">🌗 Theme</button>
+                <span class="navbar-text text-white">Master Fleet Registry</span>
+            </div>
         </div>
     </nav>
 
     <div class="container-fluid px-4">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3">
+            <div>
+                <h2 class="page-title fw-bold mb-1">Fleet</h2>
+                <p class="page-subtitle mb-0">Review vehicle assignments, maintenance, and retirement status.</p>
+            </div>
+            <button class="btn btn-outline-secondary btn-sm" type="button" id="clearFleetFiltersBtn">Clear
+                Filters</button>
+        </div>
         <div class="card shadow-sm mb-4">
             <div class="card-body">
                 <table id="fleetTable" class="table table-striped table-hover w-100 align-middle">
@@ -223,97 +236,7 @@
     <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
-    <script th:inline="none">
-        $(document).ready(function () {
-            // Auto-Hide Toast
-            const toastEl = document.getElementById('successToast');
-            if (toastEl) {
-                const toast = new bootstrap.Toast(toastEl, { delay: 3000 });
-                toast.show();
-            }
-
-            // Fleet DataTables Initialization
-            $('#fleetTable').DataTable({
-                pageLength: 25,
-                lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
-                order: [[0, "asc"]], // Sorts by Plate No.
-                buttons: [
-                    { extend: 'csv', className: 'btn btn-primary btn-sm me-2 text-white', text: 'Export to CSV' },
-                    { extend: 'excel', className: 'btn btn-success btn-sm text-white', text: 'Export to Excel' }
-                ],
-                dom: "<'row mb-3'<'col-sm-12 col-md-4'l><'col-sm-12 col-md-4 text-center'B><'col-sm-12 col-md-4'f>>" +
-                    "<'row'<'col-sm-12'tr>>" +
-                    "<'row pt-2'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>"
-            });
-
-            // Select2 Initialization
-            // Initialize Select2 dynamically every time a modal is opened
-            $('.modal').on('shown.bs.modal', function () {
-                $(this).find('.select2-dropdown').select2({
-                    theme: 'bootstrap-5',
-                    dropdownParent: $(this), // Attaches perfectly to the currently open modal
-                    placeholder: 'Type a name to search...',
-                    minimumInputLength: 2,
-                    ajax: {
-                        url: '/api/personnel/search',
-                        dataType: 'json',
-                        delay: 250,
-                        data: function (params) {
-                            return {
-                                q: params.term || '', // Fallback to empty string if undefined
-                                page: (params.page || 1) - 1 // Spring Data pages are 0-indexed, Select2 is 1-indexed
-                            };
-                        },
-                        processResults: function (data) {
-                            return {
-                                results: data.results,
-                                pagination: { more: data.pagination.more }
-                            };
-                        },
-                        cache: true
-                    }
-                });
-            });
-
-            // Destroy Select2 when modal closes to prevent duplication bugs
-            $('.modal').on('hidden.bs.modal', function () {
-                $(this).find('.select2-dropdown').select2('destroy');
-            });
-
-            // Inject Data into Modals
-            $('.action-btn').on('click', function () {
-                const vId = $(this).data('id');
-                const plate = $(this).data('plate');
-
-                // Assign Modal
-                $('#assignVehicleID').val(vId);
-                $('#assignPlateDisplay').val(plate);
-
-                // Return Modal
-                $('#returnVehicleID').val(vId);
-                $('#returnPlateDisplay').text(plate);
-
-                // Retire Modal
-                $('#retireVehicleID').val(vId);
-                $('#retirePlateDisplay').text(plate);
-            });
-
-            window.loadFleetDetails = function (vehicleId) {
-                $.get('/fleet/' + vehicleId, function (data) {
-                    $('#fleetDetailPlate').text(data.plateNumber || 'N/A');
-                    $('#fleetDetailType').text(data.vehicleType || 'N/A');
-                    $('#fleetDetailMakeModel').text(((data.make || '') + ' ' + (data.model || '')).trim() || 'N/A');
-                    $('#fleetDetailYear').text(data.manufactureYear || 'N/A');
-                    $('#fleetDetailDriver').text(data.assignedDriverID || 'Unassigned');
-                    $('#fleetDetailRegExpiry').text(data.registrationExpiry || 'N/A');
-                    $('#fleetDetailStatus').text(data.currentStatus || 'N/A');
-                    $('#fleetDetailModal').modal('show');
-                }).fail(function () {
-                    alert('Unable to load fleet vehicle details.');
-                });
-            };
-        });
-    </script>
+    <script th:src="@{/js/fleet-page.js}"></script>
 
     <!-- Fleet Detail Modal -->
     <div class="modal fade" id="fleetDetailModal" tabindex="-1" aria-hidden="true">

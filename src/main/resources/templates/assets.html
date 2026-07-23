@@ -10,9 +10,10 @@
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css"
         rel="stylesheet" />
+    <link th:href="@{/css/app-theme.css}" rel="stylesheet" />
 </head>
 
-<body class="bg-light">
+<body class="theme-app" data-theme="light">
 
     <!-- FLOATING TOAST NOTIFICATION -->
     <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1055;">
@@ -32,11 +33,23 @@
                 onclick="sessionStorage.setItem('dashboardActiveTab', 'it-equipment');">
                 &larr; Back to Dashboard
             </a>
-            <span class="navbar-text text-white">Master Asset Registry</span>
+            <div class="d-flex align-items-center gap-2">
+                <button class="btn btn-sm theme-toggle-btn fw-semibold" type="button" id="themeToggleBtn"
+                    title="Switch theme">🌗 Theme</button>
+                <span class="navbar-text text-white">Master Asset Registry</span>
+            </div>
         </div>
     </nav>
 
     <div class="container-fluid px-4">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3">
+            <div>
+                <h2 class="page-title fw-bold mb-1">IT Assets</h2>
+                <p class="page-subtitle mb-0">Track deployment, warranty, and retirement activity.</p>
+            </div>
+            <button class="btn btn-outline-secondary btn-sm" type="button" id="clearAssetFiltersBtn">Clear
+                Filters</button>
+        </div>
         <div class="card shadow-sm mb-4">
             <div class="card-body">
                 <table id="assetsTable" class="table table-striped table-hover w-100 align-middle">

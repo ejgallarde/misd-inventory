@@ -13,6 +13,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.stereotype.Controller;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -50,6 +52,20 @@ public class MainDashboardController {
 
     @GetMapping("/")
     public String viewDashboard(Model model) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String displayName = "User";
+        if (authentication != null && authentication.isAuthenticated()
+                && !"anonymousUser".equals(authentication.getPrincipal().toString())) {
+            String principal = authentication.getName();
+            String[] parts = principal.split("@", 2);
+            displayName = parts.length > 0 ? parts[0] : principal;
+            displayName = displayName.replace('.', ' ').trim();
+            if (displayName.isBlank()) {
+                displayName = "User";
+            }
+        }
+        model.addAttribute("userDisplayName", displayName);
+
         // IT Assets
         model.addAttribute("totalAssets", dashboardRepo.countTotalAssets());
         model.addAttribute("deployedAssets", dashboardRepo.countDeployedAssets());

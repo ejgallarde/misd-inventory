@@ -36,7 +36,7 @@ public class SecurityConfig implements WebMvcConfigurer {
         HttpSecurity configured = http
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/login", "/logout", "/css/**", "/js/**", "/images/**", "/webjars/**",
-                                "/error", "/")
+                                "/error")
                         .permitAll()
                         .anyRequest().authenticated())
                 .formLogin(form -> form

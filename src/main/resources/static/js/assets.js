@@ -1,5 +1,46 @@
 $(document).ready(function () {
+    const themeToggleBtn = document.getElementById('themeToggleBtn');
+    const clearAssetFiltersBtn = document.getElementById('clearAssetFiltersBtn');
     const tableStateKey = 'assetsTableState';
+
+    function applyTheme(theme) {
+        document.body.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-bs-theme', theme);
+        if (themeToggleBtn) {
+            themeToggleBtn.textContent = theme === 'dark' ? '☀️ Light' : '🌙 Dark';
+            themeToggleBtn.setAttribute('title', theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme');
+            themeToggleBtn.setAttribute('aria-label', theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme');
+        }
+        localStorage.setItem('misd-theme', theme);
+    }
+
+    function clearAssetFilters(table) {
+        table.search('');
+        table.columns().search('');
+        table.page(0).draw();
+        $('.dataTables_filter input').val('').trigger('keyup');
+        sessionStorage.removeItem(tableStateKey);
+        const params = new URLSearchParams(window.location.search);
+        params.delete('search');
+        params.delete('page');
+        const nextUrl = `${window.location.pathname}${params.toString() ? `?${params.toString()}` : ''}`;
+        window.history.replaceState({}, '', nextUrl);
+    }
+
+    const savedTheme = localStorage.getItem('misd-theme') || 'light';
+    applyTheme(savedTheme);
+    if (themeToggleBtn) {
+        themeToggleBtn.addEventListener('click', function () {
+            const nextTheme = document.body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            applyTheme(nextTheme);
+        });
+    }
+
+    if (clearAssetFiltersBtn) {
+        clearAssetFiltersBtn.addEventListener('click', function () {
+            clearAssetFilters(assetsTable);
+        });
+    }
 
     function getAssetsTableState(table) {
         return {
