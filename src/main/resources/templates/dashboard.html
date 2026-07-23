@@ -565,6 +565,10 @@
             $('button[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
                 $('button[data-bs-toggle="tab"]').removeClass('text-dark').addClass('text-secondary');
                 $(e.target).removeClass('text-secondary').addClass('text-dark');
+                const targetKey = $(e.target).attr('data-bs-target')?.replace('#', '');
+                if (targetKey) {
+                    sessionStorage.setItem('dashboardActiveTab', targetKey);
+                }
             });
 
             // Toast Notification
@@ -575,6 +579,13 @@
             }
 
             const errorToastEl = document.getElementById('errorToast');
+            const storedDashboardTab = sessionStorage.getItem('dashboardActiveTab');
+            if (storedDashboardTab) {
+                const triggerButton = document.querySelector(`#assetTabs button[data-bs-target="#${storedDashboardTab}"]`);
+                if (triggerButton) {
+                    new bootstrap.Tab(triggerButton).show();
+                }
+            }
             if (errorToastEl) {
                 new bootstrap.Toast(errorToastEl, { delay: 4000 }).show();
             }

@@ -7,9 +7,12 @@ import ph.gov.phlpost.inventory.misddashboard.repository.EquipmentCatalogReposit
 import ph.gov.phlpost.inventory.misddashboard.service.ITAssetService;
 import ph.gov.phlpost.inventory.misddashboard.service.RegistryService;
 
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
+
+import org.springframework.web.util.UriUtils;
 
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.http.ResponseEntity;
@@ -125,62 +128,83 @@ public class ITAssetController {
 
     @PostMapping("/assets/assign")
     public String assignAsset(@RequestParam String assetTag, @RequestParam String employeeID,
-            @RequestParam String conditionNotes, RedirectAttributes redirectAttributes) {
+            @RequestParam String conditionNotes, @RequestParam(value = "search", required = false) String search,
+            @RequestParam(value = "page", required = false) Integer page, RedirectAttributes redirectAttributes) {
         try {
             assetService.assignAsset(assetTag, employeeID, conditionNotes);
             redirectAttributes.addFlashAttribute("successMessage", "Asset assigned successfully.");
         } catch (IllegalArgumentException e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }
-        return "redirect:/assets";
+        return "redirect:" + buildAssetsRedirectUrl(search, page);
     }
 
     @PostMapping("/assets/return")
     public String returnAsset(@RequestParam String assetTag, @RequestParam String conditionNotes,
-            RedirectAttributes redirectAttributes) {
+            @RequestParam(value = "search", required = false) String search,
+            @RequestParam(value = "page", required = false) Integer page, RedirectAttributes redirectAttributes) {
         try {
             assetService.returnAsset(assetTag, conditionNotes);
             redirectAttributes.addFlashAttribute("successMessage", "Asset returned to MISD.");
         } catch (IllegalArgumentException e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }
-        return "redirect:/assets";
+        return "redirect:" + buildAssetsRedirectUrl(search, page);
     }
 
     @PostMapping("/assets/unserviceable")
     public String markUnserviceable(@RequestParam String assetTag, @RequestParam String conditionNotes,
-            RedirectAttributes redirectAttributes) {
+            @RequestParam(value = "search", required = false) String search,
+            @RequestParam(value = "page", required = false) Integer page, RedirectAttributes redirectAttributes) {
         try {
             assetService.updateLifecycle(assetTag, "Unserviceable", "Marked Unserviceable", conditionNotes);
             redirectAttributes.addFlashAttribute("successMessage", "Asset marked unserviceable.");
         } catch (IllegalArgumentException e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }
-        return "redirect:/assets";
+        return "redirect:" + buildAssetsRedirectUrl(search, page);
     }
 
     @PostMapping("/assets/warranty")
     public String markForWarranty(@RequestParam String assetTag, @RequestParam String conditionNotes,
-            RedirectAttributes redirectAttributes) {
+            @RequestParam(value = "search", required = false) String search,
+            @RequestParam(value = "page", required = false) Integer page, RedirectAttributes redirectAttributes) {
         try {
             assetService.updateLifecycle(assetTag, "In Warranty Repair", "Sent for Warranty Repair", conditionNotes);
             redirectAttributes.addFlashAttribute("successMessage", "Asset flagged for warranty.");
         } catch (IllegalArgumentException e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }
-        return "redirect:/assets";
+        return "redirect:" + buildAssetsRedirectUrl(search, page);
     }
 
     @PostMapping("/assets/retire")
     public String retireAsset(@RequestParam String assetTag, @RequestParam String conditionNotes,
-            RedirectAttributes redirectAttributes) {
+            @RequestParam(value = "search", required = false) String search,
+            @RequestParam(value = "page", required = false) Integer page, RedirectAttributes redirectAttributes) {
         try {
             assetService.updateLifecycle(assetTag, "Retired", "Asset Retired", conditionNotes);
             redirectAttributes.addFlashAttribute("successMessage", "Asset retired.");
         } catch (IllegalArgumentException e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }
-        return "redirect:/assets";
+        return "redirect:" + buildAssetsRedirectUrl(search, page);
+    }
+
+    private String buildAssetsRedirectUrl(String search, Integer page) {
+        StringBuilder redirectUrl = new StringBuilder("/assets");
+        boolean hasQuery = false;
+
+        if (search != null && !search.isBlank()) {
+            redirectUrl.append("?search=").append(UriUtils.encode(search, StandardCharsets.UTF_8));
+            hasQuery = true;
+        }
+
+        if (page != null) {
+            redirectUrl.append(hasQuery ? '&' : '?').append("page=").append(page);
+        }
+
+        return redirectUrl.toString();
     }
 
     @GetMapping("/assets/{id}")

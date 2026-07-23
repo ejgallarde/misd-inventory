@@ -1,4 +1,59 @@
 $(document).ready(function () {
+    const tableStateKey = 'assetsTableState';
+
+    function getAssetsTableState(table) {
+        return {
+            search: table.search(),
+            page: table.page.info().page,
+            order: table.order()
+        };
+    }
+
+    function syncAssetsTableStateToUrl(table) {
+        const state = getAssetsTableState(table);
+        const params = new URLSearchParams(window.location.search);
+
+        if (state.search) {
+            params.set('search', state.search);
+        } else {
+            params.delete('search');
+        }
+
+        params.set('page', String(state.page));
+
+        const nextUrl = `${window.location.pathname}${params.toString() ? `?${params.toString()}` : ''}`;
+        window.history.replaceState({}, '', nextUrl);
+
+        sessionStorage.setItem(tableStateKey, JSON.stringify(state));
+    }
+
+    function restoreAssetsTableState(table) {
+        const savedState = sessionStorage.getItem(tableStateKey);
+        const params = new URLSearchParams(window.location.search);
+        const urlSearch = params.get('search') || '';
+        const urlPage = Number(params.get('page')) || 0;
+
+        try {
+            const state = savedState ? JSON.parse(savedState) : null;
+            const searchValue = urlSearch || (state && state.search ? state.search : '');
+            const pageValue = Number.isFinite(urlPage) && urlPage >= 0 ? urlPage : (state && typeof state.page === 'number' ? state.page : 0);
+
+            if (searchValue) {
+                table.search(searchValue);
+            } else {
+                table.search('');
+            }
+
+            if (state && state.order) {
+                table.order(state.order);
+            }
+
+            table.page(pageValue).draw(false);
+        } catch (error) {
+            console.warn('Unable to restore saved asset table state.', error);
+        }
+    }
+
     // Auto-Hide Toast
     const toastEl = document.getElementById('successToast');
     if (toastEl) {
@@ -7,7 +62,7 @@ $(document).ready(function () {
     }
 
     // DataTables
-    $('#assetsTable').DataTable({
+    const assetsTable = $('#assetsTable').DataTable({
         pageLength: 25,
         lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
         order: [[0, "asc"]],
@@ -19,6 +74,12 @@ $(document).ready(function () {
             "<'row'<'col-sm-12'tr>>" +
             "<'row pt-2'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>"
     });
+
+    assetsTable.on('search.dt draw.dt order.dt page.dt', function () {
+        syncAssetsTableStateToUrl(assetsTable);
+    });
+
+    restoreAssetsTableState(assetsTable);
 
     // Select2
     // Initialize Select2 dynamically every time a modal is opened
@@ -112,6 +173,8 @@ $(document).ready(function () {
 
         lockForm(); // Re-lock immediately to prevent UI flashes
 
+        syncAssetsTableStateToUrl(assetsTable);
+
         $.ajax({
             url: '/assets/update',
             type: 'POST',
@@ -158,6 +221,24 @@ $(document).ready(function () {
             alert("Could not load asset details.");
         });
     }
+
+    // Persist the current table view before action forms redirect back to the list
+    $('form').on('submit', function (event) {
+        const form = $(this);
+        const state = getAssetsTableState(assetsTable);
+        const params = new URLSearchParams(window.location.search);
+
+        if (state.search) {
+            params.set('search', state.search);
+        } else {
+            params.delete('search');
+        }
+
+        params.set('page', String(state.page));
+        const actionUrl = new URL(form.attr('action') || window.location.pathname, window.location.origin);
+        actionUrl.search = params.toString();
+        form.attr('action', `${actionUrl.pathname}${actionUrl.search}`);
+    });
 
     // Automatically pass the Asset Tag to the Action Modals
     $('.modal').on('show.bs.modal', function (event) {
