@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<body>
+
+    <!-- Top Navigation Bar Fragment -->
+    <nav th:fragment="navbar" class="navbar navbar-dark bg-dark mb-4">
+        <div class="container-fluid d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center">
+                <img th:src="@{/logo.png}" alt="PHLPost Logo" style="height: 40px;" class="me-2">
+                <span class="navbar-brand mb-0 h1 fw-bold">Management Information Systems Department</span>
+                <span class="navbar-text text-white d-none d-md-inline ms-2 border-start ps-2">
+                    Broad Unified Resource & Asset Tracker
+                </span>
+            </div>
+        </div>
+    </nav>
+
+</body>
+
+</html>
