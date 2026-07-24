@@ -182,3 +182,54 @@ body[data-theme="dark"] .navbar-dark .dropdown-toggle {
 .hover-effect:hover {
     transform: scale(1.02);
 }
+
+.app-footer {
+    border-top: 1px solid var(--app-border);
+    background-color: var(--app-surface);
+    color: var(--app-text-muted);
+}
+
+.app-footer .footer-link {
+    color: var(--app-accent);
+    text-decoration: none;
+}
+
+.app-footer .footer-link:hover,
+.app-footer .footer-link:focus {
+    text-decoration: underline;
+}
+
+.documents-grid-table {
+    width: 100%;
+    table-layout: fixed;
+}
+
+.documents-grid-table th,
+.documents-grid-table td {
+    word-break: break-word;
+}
+
+.documents-grid-table th:nth-child(1),
+.documents-grid-table td:nth-child(1) {
+    width: 18%;
+}
+
+.documents-grid-table th:nth-child(2),
+.documents-grid-table td:nth-child(2) {
+    width: 36%;
+}
+
+.documents-grid-table th:nth-child(3),
+.documents-grid-table td:nth-child(3) {
+    width: 20%;
+}
+
+.documents-grid-table th:nth-child(4),
+.documents-grid-table td:nth-child(4) {
+    width: 26%;
+}
+
+.documents-grid-table .btn-group {
+    flex-wrap: wrap;
+    justify-content: center;
+}
