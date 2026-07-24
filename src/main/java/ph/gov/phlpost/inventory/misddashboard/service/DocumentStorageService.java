@@ -6,6 +6,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 import java.io.IOException;
@@ -59,10 +61,26 @@ public class DocumentStorageService {
         };
     }
 
+    public InputStream readDocument(String objectKey) throws IOException {
+        return switch (storageMode) {
+            case "filesystem" -> readFromFilesystem(objectKey);
+            case "minio" -> readFromMinio(objectKey);
+            default -> throw new IllegalStateException("Unsupported storage mode: " + storageMode);
+        };
+    }
+
+    public void deleteDocument(String objectKey) throws IOException {
+        switch (storageMode) {
+            case "filesystem" -> deleteFromFilesystem(objectKey);
+            case "minio" -> deleteFromMinio(objectKey);
+            default -> throw new IllegalStateException("Unsupported storage mode: " + storageMode);
+        }
+    }
+
     private String uploadToFilesystem(MultipartFile file, String objectKey) throws IOException {
         Files.createDirectories(filesystemRootPath);
 
-        Path targetFile = filesystemRootPath.resolve(objectKey.replace('/', java.io.File.separatorChar)).normalize();
+        Path targetFile = resolveFilesystemPath(objectKey);
         if (!targetFile.startsWith(filesystemRootPath.normalize())) {
             throw new IllegalArgumentException("Invalid file path generated for upload.");
         }
@@ -77,6 +95,19 @@ public class DocumentStorageService {
         }
 
         return objectKey;
+    }
+
+    private InputStream readFromFilesystem(String objectKey) throws IOException {
+        Path targetFile = resolveFilesystemPath(objectKey);
+        if (!Files.exists(targetFile)) {
+            throw new IOException("Document file not found in filesystem storage.");
+        }
+        return Files.newInputStream(targetFile);
+    }
+
+    private void deleteFromFilesystem(String objectKey) throws IOException {
+        Path targetFile = resolveFilesystemPath(objectKey);
+        Files.deleteIfExists(targetFile);
     }
 
     private String uploadToMinio(MultipartFile file, String objectKey) throws IOException {
@@ -97,6 +128,44 @@ public class DocumentStorageService {
                 RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
 
         return objectKey;
+    }
+
+    private InputStream readFromMinio(String objectKey) {
+        if (s3Client == null) {
+            throw new IllegalStateException("MinIO storage mode is enabled, but S3 client is not configured.");
+        }
+        if (bucketName == null || bucketName.isBlank()) {
+            throw new IllegalStateException("MinIO storage mode is enabled, but bucket name is missing.");
+        }
+
+        GetObjectRequest request = GetObjectRequest.builder()
+                .bucket(bucketName)
+                .key(objectKey)
+                .build();
+        return s3Client.getObject(request);
+    }
+
+    private void deleteFromMinio(String objectKey) {
+        if (s3Client == null) {
+            throw new IllegalStateException("MinIO storage mode is enabled, but S3 client is not configured.");
+        }
+        if (bucketName == null || bucketName.isBlank()) {
+            throw new IllegalStateException("MinIO storage mode is enabled, but bucket name is missing.");
+        }
+
+        DeleteObjectRequest request = DeleteObjectRequest.builder()
+                .bucket(bucketName)
+                .key(objectKey)
+                .build();
+        s3Client.deleteObject(request);
+    }
+
+    private Path resolveFilesystemPath(String objectKey) {
+        Path targetFile = filesystemRootPath.resolve(objectKey.replace('/', java.io.File.separatorChar)).normalize();
+        if (!targetFile.startsWith(filesystemRootPath.normalize())) {
+            throw new IllegalArgumentException("Invalid file path generated for storage operation.");
+        }
+        return targetFile;
     }
 
     private String buildObjectKey(String assetType, String entityId, String originalFilename) {

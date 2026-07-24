@@ -376,6 +376,47 @@
 
                 <hr class="my-4">
 
+                <div>
+                    <h6 class="fw-bold mb-3">Attached Documents</h6>
+                    <div id="assetDocumentsEmpty" class="text-muted small">No documents attached yet.</div>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Category</th>
+                                    <th>File</th>
+                                    <th>Uploaded</th>
+                                    <th class="text-center">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="assetDocumentsTableBody"></tbody>
+                        </table>
+                    </div>
+
+                    <div class="mt-3">
+                        <label class="form-label fw-bold text-muted small text-uppercase">Upload Additional
+                            Documents</label>
+                        <input type="file" id="assetDetailDocumentFiles" class="form-control js-detail-document-input"
+                            multiple data-document-preview-target="assetDetailDocumentPreview"
+                            data-document-category-template-target="assetDetailDocumentCategoryTemplate"
+                            th:attr="data-document-allowed-extensions=${documentUploadAllowedExtensions},data-document-max-size-mb=${documentUploadMaxSizeMb}"
+                            accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx">
+                        <select id="assetDetailDocumentCategoryTemplate" class="d-none">
+                            <option value="" selected disabled>Select a document category</option>
+                            <option th:each="documentCategory : ${documentUploadCategories}"
+                                th:value="${documentCategory}" th:text="${documentCategory}"></option>
+                        </select>
+                        <ul id="assetDetailDocumentPreview"
+                            class="list-group list-group-flush border rounded mt-2 small"></ul>
+                        <div class="d-grid d-md-flex justify-content-md-end mt-2">
+                            <button type="button" id="uploadAssetDocumentsBtn" class="btn btn-sm btn-primary">Upload
+                                Selected</button>
+                        </div>
+                    </div>
+                </div>
+
+                <hr class="my-4">
+
                 <!-- Action Buttons -->
                 <div class="d-grid gap-2 d-md-flex justify-content-md-end">
                     <button type="button" class="btn btn-outline-secondary w-100" id="enableEditBtn">Enable Edit

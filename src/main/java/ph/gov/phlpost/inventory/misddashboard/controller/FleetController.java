@@ -6,6 +6,9 @@ import ph.gov.phlpost.inventory.misddashboard.service.DocumentService;
 import ph.gov.phlpost.inventory.misddashboard.service.FleetService;
 import ph.gov.phlpost.inventory.misddashboard.service.RegistryService;
 
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -23,6 +26,15 @@ public class FleetController {
     private final RegistryService registryService;
     private final DocumentService documentService;
 
+    @Value("${document.upload.max-size-mb:10}")
+    private int documentUploadMaxSizeMb;
+
+    @Value("${document.upload.allowed-extensions:pdf,jpg,jpeg,png,doc,docx,xls,xlsx}")
+    private String documentUploadAllowedExtensions;
+
+    @Value("#{'${document.upload.categories}'.split(',')}")
+    private List<String> documentUploadCategories;
+
     public FleetController(FleetVehicleRepository fleetRepo, FleetService fleetService,
             RegistryService registryService,
             DocumentService documentService) {
@@ -36,6 +48,9 @@ public class FleetController {
     public String viewAllFleet(Model model) {
         model.addAttribute("allVehicles", fleetRepo.findAll());
         model.addAttribute("employeeMap", registryService.getEmployeeNameMap());
+        model.addAttribute("documentUploadMaxSizeMb", documentUploadMaxSizeMb);
+        model.addAttribute("documentUploadAllowedExtensions", documentUploadAllowedExtensions);
+        model.addAttribute("documentUploadCategories", documentUploadCategories);
         return "fleet";
     }
 

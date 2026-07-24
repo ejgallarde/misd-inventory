@@ -6,6 +6,9 @@ import ph.gov.phlpost.inventory.misddashboard.service.AuditLogService;
 import ph.gov.phlpost.inventory.misddashboard.service.DocumentService;
 import ph.gov.phlpost.inventory.misddashboard.service.RegistryService;
 
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -24,6 +27,15 @@ public class PropertiesController {
     private final AuditLogService auditService;
     private final DocumentService documentService;
 
+    @Value("${document.upload.max-size-mb:10}")
+    private int documentUploadMaxSizeMb;
+
+    @Value("${document.upload.allowed-extensions:pdf,jpg,jpeg,png,doc,docx,xls,xlsx}")
+    private String documentUploadAllowedExtensions;
+
+    @Value("#{'${document.upload.categories}'.split(',')}")
+    private List<String> documentUploadCategories;
+
     public PropertiesController(RealEstatePropertyRepository propertyRepo, RegistryService registryService,
             AuditLogService auditService,
             DocumentService documentService) {
@@ -37,6 +49,9 @@ public class PropertiesController {
     public String viewAllProperties(Model model) {
         model.addAttribute("allProperties", propertyRepo.findAll());
         model.addAttribute("employeeMap", registryService.getEmployeeNameMap());
+        model.addAttribute("documentUploadMaxSizeMb", documentUploadMaxSizeMb);
+        model.addAttribute("documentUploadAllowedExtensions", documentUploadAllowedExtensions);
+        model.addAttribute("documentUploadCategories", documentUploadCategories);
         return "properties";
     }
 
@@ -102,14 +117,14 @@ public class PropertiesController {
         return "redirect:/properties";
     }
 
-    @GetMapping("/properties/{id}")
+    @GetMapping({ "/{id}", "/properties/{id}" })
     public ResponseEntity<RealEstateProperty> getPropertyDetails(@PathVariable Integer id) {
         return propertyRepo.findById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @PostMapping("/properties/update")
+    @PostMapping({ "/update", "/properties/update" })
     public ResponseEntity<String> updateProperty(@RequestBody RealEstateProperty updatedProp) {
         propertyRepo.save(updatedProp);
         return ResponseEntity.ok("Property updated successfully");

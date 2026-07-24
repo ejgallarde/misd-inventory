@@ -11,10 +11,12 @@ import ph.gov.phlpost.inventory.misddashboard.service.RegistryService;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.web.util.UriUtils;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -33,6 +35,15 @@ public class ITAssetController {
     private final RegistryService registryService;
     private final DocumentService documentService;
 
+    @Value("${document.upload.max-size-mb:10}")
+    private int documentUploadMaxSizeMb;
+
+    @Value("${document.upload.allowed-extensions:pdf,jpg,jpeg,png,doc,docx,xls,xlsx}")
+    private String documentUploadAllowedExtensions;
+
+    @Value("#{'${document.upload.categories}'.split(',')}")
+    private List<String> documentUploadCategories;
+
     public ITAssetController(AssetRepository assetRepo,
             EquipmentCatalogRepository catalogRepo, ITAssetService assetService,
             RegistryService registryService,
@@ -50,6 +61,9 @@ public class ITAssetController {
         model.addAttribute("employeeMap", registryService.getEmployeeNameMap());
         model.addAttribute("catalogMap", registryService.getCatalogMap());
         model.addAttribute("departmentMap", registryService.getDepartmentMap());
+        model.addAttribute("documentUploadMaxSizeMb", documentUploadMaxSizeMb);
+        model.addAttribute("documentUploadAllowedExtensions", documentUploadAllowedExtensions);
+        model.addAttribute("documentUploadCategories", documentUploadCategories);
         return "assets";
     }
 

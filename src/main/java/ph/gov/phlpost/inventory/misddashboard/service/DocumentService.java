@@ -8,9 +8,11 @@ import ph.gov.phlpost.inventory.misddashboard.model.Document;
 import ph.gov.phlpost.inventory.misddashboard.repository.DocumentRepository;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -43,6 +45,39 @@ public class DocumentService {
 
     public boolean hasFiles(MultipartFile[] files) {
         return files != null && Arrays.stream(files).anyMatch(file -> file != null && !file.isEmpty());
+    }
+
+    public List<Document> findDocumentsByReference(String referenceType, String referenceId) {
+        String normalizedReferenceType = normalizeReferenceType(referenceType);
+        String normalizedReferenceId = referenceId == null ? "" : referenceId.trim();
+        if (normalizedReferenceId.isEmpty()) {
+            throw new IllegalArgumentException("Reference ID is required.");
+        }
+
+        return documentRepository.findByReferenceTypeAndReferenceId(normalizedReferenceType, normalizedReferenceId);
+    }
+
+    public Optional<Document> findDocumentById(Integer documentId) {
+        return documentRepository.findById(documentId);
+    }
+
+    public InputStream readDocumentContent(Document document) throws IOException {
+        if (document == null || document.getMinioObjectKey() == null || document.getMinioObjectKey().isBlank()) {
+            throw new IllegalArgumentException("Document storage key is missing.");
+        }
+        return storageService.readDocument(document.getMinioObjectKey());
+    }
+
+    public void deleteDocumentById(Integer documentId) throws IOException {
+        Document document = documentRepository.findById(documentId)
+                .orElseThrow(() -> new IllegalArgumentException("Document not found."));
+
+        String objectKey = document.getMinioObjectKey();
+        if (objectKey != null && !objectKey.isBlank()) {
+            storageService.deleteDocument(objectKey);
+        }
+
+        documentRepository.delete(document);
     }
 
     public void uploadAndSaveDocuments(MultipartFile[] files,
