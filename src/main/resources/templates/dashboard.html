@@ -437,8 +437,13 @@
 
                 <div class="mb-3">
                     <label class="form-label fw-bold text-muted small text-uppercase">Attach Document (Optional)</label>
-                    <input type="file" class="form-control" name="documentFile"
+                    <input type="file" class="form-control js-document-upload-input" name="documentFiles" multiple
+                        data-document-preview-target="receiveDocumentPreview"
+                        th:attr="data-document-allowed-extensions=${documentUploadAllowedExtensions},data-document-max-size-mb=${documentUploadMaxSizeMb}"
                         accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx">
+                    <div class="form-text">Selected files appear below before upload.</div>
+                    <ul id="receiveDocumentPreview" class="list-group list-group-flush border rounded mt-2 small"
+                        aria-live="polite"></ul>
                 </div>
 
                 <div class="d-grid mt-4">
@@ -500,7 +505,14 @@
                         type="text" class="form-control" name="documentCategory" placeholder="e.g. OR/CR, Insurance">
                 </div>
                 <div class="mb-3"><label class="form-label fw-bold">Attach Document (Optional)</label><input type="file"
-                        class="form-control" name="documentFile" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx">
+                        class="form-control js-document-upload-input" name="documentFiles" multiple
+                        data-document-preview-target="vehicleDocumentPreview"
+                        th:attr="data-document-allowed-extensions=${documentUploadAllowedExtensions},data-document-max-size-mb=${documentUploadMaxSizeMb}"
+                        accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx">
+                    <div class="form-text">Allowed: <span th:text="${documentUploadAllowedExtensions}"></span>. Max
+                        size: <span th:text="${documentUploadMaxSizeMb}"></span> MB each.</div>
+                    <ul id="vehicleDocumentPreview" class="list-group list-group-flush border rounded mt-2 small"
+                        aria-live="polite"></ul>
                 </div>
                 <div class="d-grid gap-2"><button type="submit" class="btn btn-success">Register Vehicle</button></div>
             </form>
@@ -563,7 +575,14 @@
                         type="text" class="form-control" name="documentCategory" placeholder="e.g. Deed of Sale, Title">
                 </div>
                 <div class="mb-3"><label class="form-label fw-bold">Attach Document (Optional)</label><input type="file"
-                        class="form-control" name="documentFile" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx">
+                        class="form-control js-document-upload-input" name="documentFiles" multiple
+                        data-document-preview-target="propertyDocumentPreview"
+                        th:attr="data-document-allowed-extensions=${documentUploadAllowedExtensions},data-document-max-size-mb=${documentUploadMaxSizeMb}"
+                        accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx">
+                    <div class="form-text">Allowed: <span th:text="${documentUploadAllowedExtensions}"></span>. Max
+                        size: <span th:text="${documentUploadMaxSizeMb}"></span> MB each.</div>
+                    <ul id="propertyDocumentPreview" class="list-group list-group-flush border rounded mt-2 small"
+                        aria-live="polite"></ul>
                 </div>
                 <div class="d-grid gap-2"><button type="submit" class="btn btn-success">Add Property</button></div>
             </form>

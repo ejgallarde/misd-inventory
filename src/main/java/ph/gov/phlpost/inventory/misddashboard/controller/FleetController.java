@@ -2,13 +2,16 @@ package ph.gov.phlpost.inventory.misddashboard.controller;
 
 import ph.gov.phlpost.inventory.misddashboard.model.FleetVehicle;
 import ph.gov.phlpost.inventory.misddashboard.repository.FleetVehicleRepository;
+import ph.gov.phlpost.inventory.misddashboard.service.DocumentService;
 import ph.gov.phlpost.inventory.misddashboard.service.FleetService;
 import ph.gov.phlpost.inventory.misddashboard.service.RegistryService;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
@@ -18,12 +21,15 @@ public class FleetController {
     private final FleetVehicleRepository fleetRepo;
     private final FleetService fleetService;
     private final RegistryService registryService;
+    private final DocumentService documentService;
 
     public FleetController(FleetVehicleRepository fleetRepo, FleetService fleetService,
-            RegistryService registryService) {
+            RegistryService registryService,
+            DocumentService documentService) {
         this.fleetRepo = fleetRepo;
         this.fleetService = fleetService;
         this.registryService = registryService;
+        this.documentService = documentService;
     }
 
     @GetMapping
@@ -34,8 +40,29 @@ public class FleetController {
     }
 
     @PostMapping("/add")
-    public String registerVehicle(@ModelAttribute FleetVehicle newVehicle, RedirectAttributes redirectAttributes) {
+    public String registerVehicle(@ModelAttribute FleetVehicle newVehicle,
+            @RequestParam(value = "documentFiles", required = false) MultipartFile[] documentFiles,
+            @RequestParam(value = "documentCategory", required = false) String documentCategory,
+            Authentication authentication,
+            RedirectAttributes redirectAttributes) {
         fleetRepo.save(newVehicle);
+
+        if (documentService.hasFiles(documentFiles) && newVehicle.getVehicleID() != null) {
+            String uploadedBy = authentication != null ? authentication.getName() : "SystemUser";
+            try {
+                documentService.uploadAndSaveDocuments(
+                        documentFiles,
+                        "VEHICLE",
+                        String.valueOf(newVehicle.getVehicleID()),
+                        documentCategory,
+                        uploadedBy);
+            } catch (Exception e) {
+                redirectAttributes.addFlashAttribute("errorMessage",
+                        "Vehicle saved, but document upload failed: " + e.getMessage());
+                return "redirect:/";
+            }
+        }
+
         redirectAttributes.addFlashAttribute("successMessage",
                 "Success! Vehicle " + newVehicle.getPlateNumber() + " registered.");
         return "redirect:/";

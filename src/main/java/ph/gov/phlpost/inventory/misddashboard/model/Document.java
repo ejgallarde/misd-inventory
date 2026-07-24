@@ -1,11 +1,18 @@
 package ph.gov.phlpost.inventory.misddashboard.model;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.Table;
+
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "AssetDocument")
-public class AssetDocument {
+public class Document {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -35,6 +42,9 @@ public class AssetDocument {
 
     @Column(name = "UploadedBy")
     private String uploadedBy;
+
+    @Column(name = "UploadDate", updatable = false)
+    private LocalDateTime uploadDate;
 
     public Integer getDocumentId() {
         return documentId;
@@ -116,13 +126,8 @@ public class AssetDocument {
         this.uploadDate = uploadDate;
     }
 
-    @Column(name = "UploadDate", updatable = false)
-    private LocalDateTime uploadDate;
-
-    // Automatically set the timestamp right before saving to the database
     @PrePersist
     protected void onCreate() {
         this.uploadDate = LocalDateTime.now();
     }
-
 }

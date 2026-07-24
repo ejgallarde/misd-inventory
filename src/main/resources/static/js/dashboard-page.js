@@ -134,6 +134,98 @@ $(document).ready(function () {
         }
     });
 
+    function formatBytes(bytes) {
+        if (!Number.isFinite(bytes) || bytes <= 0) {
+            return '0 B';
+        }
+
+        const units = ['B', 'KB', 'MB', 'GB'];
+        const index = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+        const value = bytes / Math.pow(1024, index);
+        return `${value.toFixed(index === 0 ? 0 : 1)} ${units[index]}`;
+    }
+
+    function renderDocumentPreview(input) {
+        const previewTarget = input.dataset.documentPreviewTarget;
+        const previewList = previewTarget ? document.getElementById(previewTarget) : null;
+
+        if (!previewList) {
+            return;
+        }
+
+        previewList.innerHTML = '';
+
+        const allowedExtensions = (input.dataset.documentAllowedExtensions || '')
+            .split(',')
+            .map(value => value.trim().toLowerCase())
+            .filter(Boolean);
+        const maxSizeMb = Number.parseInt(input.dataset.documentMaxSizeMb || '10', 10);
+        const maxSizeBytes = Number.isFinite(maxSizeMb) && maxSizeMb > 0 ? maxSizeMb * 1024 * 1024 : 10 * 1024 * 1024;
+        const files = Array.from(input.files || []);
+
+        if (files.length === 0) {
+            const emptyItem = document.createElement('li');
+            emptyItem.className = 'list-group-item text-muted';
+            emptyItem.textContent = 'No files selected.';
+            previewList.appendChild(emptyItem);
+            return;
+        }
+
+        files.forEach(file => {
+            const item = document.createElement('li');
+            item.className = 'list-group-item d-flex justify-content-between align-items-start gap-3';
+
+            const fileInfo = document.createElement('div');
+            fileInfo.className = 'flex-grow-1';
+
+            const fileName = document.createElement('div');
+            fileName.className = 'fw-semibold';
+            fileName.textContent = file.name;
+
+            const fileMeta = document.createElement('div');
+            fileMeta.className = 'text-muted small';
+            fileMeta.textContent = formatBytes(file.size);
+
+            fileInfo.appendChild(fileName);
+            fileInfo.appendChild(fileMeta);
+
+            const badge = document.createElement('span');
+            const extension = file.name.includes('.') ? file.name.split('.').pop().toLowerCase() : '';
+            const typeAllowed = !allowedExtensions.length || allowedExtensions.includes(extension);
+            const sizeAllowed = file.size <= maxSizeBytes;
+
+            if (typeAllowed && sizeAllowed) {
+                badge.className = 'badge bg-success align-self-center';
+                badge.textContent = 'Ready';
+            } else {
+                badge.className = 'badge bg-danger align-self-center';
+                badge.textContent = !typeAllowed ? 'Invalid type' : 'Too large';
+            }
+
+            item.appendChild(fileInfo);
+            item.appendChild(badge);
+            previewList.appendChild(item);
+        });
+    }
+
+    $('.js-document-upload-input').each(function () {
+        renderDocumentPreview(this);
+        $(this).on('change', function () {
+            renderDocumentPreview(this);
+        });
+    });
+
+    $('#receiveAssetOffcanvas, #addVehicleOffcanvas, #addPropertyOffcanvas').on('hidden.bs.offcanvas', function () {
+        const form = this.querySelector('form');
+        if (form) {
+            form.reset();
+        }
+
+        $(this).find('.js-document-upload-input').each(function () {
+            renderDocumentPreview(this);
+        });
+    });
+
     $('#receiveAssetOffcanvas').on('hidden.bs.offcanvas', function () {
         $('#receiveAssetForm')[0].reset();
         $('#receiveAssetTag').prop('disabled', false).attr('placeholder', 'Leave blank to auto-generate');

@@ -4,6 +4,7 @@ import ph.gov.phlpost.inventory.misddashboard.model.Asset;
 import ph.gov.phlpost.inventory.misddashboard.model.EquipmentCatalog;
 import ph.gov.phlpost.inventory.misddashboard.repository.AssetRepository;
 import ph.gov.phlpost.inventory.misddashboard.repository.EquipmentCatalogRepository;
+import ph.gov.phlpost.inventory.misddashboard.service.DocumentService;
 import ph.gov.phlpost.inventory.misddashboard.service.ITAssetService;
 import ph.gov.phlpost.inventory.misddashboard.service.RegistryService;
 
@@ -16,9 +17,11 @@ import org.springframework.web.util.UriUtils;
 
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
@@ -28,14 +31,17 @@ public class ITAssetController {
     private final EquipmentCatalogRepository catalogRepo;
     private final ITAssetService assetService;
     private final RegistryService registryService;
+    private final DocumentService documentService;
 
     public ITAssetController(AssetRepository assetRepo,
             EquipmentCatalogRepository catalogRepo, ITAssetService assetService,
-            RegistryService registryService) {
+            RegistryService registryService,
+            DocumentService documentService) {
         this.assetRepo = assetRepo;
         this.catalogRepo = catalogRepo;
         this.assetService = assetService;
         this.registryService = registryService;
+        this.documentService = documentService;
     }
 
     @GetMapping("/assets")
@@ -59,6 +65,9 @@ public class ITAssetController {
     public String receiveAsset(
             @ModelAttribute Asset baseAsset,
             @RequestParam(defaultValue = "1") int quantity,
+            @RequestParam(value = "documentFiles", required = false) MultipartFile[] documentFiles,
+            @RequestParam(value = "documentCategory", required = false) String documentCategory,
+            Authentication authentication,
             RedirectAttributes redirectAttributes) {
 
         // 1. Setup the Date Prefix (e.g., PPC-2026-07-15-)
@@ -67,6 +76,8 @@ public class ITAssetController {
         String datePrefix = "PPC-" + today.format(formatter) + "-";
 
         // 2. Loop through the quantity and save each asset
+        String firstCreatedAssetTag = null;
+
         for (int i = 0; i < quantity; i++) {
             Asset newAsset = new Asset();
 
@@ -96,6 +107,34 @@ public class ITAssetController {
             }
 
             assetRepo.save(newAsset);
+
+            if (firstCreatedAssetTag == null) {
+                firstCreatedAssetTag = newAsset.getAssetTag();
+            }
+        }
+
+        if (documentService.hasFiles(documentFiles) && firstCreatedAssetTag != null) {
+            String uploadedBy = authentication != null ? authentication.getName() : "SystemUser";
+            try {
+                documentService.uploadAndSaveDocuments(
+                        documentFiles,
+                        "IT_EQUIPMENT",
+                        firstCreatedAssetTag,
+                        documentCategory,
+                        uploadedBy);
+
+                if (quantity > 1) {
+                    redirectAttributes.addFlashAttribute("successMessage",
+                            "Successfully received " + quantity
+                                    + " asset(s) into storage. Document linked to first asset tag "
+                                    + firstCreatedAssetTag + ".");
+                    return "redirect:/";
+                }
+            } catch (Exception e) {
+                redirectAttributes.addFlashAttribute("errorMessage",
+                        "Assets were saved, but document upload failed: " + e.getMessage());
+                return "redirect:/";
+            }
         }
 
         redirectAttributes.addFlashAttribute("successMessage",

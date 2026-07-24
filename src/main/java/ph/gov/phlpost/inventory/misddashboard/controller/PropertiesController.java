@@ -3,13 +3,16 @@ package ph.gov.phlpost.inventory.misddashboard.controller;
 import ph.gov.phlpost.inventory.misddashboard.model.RealEstateProperty;
 import ph.gov.phlpost.inventory.misddashboard.repository.RealEstatePropertyRepository;
 import ph.gov.phlpost.inventory.misddashboard.service.AuditLogService;
+import ph.gov.phlpost.inventory.misddashboard.service.DocumentService;
 import ph.gov.phlpost.inventory.misddashboard.service.RegistryService;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
@@ -19,12 +22,15 @@ public class PropertiesController {
     private final RealEstatePropertyRepository propertyRepo;
     private final RegistryService registryService;
     private final AuditLogService auditService;
+    private final DocumentService documentService;
 
     public PropertiesController(RealEstatePropertyRepository propertyRepo, RegistryService registryService,
-            AuditLogService auditService) {
+            AuditLogService auditService,
+            DocumentService documentService) {
         this.propertyRepo = propertyRepo;
         this.registryService = registryService;
         this.auditService = auditService;
+        this.documentService = documentService;
     }
 
     @GetMapping
@@ -35,8 +41,29 @@ public class PropertiesController {
     }
 
     @PostMapping("/add")
-    public String addProperty(@ModelAttribute RealEstateProperty newProperty, RedirectAttributes redirectAttributes) {
+    public String addProperty(@ModelAttribute RealEstateProperty newProperty,
+            @RequestParam(value = "documentFiles", required = false) MultipartFile[] documentFiles,
+            @RequestParam(value = "documentCategory", required = false) String documentCategory,
+            Authentication authentication,
+            RedirectAttributes redirectAttributes) {
         propertyRepo.save(newProperty);
+
+        if (documentService.hasFiles(documentFiles) && newProperty.getPropertyID() != null) {
+            String uploadedBy = authentication != null ? authentication.getName() : "SystemUser";
+            try {
+                documentService.uploadAndSaveDocuments(
+                        documentFiles,
+                        "PROPERTY",
+                        String.valueOf(newProperty.getPropertyID()),
+                        documentCategory,
+                        uploadedBy);
+            } catch (Exception e) {
+                redirectAttributes.addFlashAttribute("errorMessage",
+                        "Property saved, but document upload failed: " + e.getMessage());
+                return "redirect:/";
+            }
+        }
+
         redirectAttributes.addFlashAttribute("successMessage", "Property added to registry.");
         return "redirect:/";
     }
