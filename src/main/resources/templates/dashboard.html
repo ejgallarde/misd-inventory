@@ -376,7 +376,7 @@
         </div>
         <div class="offcanvas-body">
             <!-- Inside your Receive Asset Modal Body -->
-            <form th:action="@{/assets/receive}" method="post" id="receiveAssetForm">
+            <form th:action="@{/assets/receive}" method="post" id="receiveAssetForm" enctype="multipart/form-data">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
 
                 <div class="mb-3">
@@ -428,6 +428,19 @@
                         placeholder="e.g. Delivery receipt notes..."></textarea>
                 </div>
 
+                <div class="mb-3">
+                    <label class="form-label fw-bold text-muted small text-uppercase">Document Category
+                        (Optional)</label>
+                    <input type="text" class="form-control" name="documentCategory"
+                        placeholder="e.g. Delivery Receipt, Appendix 71">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold text-muted small text-uppercase">Attach Document (Optional)</label>
+                    <input type="file" class="form-control" name="documentFile"
+                        accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx">
+                </div>
+
                 <div class="d-grid mt-4">
                     <button type="submit" class="btn btn-primary text-white fw-bold">Receive into Storage</button>
                 </div>
@@ -442,7 +455,7 @@
             <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
         </div>
         <div class="offcanvas-body">
-            <form th:action="@{/fleet/add}" method="post">
+            <form th:action="@{/fleet/add}" method="post" enctype="multipart/form-data">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                 <div class="row mb-3">
                     <div class="col-6"><label class="form-label fw-bold">Plate Number</label><input type="text"
@@ -483,6 +496,12 @@
                     <div class="col-6"><label class="form-label fw-bold">Ins. Expiry</label><input type="date"
                             class="form-control" name="insuranceExpiry" required></div>
                 </div>
+                <div class="mb-3"><label class="form-label fw-bold">Document Category (Optional)</label><input
+                        type="text" class="form-control" name="documentCategory" placeholder="e.g. OR/CR, Insurance">
+                </div>
+                <div class="mb-3"><label class="form-label fw-bold">Attach Document (Optional)</label><input type="file"
+                        class="form-control" name="documentFile" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx">
+                </div>
                 <div class="d-grid gap-2"><button type="submit" class="btn btn-success">Register Vehicle</button></div>
             </form>
         </div>
@@ -495,7 +514,7 @@
             <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
         </div>
         <div class="offcanvas-body">
-            <form th:action="@{/properties/add}" method="post">
+            <form th:action="@{/properties/add}" method="post" enctype="multipart/form-data">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                 <div class="mb-3">
                     <label class="form-label fw-bold">Property Name</label>
@@ -539,6 +558,12 @@
                             <option value="Overdue">Overdue</option>
                         </select>
                     </div>
+                </div>
+                <div class="mb-3"><label class="form-label fw-bold">Document Category (Optional)</label><input
+                        type="text" class="form-control" name="documentCategory" placeholder="e.g. Deed of Sale, Title">
+                </div>
+                <div class="mb-3"><label class="form-label fw-bold">Attach Document (Optional)</label><input type="file"
+                        class="form-control" name="documentFile" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx">
                 </div>
                 <div class="d-grid gap-2"><button type="submit" class="btn btn-success">Add Property</button></div>
             </form>

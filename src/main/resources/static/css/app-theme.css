@@ -7,6 +7,10 @@
     --app-border: #d8e2ee;
     --app-accent: #0f6cbd;
     --app-accent-soft: rgba(15, 108, 189, 0.12);
+    --app-toggle-bg: linear-gradient(135deg, #ffffff 0%, #e7eef8 100%);
+    --app-toggle-text: #0f6cbd;
+    --app-toggle-border: rgba(15, 108, 189, 0.18);
+    --app-toggle-shadow: rgba(15, 108, 189, 0.12);
     --bs-body-bg: var(--app-bg);
     --bs-body-color: var(--app-text);
     --bs-secondary-color: var(--app-text-muted);
@@ -21,6 +25,10 @@ body[data-theme="dark"] {
     --app-border: #2b3a4f;
     --app-accent: #4da3ff;
     --app-accent-soft: rgba(77, 163, 255, 0.18);
+    --app-toggle-bg: linear-gradient(135deg, #1f2d42 0%, #2d4464 100%);
+    --app-toggle-text: #edf4ff;
+    --app-toggle-border: rgba(237, 244, 255, 0.2);
+    --app-toggle-shadow: rgba(0, 0, 0, 0.2);
     --bs-body-bg: var(--app-bg);
     --bs-body-color: var(--app-text);
     --bs-secondary-color: var(--app-text-muted);
@@ -35,6 +43,10 @@ body[data-theme="light"] {
     --app-border: #d8e2ee;
     --app-accent: #0f6cbd;
     --app-accent-soft: rgba(15, 108, 189, 0.12);
+    --app-toggle-bg: linear-gradient(135deg, #ffffff 0%, #e7eef8 100%);
+    --app-toggle-text: #0f6cbd;
+    --app-toggle-border: rgba(15, 108, 189, 0.18);
+    --app-toggle-shadow: rgba(15, 108, 189, 0.12);
     --bs-body-bg: var(--app-bg);
     --bs-body-color: var(--app-text);
     --bs-secondary-color: var(--app-text-muted);
@@ -118,6 +130,13 @@ body[data-theme="dark"] .navbar-dark .dropdown-toggle {
     color: #fff !important;
 }
 
+.table thead th,
+.table-dark th,
+.table-dark td,
+.table-dark thead th {
+    color: #ffffff !important;
+}
+
 .form-control,
 .form-select {
     background-color: var(--app-surface) !important;
@@ -139,16 +158,16 @@ body[data-theme="dark"] .navbar-dark .dropdown-toggle {
 }
 
 .theme-toggle-btn {
-    background: linear-gradient(135deg, var(--app-accent) 0%, #3d98eb 100%);
-    color: #ffffff !important;
-    border: 1px solid rgba(255, 255, 255, 0.35);
-    box-shadow: 0 3px 10px rgba(15, 108, 189, 0.2);
+    background: var(--app-toggle-bg);
+    color: var(--app-toggle-text) !important;
+    border: 1px solid var(--app-toggle-border);
+    box-shadow: 0 3px 10px var(--app-toggle-shadow);
     font-weight: 600;
 }
 
 .theme-toggle-btn:hover {
     filter: brightness(1.04);
-    color: #ffffff !important;
+    color: var(--app-toggle-text) !important;
 }
 
 .toast-shell {

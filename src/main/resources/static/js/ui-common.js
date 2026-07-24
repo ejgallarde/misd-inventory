@@ -6,7 +6,7 @@ window.MISDCommon = (function (jqueryGlobal) {
         document.documentElement.setAttribute('data-bs-theme', theme);
 
         if (toggleButton) {
-            toggleButton.textContent = theme === 'dark' ? '☀️ Light' : '🌙 Dark';
+            toggleButton.textContent = theme === 'dark' ? '🌙 Dark' : '☀️ Light';
             toggleButton.setAttribute('title', theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme');
             toggleButton.setAttribute('aria-label', theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme');
         }

@@ -1,4 +1,6 @@
 $(document).ready(function () {
+    MISDCommon.setupThemeToggle('themeToggleBtn');
+
     $('button[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
         $('button[data-bs-toggle="tab"]').removeClass('text-dark').addClass('text-secondary');
         $(e.target).removeClass('text-secondary').addClass('text-dark');
