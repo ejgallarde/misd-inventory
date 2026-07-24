@@ -42,7 +42,7 @@ public class FleetController {
     @PostMapping("/add")
     public String registerVehicle(@ModelAttribute FleetVehicle newVehicle,
             @RequestParam(value = "documentFiles", required = false) MultipartFile[] documentFiles,
-            @RequestParam(value = "documentCategory", required = false) String documentCategory,
+            @RequestParam(value = "documentCategories", required = false) String[] documentCategories,
             Authentication authentication,
             RedirectAttributes redirectAttributes) {
         fleetRepo.save(newVehicle);
@@ -54,7 +54,7 @@ public class FleetController {
                         documentFiles,
                         "VEHICLE",
                         String.valueOf(newVehicle.getVehicleID()),
-                        documentCategory,
+                        documentCategories,
                         uploadedBy);
             } catch (Exception e) {
                 redirectAttributes.addFlashAttribute("errorMessage",

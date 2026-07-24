@@ -501,19 +501,18 @@
                     <div class="col-6"><label class="form-label fw-bold">Ins. Expiry</label><input type="date"
                             class="form-control" name="insuranceExpiry" required></div>
                 </div>
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Document Category</label>
-                    <select class="form-select" name="documentCategory" required>
+                <div class="mb-3"><label class="form-label fw-bold">Attach Documents</label><input type="file"
+                        class="form-control js-document-upload-input" name="documentFiles" multiple
+                        data-document-preview-target="vehicleDocumentPreview"
+                        data-document-category-template-target="vehicleDocumentCategoryTemplate"
+                        th:attr="data-document-allowed-extensions=${documentUploadAllowedExtensions},data-document-max-size-mb=${documentUploadMaxSizeMb}"
+                        accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx">
+                    <div class="form-text">Select one category for each file before upload.</div>
+                    <select id="vehicleDocumentCategoryTemplate" class="d-none">
                         <option value="" selected disabled>Select a document category</option>
                         <option th:each="documentCategory : ${documentUploadCategories}" th:value="${documentCategory}"
                             th:text="${documentCategory}"></option>
                     </select>
-                </div>
-                <div class="mb-3"><label class="form-label fw-bold">Attach Document (Optional)</label><input type="file"
-                        class="form-control js-document-upload-input" name="documentFiles" multiple
-                        data-document-preview-target="vehicleDocumentPreview"
-                        th:attr="data-document-allowed-extensions=${documentUploadAllowedExtensions},data-document-max-size-mb=${documentUploadMaxSizeMb}"
-                        accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx">
                     <div class="form-text">Allowed: <span th:text="${documentUploadAllowedExtensions}"></span>. Max
                         size: <span th:text="${documentUploadMaxSizeMb}"></span> MB each.</div>
                     <ul id="vehicleDocumentPreview" class="list-group list-group-flush border rounded mt-2 small"
@@ -576,19 +575,18 @@
                         </select>
                     </div>
                 </div>
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Document Category</label>
-                    <select class="form-select" name="documentCategory" required>
+                <div class="mb-3"><label class="form-label fw-bold">Attach Documents</label><input type="file"
+                        class="form-control js-document-upload-input" name="documentFiles" multiple
+                        data-document-preview-target="propertyDocumentPreview"
+                        data-document-category-template-target="propertyDocumentCategoryTemplate"
+                        th:attr="data-document-allowed-extensions=${documentUploadAllowedExtensions},data-document-max-size-mb=${documentUploadMaxSizeMb}"
+                        accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx">
+                    <div class="form-text">Select one category for each file before upload.</div>
+                    <select id="propertyDocumentCategoryTemplate" class="d-none">
                         <option value="" selected disabled>Select a document category</option>
                         <option th:each="documentCategory : ${documentUploadCategories}" th:value="${documentCategory}"
                             th:text="${documentCategory}"></option>
                     </select>
-                </div>
-                <div class="mb-3"><label class="form-label fw-bold">Attach Document (Optional)</label><input type="file"
-                        class="form-control js-document-upload-input" name="documentFiles" multiple
-                        data-document-preview-target="propertyDocumentPreview"
-                        th:attr="data-document-allowed-extensions=${documentUploadAllowedExtensions},data-document-max-size-mb=${documentUploadMaxSizeMb}"
-                        accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx">
                     <div class="form-text">Allowed: <span th:text="${documentUploadAllowedExtensions}"></span>. Max
                         size: <span th:text="${documentUploadMaxSizeMb}"></span> MB each.</div>
                     <ul id="propertyDocumentPreview" class="list-group list-group-flush border rounded mt-2 small"

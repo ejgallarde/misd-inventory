@@ -43,7 +43,7 @@ public class PropertiesController {
     @PostMapping("/add")
     public String addProperty(@ModelAttribute RealEstateProperty newProperty,
             @RequestParam(value = "documentFiles", required = false) MultipartFile[] documentFiles,
-            @RequestParam(value = "documentCategory", required = false) String documentCategory,
+            @RequestParam(value = "documentCategories", required = false) String[] documentCategories,
             Authentication authentication,
             RedirectAttributes redirectAttributes) {
         propertyRepo.save(newProperty);
@@ -55,7 +55,7 @@ public class PropertiesController {
                         documentFiles,
                         "PROPERTY",
                         String.valueOf(newProperty.getPropertyID()),
-                        documentCategory,
+                        documentCategories,
                         uploadedBy);
             } catch (Exception e) {
                 redirectAttributes.addFlashAttribute("errorMessage",
