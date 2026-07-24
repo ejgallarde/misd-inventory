@@ -413,7 +413,8 @@
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label class="form-label fw-bold text-muted small text-uppercase">Purchase Date</label>
-                        <input type="date" class="form-control" name="purchaseDate">
+                        <input type="date" class="form-control" name="purchaseDate"
+                            th:value="${#temporals.format(T(java.time.LocalDate).now(), 'yyyy-MM-dd')}">
                     </div>
                     <div class="col-md-6 mb-3">
                         <label class="form-label fw-bold text-muted small text-uppercase">Price (PHP)</label>
@@ -429,19 +430,18 @@
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label fw-bold text-muted small text-uppercase">Document Category
-                        (Optional)</label>
-                    <input type="text" class="form-control" name="documentCategory"
-                        placeholder="e.g. Delivery Receipt, Appendix 71">
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label fw-bold text-muted small text-uppercase">Attach Document (Optional)</label>
+                    <label class="form-label fw-bold text-muted small text-uppercase">Attach Documents</label>
                     <input type="file" class="form-control js-document-upload-input" name="documentFiles" multiple
                         data-document-preview-target="receiveDocumentPreview"
+                        data-document-category-template-target="receiveDocumentCategoryTemplate"
                         th:attr="data-document-allowed-extensions=${documentUploadAllowedExtensions},data-document-max-size-mb=${documentUploadMaxSizeMb}"
                         accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx">
-                    <div class="form-text">Selected files appear below before upload.</div>
+                    <div class="form-text">Select one category for each file before upload.</div>
+                    <select id="receiveDocumentCategoryTemplate" class="d-none">
+                        <option value="" selected disabled>Select a document category</option>
+                        <option th:each="documentCategory : ${documentUploadCategories}" th:value="${documentCategory}"
+                            th:text="${documentCategory}"></option>
+                    </select>
                     <ul id="receiveDocumentPreview" class="list-group list-group-flush border rounded mt-2 small"
                         aria-live="polite"></ul>
                 </div>
@@ -501,8 +501,13 @@
                     <div class="col-6"><label class="form-label fw-bold">Ins. Expiry</label><input type="date"
                             class="form-control" name="insuranceExpiry" required></div>
                 </div>
-                <div class="mb-3"><label class="form-label fw-bold">Document Category (Optional)</label><input
-                        type="text" class="form-control" name="documentCategory" placeholder="e.g. OR/CR, Insurance">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Document Category</label>
+                    <select class="form-select" name="documentCategory" required>
+                        <option value="" selected disabled>Select a document category</option>
+                        <option th:each="documentCategory : ${documentUploadCategories}" th:value="${documentCategory}"
+                            th:text="${documentCategory}"></option>
+                    </select>
                 </div>
                 <div class="mb-3"><label class="form-label fw-bold">Attach Document (Optional)</label><input type="file"
                         class="form-control js-document-upload-input" name="documentFiles" multiple
@@ -571,8 +576,13 @@
                         </select>
                     </div>
                 </div>
-                <div class="mb-3"><label class="form-label fw-bold">Document Category (Optional)</label><input
-                        type="text" class="form-control" name="documentCategory" placeholder="e.g. Deed of Sale, Title">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Document Category</label>
+                    <select class="form-select" name="documentCategory" required>
+                        <option value="" selected disabled>Select a document category</option>
+                        <option th:each="documentCategory : ${documentUploadCategories}" th:value="${documentCategory}"
+                            th:text="${documentCategory}"></option>
+                    </select>
                 </div>
                 <div class="mb-3"><label class="form-label fw-bold">Attach Document (Optional)</label><input type="file"
                         class="form-control js-document-upload-input" name="documentFiles" multiple

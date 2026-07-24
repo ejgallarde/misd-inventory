@@ -45,6 +45,9 @@ public class MainDashboardController {
     @Value("${document.upload.allowed-extensions:pdf,jpg,jpeg,png,doc,docx,xls,xlsx}")
     private String documentUploadAllowedExtensions;
 
+    @Value("#{'${document.upload.categories}'.split(',')}")
+    private List<String> documentUploadCategories;
+
     public MainDashboardController(DashboardRepository dashboardRepo, FleetVehicleRepository fleetRepo,
             RealEstatePropertyRepository propertyRepo, EquipmentCatalogRepository catalogRepo,
             PersonnelRepository personnelRepo, RegistryService registryService) {
@@ -98,6 +101,7 @@ public class MainDashboardController {
         model.addAttribute("equipmentCategories", equipmentCategories);
         model.addAttribute("documentUploadMaxSizeMb", documentUploadMaxSizeMb);
         model.addAttribute("documentUploadAllowedExtensions", documentUploadAllowedExtensions);
+        model.addAttribute("documentUploadCategories", documentUploadCategories);
 
         return "dashboard";
     }

@@ -66,7 +66,7 @@ public class ITAssetController {
             @ModelAttribute Asset baseAsset,
             @RequestParam(defaultValue = "1") int quantity,
             @RequestParam(value = "documentFiles", required = false) MultipartFile[] documentFiles,
-            @RequestParam(value = "documentCategory", required = false) String documentCategory,
+            @RequestParam(value = "documentCategories", required = false) String[] documentCategories,
             Authentication authentication,
             RedirectAttributes redirectAttributes) {
 
@@ -120,7 +120,7 @@ public class ITAssetController {
                         documentFiles,
                         "IT_EQUIPMENT",
                         firstCreatedAssetTag,
-                        documentCategory,
+                        documentCategories,
                         uploadedBy);
 
                 if (quantity > 1) {

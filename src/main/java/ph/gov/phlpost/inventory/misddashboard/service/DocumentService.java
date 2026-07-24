@@ -9,6 +9,7 @@ import ph.gov.phlpost.inventory.misddashboard.repository.DocumentRepository;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -20,10 +21,12 @@ public class DocumentService {
     private final DocumentRepository documentRepository;
     private final long maxFileSizeBytes;
     private final Set<String> allowedExtensions;
+    private final Set<String> allowedCategories;
 
     public DocumentService(DocumentStorageService storageService, DocumentRepository documentRepository,
             @Value("${document.upload.max-size-mb:10}") long maxFileSizeMb,
-            @Value("${document.upload.allowed-extensions:pdf,jpg,jpeg,png,doc,docx,xls,xlsx}") String allowedExtensionsConfig) {
+            @Value("${document.upload.allowed-extensions:pdf,jpg,jpeg,png,doc,docx,xls,xlsx}") String allowedExtensionsConfig,
+            @Value("#{'${document.upload.categories:Delivery Receipt,Official Receipt / Invoice,Warranty Certificate,Inspection Report,Acceptance Report,Appendix 71,Serial Number Label,Photographs,Equipment Specification Sheet,Repair or Service Report,OR/CR,Insurance Policy,Deed of Sale,Title,Tax Declaration,Property Photo,Service Report}'.split(',')}") List<String> allowedCategoriesConfig) {
         this.storageService = storageService;
         this.documentRepository = documentRepository;
         this.maxFileSizeBytes = Math.max(1L, maxFileSizeMb) * 1024L * 1024L;
@@ -31,6 +34,10 @@ public class DocumentService {
                 .map(String::trim)
                 .filter(extension -> !extension.isBlank())
                 .map(extension -> extension.toLowerCase(Locale.ROOT))
+                .collect(Collectors.toUnmodifiableSet());
+        this.allowedCategories = allowedCategoriesConfig.stream()
+                .map(String::trim)
+                .filter(category -> !category.isBlank())
                 .collect(Collectors.toUnmodifiableSet());
     }
 
@@ -48,11 +55,35 @@ public class DocumentService {
             return;
         }
 
-        validateFiles(files);
+        String normalizedCategory = normalizeCategory(documentCategory);
+        if (normalizedCategory == null) {
+            throw new IllegalArgumentException("Document category is required for document upload.");
+        }
 
-        for (MultipartFile file : files) {
+        uploadAndSaveDocuments(files, referenceType, referenceId, repeatCategory(files, normalizedCategory),
+                uploadedBy);
+    }
+
+    public void uploadAndSaveDocuments(MultipartFile[] files,
+            String referenceType,
+            String referenceId,
+            String[] documentCategories,
+            String uploadedBy) throws IOException {
+
+        if (!hasFiles(files)) {
+            return;
+        }
+
+        validateFiles(files);
+        validateCategoryCount(files, documentCategories);
+
+        for (int index = 0; index < files.length; index++) {
+            MultipartFile file = files[index];
             if (file != null && !file.isEmpty()) {
-                uploadAndSaveDocument(file, referenceType, referenceId, documentCategory, uploadedBy);
+                String category = documentCategories != null && index < documentCategories.length
+                        ? documentCategories[index]
+                        : null;
+                uploadAndSaveDocument(file, referenceType, referenceId, category, uploadedBy);
             }
         }
     }
@@ -75,9 +106,10 @@ public class DocumentService {
             throw new IllegalArgumentException("Reference ID is required for document upload.");
         }
 
-        String category = documentCategory == null || documentCategory.isBlank()
-                ? "General"
-                : documentCategory.trim();
+        String category = normalizeCategory(documentCategory);
+        if (category == null) {
+            throw new IllegalArgumentException("Document category is required for document upload.");
+        }
 
         String uploadedByValue = uploadedBy == null || uploadedBy.isBlank()
                 ? "SystemUser"
@@ -121,6 +153,46 @@ public class DocumentService {
                     "File '" + filename + "' is not an allowed type. Allowed types: "
                             + String.join(", ", allowedExtensions));
         }
+    }
+
+    private void validateCategoryCount(MultipartFile[] files, String[] documentCategories) {
+        int fileCount = (int) Arrays.stream(files).filter(file -> file != null && !file.isEmpty()).count();
+        int categoryCount = documentCategories == null ? 0
+                : (int) Arrays.stream(documentCategories)
+                        .filter(category -> category != null && !category.isBlank())
+                        .count();
+
+        if (fileCount != categoryCount) {
+            throw new IllegalArgumentException(
+                    "Each uploaded file must have a document category selected.");
+        }
+    }
+
+    private String[] repeatCategory(MultipartFile[] files, String category) {
+        if (!hasFiles(files)) {
+            return new String[0];
+        }
+
+        int fileCount = (int) Arrays.stream(files)
+                .filter(file -> file != null && !file.isEmpty())
+                .count();
+
+        String[] repeated = new String[fileCount];
+        Arrays.fill(repeated, category);
+        return repeated;
+    }
+
+    private String normalizeCategory(String documentCategory) {
+        if (documentCategory == null || documentCategory.isBlank()) {
+            return null;
+        }
+
+        String normalizedCategory = documentCategory.trim();
+        if (!allowedCategories.contains(normalizedCategory)) {
+            throw new IllegalArgumentException(
+                    "Document category '" + normalizedCategory + "' is not allowed.");
+        }
+        return normalizedCategory;
     }
 
     private String resolveFilename(MultipartFile file) {

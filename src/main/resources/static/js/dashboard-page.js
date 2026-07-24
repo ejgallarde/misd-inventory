@@ -148,6 +148,8 @@ $(document).ready(function () {
     function renderDocumentPreview(input) {
         const previewTarget = input.dataset.documentPreviewTarget;
         const previewList = previewTarget ? document.getElementById(previewTarget) : null;
+        const categoryTemplateTarget = input.dataset.documentCategoryTemplateTarget;
+        const categoryTemplate = categoryTemplateTarget ? document.getElementById(categoryTemplateTarget) : null;
 
         if (!previewList) {
             return;
@@ -173,10 +175,10 @@ $(document).ready(function () {
 
         files.forEach(file => {
             const item = document.createElement('li');
-            item.className = 'list-group-item d-flex justify-content-between align-items-start gap-3';
+            item.className = 'list-group-item d-flex flex-column gap-2';
 
             const fileInfo = document.createElement('div');
-            fileInfo.className = 'flex-grow-1';
+            fileInfo.className = 'd-flex justify-content-between align-items-start gap-3';
 
             const fileName = document.createElement('div');
             fileName.className = 'fw-semibold';
@@ -203,7 +205,32 @@ $(document).ready(function () {
             }
 
             item.appendChild(fileInfo);
-            item.appendChild(badge);
+
+            const footer = document.createElement('div');
+            footer.className = 'd-flex flex-column gap-2';
+
+            if (categoryTemplate) {
+                const categoryLabel = document.createElement('label');
+                categoryLabel.className = 'form-label fw-semibold mb-0 small';
+                categoryLabel.textContent = 'Document category';
+
+                const categorySelect = document.createElement('select');
+                categorySelect.className = 'form-select form-select-sm';
+                categorySelect.name = 'documentCategories';
+                categorySelect.required = true;
+                categorySelect.innerHTML = categoryTemplate.innerHTML;
+
+                footer.appendChild(categoryLabel);
+                footer.appendChild(categorySelect);
+            }
+
+            const metaRow = document.createElement('div');
+            metaRow.className = 'd-flex justify-content-between align-items-center';
+            metaRow.appendChild(document.createElement('span'));
+            metaRow.appendChild(badge);
+
+            footer.appendChild(metaRow);
+            item.appendChild(footer);
             previewList.appendChild(item);
         });
     }
