@@ -1,18 +1,6 @@
 $(document).ready(function () {
-    const themeToggleBtn = document.getElementById('themeToggleBtn');
     const clearAssetFiltersBtn = document.getElementById('clearAssetFiltersBtn');
     const tableStateKey = 'assetsTableState';
-
-    function applyTheme(theme) {
-        document.body.setAttribute('data-theme', theme);
-        document.documentElement.setAttribute('data-bs-theme', theme);
-        if (themeToggleBtn) {
-            themeToggleBtn.textContent = theme === 'dark' ? '☀️ Light' : '🌙 Dark';
-            themeToggleBtn.setAttribute('title', theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme');
-            themeToggleBtn.setAttribute('aria-label', theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme');
-        }
-        localStorage.setItem('misd-theme', theme);
-    }
 
     function clearAssetFilters(table) {
         table.search('');
@@ -27,14 +15,7 @@ $(document).ready(function () {
         window.history.replaceState({}, '', nextUrl);
     }
 
-    const savedTheme = localStorage.getItem('misd-theme') || 'light';
-    applyTheme(savedTheme);
-    if (themeToggleBtn) {
-        themeToggleBtn.addEventListener('click', function () {
-            const nextTheme = document.body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-            applyTheme(nextTheme);
-        });
-    }
+    MISDCommon.setupThemeToggle('themeToggleBtn');
 
     if (clearAssetFiltersBtn) {
         clearAssetFiltersBtn.addEventListener('click', function () {
@@ -95,12 +76,7 @@ $(document).ready(function () {
         }
     }
 
-    // Auto-Hide Toast
-    const toastEl = document.getElementById('successToast');
-    if (toastEl) {
-        const toast = new bootstrap.Toast(toastEl, { delay: 3000 });
-        toast.show();
-    }
+    MISDCommon.showToast('successToast');
 
     // DataTables
     const assetsTable = $('#assetsTable').DataTable({
@@ -122,39 +98,7 @@ $(document).ready(function () {
 
     restoreAssetsTableState(assetsTable);
 
-    // Select2
-    // Initialize Select2 dynamically every time a modal is opened
-    $('.modal').on('shown.bs.modal', function () {
-        $(this).find('.select2-dropdown').select2({
-            theme: 'bootstrap-5',
-            dropdownParent: $(this), // Attaches perfectly to the currently open modal
-            placeholder: 'Type a name to search...',
-            minimumInputLength: 2,
-            ajax: {
-                url: '/api/personnel/search',
-                dataType: 'json',
-                delay: 250,
-                data: function (params) {
-                    return {
-                        q: params.term || '', // Fallback to empty string if undefined
-                        page: (params.page || 1) - 1 // Spring Data pages are 0-indexed, Select2 is 1-indexed
-                    };
-                },
-                processResults: function (data) {
-                    return {
-                        results: data.results,
-                        pagination: { more: data.pagination.more }
-                    };
-                },
-                cache: true
-            }
-        });
-    });
-
-    // Destroy Select2 when modal closes to prevent duplication bugs
-    $('.modal').on('hidden.bs.modal', function () {
-        $(this).find('.select2-dropdown').select2('destroy');
-    });
+    MISDCommon.initSelect2Modals();
 
     // --- SLIDEOUT & EDIT LOGIC ---
 
@@ -168,8 +112,8 @@ $(document).ready(function () {
     }
 
     // Trigger slideout on Asset Tag click
-    $(document).on('click', '.asset-detail-link', function () {
-        currentActiveAssetTag = $(this).data('assettag');
+    MISDCommon.bindClick('.asset-detail-link', function (link) {
+        currentActiveAssetTag = link.data('assettag');
         loadAssetDetails(currentActiveAssetTag);
     });
 
@@ -282,32 +226,37 @@ $(document).ready(function () {
     });
 
     // Automatically pass the Asset Tag to the Action Modals
-    $('.modal').on('show.bs.modal', function (event) {
-        // 1. Find the button/link that triggered the modal
-        const triggerElement = $(event.relatedTarget);
-
-        // 2. Extract the asset tag from the th:data-assettag attribute
+    MISDCommon.bindModalShow('.modal', function (modal, triggerElement) {
         const assetTag = triggerElement.data('assettag');
 
-        // 3. Find the currently opening modal
-        const modal = $(this);
+        if (!assetTag) {
+            return;
+        }
 
-        // 4. Populate the specific inputs inside this modal
-        if (assetTag) {
-            modal.find('input[name="assetTag"]').val(assetTag); // Hidden input for submission
+        MISDCommon.populateModalFields(modal, {
+            'input[name="assetTag"]': assetTag
+        });
 
-            // Populate the display fields based on which modal is opening
-            if (modal.attr('id') === 'assignModal') {
-                modal.find('#assignAssetTagDisplay').val(assetTag);
-            } else if (modal.attr('id') === 'returnModal') {
-                modal.find('#returnAssetTagDisplay').text(assetTag);
-            } else if (modal.attr('id') === 'warrantyModal') {
-                modal.find('#warrantyAssetTagDisplay').text(assetTag);
-            } else if (modal.attr('id') === 'unserviceableModal') {
-                modal.find('#unserviceableAssetTagDisplay').text(assetTag);
-            } else if (modal.attr('id') === 'retireModal') {
-                modal.find('#retireAssetTagDisplay').text(assetTag);
-            }
+        if (modal.attr('id') === 'assignModal') {
+            MISDCommon.populateModalFields(modal, {
+                '#assignAssetTagDisplay': assetTag
+            });
+        } else if (modal.attr('id') === 'returnModal') {
+            MISDCommon.populateModalFields(modal, {
+                '#returnAssetTagDisplay': assetTag
+            });
+        } else if (modal.attr('id') === 'warrantyModal') {
+            MISDCommon.populateModalFields(modal, {
+                '#warrantyAssetTagDisplay': assetTag
+            });
+        } else if (modal.attr('id') === 'unserviceableModal') {
+            MISDCommon.populateModalFields(modal, {
+                '#unserviceableAssetTagDisplay': assetTag
+            });
+        } else if (modal.attr('id') === 'retireModal') {
+            MISDCommon.populateModalFields(modal, {
+                '#retireAssetTagDisplay': assetTag
+            });
         }
     });
 

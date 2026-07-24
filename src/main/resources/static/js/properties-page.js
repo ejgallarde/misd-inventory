@@ -1,17 +1,5 @@
 $(document).ready(function () {
-    const themeToggleBtn = document.getElementById('themeToggleBtn');
     const clearPropertyFiltersBtn = document.getElementById('clearPropertyFiltersBtn');
-
-    function applyTheme(theme) {
-        document.body.setAttribute('data-theme', theme);
-        document.documentElement.setAttribute('data-bs-theme', theme);
-        if (themeToggleBtn) {
-            themeToggleBtn.textContent = theme === 'dark' ? '☀️ Light' : '🌙 Dark';
-            themeToggleBtn.setAttribute('title', theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme');
-            themeToggleBtn.setAttribute('aria-label', theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme');
-        }
-        localStorage.setItem('misd-theme', theme);
-    }
 
     function clearPropertyFilters(table) {
         table.search('');
@@ -26,14 +14,7 @@ $(document).ready(function () {
         window.history.replaceState({}, '', nextUrl);
     }
 
-    const savedTheme = localStorage.getItem('misd-theme') || 'light';
-    applyTheme(savedTheme);
-    if (themeToggleBtn) {
-        themeToggleBtn.addEventListener('click', function () {
-            const nextTheme = document.body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-            applyTheme(nextTheme);
-        });
-    }
+    MISDCommon.setupThemeToggle('themeToggleBtn');
 
     if (clearPropertyFiltersBtn) {
         clearPropertyFiltersBtn.addEventListener('click', function () {
@@ -41,11 +22,7 @@ $(document).ready(function () {
         });
     }
 
-    const toastEl = document.getElementById('successToast');
-    if (toastEl) {
-        const toast = new bootstrap.Toast(toastEl, { delay: 3000 });
-        toast.show();
-    }
+    MISDCommon.showToast('successToast');
 
     const propertiesTable = $('#propertiesTable').DataTable({
         pageLength: 25,
@@ -60,40 +37,11 @@ $(document).ready(function () {
             "<'row pt-2'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>"
     });
 
-    $('.modal').on('shown.bs.modal', function () {
-        $(this).find('.select2-dropdown').select2({
-            theme: 'bootstrap-5',
-            dropdownParent: $(this),
-            placeholder: 'Type a name to search...',
-            minimumInputLength: 2,
-            ajax: {
-                url: '/api/personnel/search',
-                dataType: 'json',
-                delay: 250,
-                data: function (params) {
-                    return {
-                        q: params.term || '',
-                        page: (params.page || 1) - 1
-                    };
-                },
-                processResults: function (data) {
-                    return {
-                        results: data.results,
-                        pagination: { more: data.pagination.more }
-                    };
-                },
-                cache: true
-            }
-        });
-    });
+    MISDCommon.initSelect2Modals();
 
-    $('.modal').on('hidden.bs.modal', function () {
-        $(this).find('.select2-dropdown').select2('destroy');
-    });
-
-    $('.action-btn').on('click', function () {
-        const pId = $(this).data('id');
-        const pName = $(this).data('name');
+    MISDCommon.bindClick('.action-btn', function (button) {
+        const pId = button.data('id');
+        const pName = button.data('name');
 
         $('#custodianPropID').val(pId);
         $('#custodianPropDisplay').val(pName);

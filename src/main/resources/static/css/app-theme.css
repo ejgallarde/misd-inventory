@@ -66,6 +66,36 @@ body {
     color: var(--app-text) !important;
 }
 
+body[data-theme="dark"] .bg-light {
+    background-color: var(--app-surface-muted) !important;
+    color: var(--app-text) !important;
+}
+
+body[data-theme="dark"] .bg-white {
+    background-color: var(--app-surface) !important;
+    color: var(--app-text) !important;
+}
+
+body[data-theme="dark"] .text-dark {
+    color: var(--app-text) !important;
+}
+
+body[data-theme="dark"] .nav-tabs .nav-link {
+    color: var(--app-text-muted) !important;
+}
+
+body[data-theme="dark"] .nav-tabs .nav-link.active {
+    color: var(--app-text) !important;
+    background-color: var(--app-surface) !important;
+    border-color: var(--app-border) var(--app-border) var(--app-surface) !important;
+}
+
+body[data-theme="dark"] .navbar-dark .navbar-brand,
+body[data-theme="dark"] .navbar-dark .navbar-text,
+body[data-theme="dark"] .navbar-dark .dropdown-toggle {
+    color: #ffffff !important;
+}
+
 .table,
 .table td,
 .table th,
@@ -74,12 +104,13 @@ body {
 .form-label,
 .modal-title,
 .page-title,
-.page-subtitle,
-.dropdown-item,
-.navbar-text,
-.navbar-brand,
-.text-muted {
+.dropdown-item {
     color: var(--app-text) !important;
+}
+
+.page-subtitle,
+.text-muted {
+    color: var(--app-text-muted) !important;
 }
 
 .table thead {
@@ -95,6 +126,16 @@ body {
 
 .form-control::placeholder {
     color: var(--app-text-muted) !important;
+}
+
+.nav-tabs .nav-link {
+    color: var(--app-text-muted) !important;
+}
+
+.nav-tabs .nav-link.active {
+    color: var(--app-text) !important;
+    background-color: var(--app-surface) !important;
+    border-color: var(--app-border) var(--app-border) var(--app-surface) !important;
 }
 
 .theme-toggle-btn {

@@ -71,8 +71,8 @@
                     <tbody>
                         <tr th:each="v : ${allVehicles}">
                             <td>
-                                <a href="javascript:void(0)" th:onclick="|loadFleetDetails(${v.vehicleID})|"
-                                    th:text="${v.plateNumber}" class="text-decoration-none fw-bold">
+                                <a href="#" th:data-vehicle-id="${v.vehicleID}" th:text="${v.plateNumber}"
+                                    class="text-decoration-none fw-bold fleet-detail-link">
                                 </a>
                             </td>
                             <td class="fw-bold" th:text="${v.plateNumber}"></td>
@@ -241,6 +241,7 @@
     <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
+    <script th:src="@{/js/ui-common.js}"></script>
     <script th:src="@{/js/csrf.js}"></script>
     <script th:src="@{/js/fleet-page.js}"></script>
 

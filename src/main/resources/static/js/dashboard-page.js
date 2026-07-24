@@ -8,13 +8,8 @@ $(document).ready(function () {
         }
     });
 
-    const toastEl = document.getElementById('successToast');
-    if (toastEl) {
-        const toast = new bootstrap.Toast(toastEl, { delay: 3000 });
-        toast.show();
-    }
+    MISDCommon.showToast('successToast');
 
-    const errorToastEl = document.getElementById('errorToast');
     const storedDashboardTab = sessionStorage.getItem('dashboardActiveTab');
     if (storedDashboardTab) {
         const triggerButton = document.querySelector(`#assetTabs button[data-bs-target="#${storedDashboardTab}"]`);
@@ -22,9 +17,7 @@ $(document).ready(function () {
             new bootstrap.Tab(triggerButton).show();
         }
     }
-    if (errorToastEl) {
-        new bootstrap.Toast(errorToastEl, { delay: 4000 }).show();
-    }
+    MISDCommon.showToast('errorToast', 4000);
 
     const defaultTableConfig = {
         pageLength: 10,
@@ -38,26 +31,18 @@ $(document).ready(function () {
             "<'row pt-2'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>"
     };
 
-    $('#agingTable').DataTable($.extend(true, {}, defaultTableConfig, {
-        order: [[5, 'desc']],
-        language: {
-            emptyTable: 'No aging equipment found.'
-        }
-    }));
+    function initDashboardTable(selector, order, emptyMessage) {
+        return $(selector).DataTable($.extend(true, {}, defaultTableConfig, {
+            order: order,
+            language: {
+                emptyTable: emptyMessage
+            }
+        }));
+    }
 
-    $('#fleetActionRequiredTable').DataTable($.extend(true, {}, defaultTableConfig, {
-        order: [[0, 'asc']],
-        language: {
-            emptyTable: 'No aging vehicles found in the fleet.'
-        }
-    }));
-
-    $('#propertiesActionRequiredTable').DataTable($.extend(true, {}, defaultTableConfig, {
-        order: [[0, 'asc']],
-        language: {
-            emptyTable: 'All property dues and taxes are up to date.'
-        }
-    }));
+    initDashboardTable('#agingTable', [[5, 'desc']], 'No aging equipment found.');
+    initDashboardTable('#fleetActionRequiredTable', [[0, 'asc']], 'No aging vehicles found in the fleet.');
+    initDashboardTable('#propertiesActionRequiredTable', [[0, 'asc']], 'All property dues and taxes are up to date.');
 
     const specOptions = [
         'Processor (CPU)', 'Memory (RAM)', 'Storage (SSD/HDD)',
