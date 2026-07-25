@@ -1,5 +1,6 @@
 window.MISDCommon = (function (jqueryGlobal) {
     const $ = jqueryGlobal || null;
+    const selectedFilesByInput = new WeakMap();
 
     function applyTheme(theme, toggleButton) {
         document.body.setAttribute('data-theme', theme);
@@ -222,9 +223,10 @@ window.MISDCommon = (function (jqueryGlobal) {
     }
 
     function getFileValidationResults(input) {
+        const files = getSelectedFiles(input);
         const { allowedExtensions, maxSizeBytes } = getUploadConstraints(input);
 
-        return Array.from(input?.files || []).map(file => {
+        return files.map(file => {
             const extension = file.name.includes('.') ? file.name.split('.').pop().toLowerCase() : '';
             const typeAllowed = !allowedExtensions.length || allowedExtensions.includes(extension);
             const sizeAllowed = file.size <= maxSizeBytes;
@@ -242,6 +244,76 @@ window.MISDCommon = (function (jqueryGlobal) {
         const dataTransfer = new DataTransfer();
         files.forEach(file => dataTransfer.items.add(file));
         input.files = dataTransfer.files;
+    }
+
+    function getFileSignature(file) {
+        return [file.name, file.size, file.lastModified, file.type].join('::');
+    }
+
+    function dedupeFiles(files) {
+        const seen = new Set();
+        const uniqueFiles = [];
+
+        files.forEach(file => {
+            const signature = getFileSignature(file);
+            if (seen.has(signature)) {
+                return;
+            }
+
+            seen.add(signature);
+            uniqueFiles.push(file);
+        });
+
+        return uniqueFiles;
+    }
+
+    function getSelectedFiles(input) {
+        if (!input) {
+            return [];
+        }
+
+        const stored = selectedFilesByInput.get(input);
+        if (stored && stored.length) {
+            return stored.slice();
+        }
+
+        return Array.from(input.files || []);
+    }
+
+    function setSelectedFiles(input, files) {
+        if (!input) {
+            return;
+        }
+
+        const normalizedFiles = dedupeFiles(Array.from(files || []));
+        selectedFilesByInput.set(input, normalizedFiles);
+        setInputFiles(input, normalizedFiles);
+    }
+
+    function prepareMultiFileSelection(input) {
+        if (!input) {
+            return [];
+        }
+
+        const existing = selectedFilesByInput.get(input) || [];
+        const incoming = Array.from(input.files || []);
+
+        if (!incoming.length) {
+            return existing.slice();
+        }
+
+        const merged = dedupeFiles(existing.concat(incoming));
+        setSelectedFiles(input, merged);
+        return merged.slice();
+    }
+
+    function clearSelectedFiles(input) {
+        if (!input) {
+            return;
+        }
+
+        selectedFilesByInput.delete(input);
+        input.value = '';
     }
 
     function getOrCreateUploadErrorContainer(input) {
@@ -295,6 +367,9 @@ window.MISDCommon = (function (jqueryGlobal) {
 
         previewList.innerHTML = '';
 
+        // Preserve already chosen files when users pick additional files in follow-up selections.
+        prepareMultiFileSelection(input);
+
         const validationResults = getFileValidationResults(input);
         const files = validationResults.map(result => result.file);
         const { maxSizeMb } = getUploadConstraints(input);
@@ -336,8 +411,8 @@ window.MISDCommon = (function (jqueryGlobal) {
 
             const removeButton = item.querySelector('button');
             removeButton.addEventListener('click', function () {
-                const updatedFiles = Array.from(input.files || []).filter((_, fileIndex) => fileIndex !== index);
-                setInputFiles(input, updatedFiles);
+                const updatedFiles = getSelectedFiles(input).filter((_, fileIndex) => fileIndex !== index);
+                setSelectedFiles(input, updatedFiles);
                 renderDocumentPreviewBySelectors(inputSelector, previewSelector, templateSelector);
             });
 
@@ -576,17 +651,17 @@ window.MISDCommon = (function (jqueryGlobal) {
                     </td>
                     <td>${escapeHtml(formatUploadDate(doc.uploadDate))}</td>
                     <td class="text-center">
-                        <div class="btn-group btn-group-sm" role="group">
-                            <a class="btn btn-outline-primary doc-action-btn" href="${viewUrl}" target="_blank" title="View" aria-label="View document">
+                        <div class="doc-action-list" role="group" aria-label="Document actions">
+                            <a class="btn btn-outline-primary doc-action-btn doc-action-btn--view" href="${viewUrl}" target="_blank" title="View" aria-label="View document">
                                 <img src="/icons/view.svg" alt="" class="doc-action-icon" aria-hidden="true">
                             </a>
-                            <a class="btn btn-outline-success doc-action-btn" href="${downloadUrl}" title="Download" aria-label="Download document">
+                            <a class="btn btn-outline-success doc-action-btn doc-action-btn--download" href="${downloadUrl}" title="Download" aria-label="Download document">
                                 <img src="/icons/download.svg" alt="" class="doc-action-icon" aria-hidden="true">
                             </a>
-                            <button type="button" class="btn btn-outline-secondary doc-action-btn ${printButtonClass}" data-doc-id="${doc.documentId}" title="Print" aria-label="Print document">
+                            <button type="button" class="btn doc-action-btn doc-action-btn--print js-doc-print ${printButtonClass}" data-doc-id="${doc.documentId}" title="Print" aria-label="Print document">
                                 <img src="/icons/print.svg" alt="" class="doc-action-icon" aria-hidden="true">
                             </button>
-                            <button type="button" class="btn btn-outline-danger doc-action-btn ${deleteButtonClass}" data-doc-id="${doc.documentId}" title="Remove" aria-label="Remove document">
+                            <button type="button" class="btn btn-outline-danger doc-action-btn doc-action-btn--delete js-doc-delete ${deleteButtonClass}" data-doc-id="${doc.documentId}" title="Remove" aria-label="Remove document">
                                 <img src="/icons/delete.svg" alt="" class="doc-action-icon" aria-hidden="true">
                             </button>
                         </div>
@@ -637,6 +712,42 @@ window.MISDCommon = (function (jqueryGlobal) {
                 $(emptySelector).removeClass('d-none').text(loadErrorText);
                 $(bodySelector).empty();
             });
+    }
+
+    function deleteDocumentById(documentId, {
+        confirmMessage = 'Remove this document?',
+        defaultErrorMessage = 'Failed to remove document.',
+        onSuccess = null,
+        onError = null
+    } = {}) {
+        if (!$ || !documentId) {
+            return false;
+        }
+
+        if (confirmMessage && !window.confirm(confirmMessage)) {
+            return false;
+        }
+
+        $.ajax({
+            url: `/documents/${documentId}`,
+            type: 'DELETE',
+            success: function (response) {
+                if (typeof onSuccess === 'function') {
+                    onSuccess(response);
+                }
+            },
+            error: function (xhr) {
+                if (typeof onError === 'function') {
+                    onError(xhr);
+                    return;
+                }
+
+                const message = xhr?.responseJSON?.error || defaultErrorMessage;
+                alert(message);
+            }
+        });
+
+        return true;
     }
 
     function getDocumentUploadSelection({
@@ -726,7 +837,7 @@ window.MISDCommon = (function (jqueryGlobal) {
 
         const fileInput = document.querySelector(fileInputSelector);
         if (fileInput) {
-            fileInput.value = '';
+            clearSelectedFiles(fileInput);
         }
 
         renderDocumentPreviewBySelectors(previewInputSelector, previewListSelector, previewTemplateSelector);
@@ -772,6 +883,9 @@ window.MISDCommon = (function (jqueryGlobal) {
         getUploadConstraints: getUploadConstraints,
         getFileValidationResults: getFileValidationResults,
         setInputFiles: setInputFiles,
+        getSelectedFiles: getSelectedFiles,
+        prepareMultiFileSelection: prepareMultiFileSelection,
+        clearSelectedFiles: clearSelectedFiles,
         showUploadError: showUploadError,
         clearUploadError: clearUploadError,
         validateFileInputBySize: validateFileInputBySize,
@@ -785,6 +899,7 @@ window.MISDCommon = (function (jqueryGlobal) {
         restoreDataTableStateFromSessionAndUrl: restoreDataTableStateFromSessionAndUrl,
         renderDocumentsTable: renderDocumentsTable,
         loadDocumentsForReference: loadDocumentsForReference,
+        deleteDocumentById: deleteDocumentById,
         getDocumentUploadSelection: getDocumentUploadSelection,
         buildDocumentUploadFormData: buildDocumentUploadFormData,
         resetDocumentDetailUI: resetDocumentDetailUI,

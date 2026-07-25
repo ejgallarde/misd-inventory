@@ -235,9 +235,11 @@ body[data-theme="dark"] .navbar-dark .dropdown-toggle {
     width: 26%;
 }
 
-.documents-grid-table .btn-group {
+.documents-grid-table .doc-action-list {
+    display: inline-flex;
     flex-wrap: wrap;
     justify-content: center;
+    gap: 6px;
 }
 
 /* Document grid headers need explicit contrast in light theme because global table headers are white text. */
@@ -260,6 +262,18 @@ body[data-theme="dark"] .documents-grid-table thead th {
     align-items: center;
     justify-content: center;
     padding: 0;
+    border-radius: 0.4rem;
+}
+
+.documents-grid-table .doc-action-btn--print {
+    border: 1px solid #9aa7b7;
+    color: #5f6d7d;
+    background-color: transparent;
+}
+
+body[data-theme="dark"] .documents-grid-table .doc-action-btn--print {
+    border-color: #4d6077;
+    color: #d5e0ef;
 }
 
 .documents-grid-table .doc-action-icon {

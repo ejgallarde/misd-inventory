@@ -172,6 +172,7 @@ $(document).ready(function () {
     }
 
     $('#assetDetailDocumentFiles').on('change', function () {
+        MISDCommon.prepareMultiFileSelection(this);
         MISDCommon.renderDocumentPreviewBySelectors(
             assetDocumentConfig.fileInputSelector,
             assetDocumentConfig.previewListSelector,
@@ -231,21 +232,11 @@ $(document).ready(function () {
 
     MISDCommon.bindClick('.asset-doc-delete', function (button) {
         const docId = button.data('doc-id');
-        if (!docId) {
-            return;
-        }
-
-        if (!confirm('Remove this document?')) {
-            return;
-        }
-
-        $.ajax({
-            url: `/documents/${docId}`,
-            type: 'DELETE',
-            success: function () {
+        MISDCommon.deleteDocumentById(docId, {
+            onSuccess: function () {
                 loadAssetDocuments(currentActiveAssetTag);
             },
-            error: function (xhr) {
+            onError: function (xhr) {
                 const message = xhr?.responseJSON?.error || 'Failed to remove document.';
                 alert(message);
             }
