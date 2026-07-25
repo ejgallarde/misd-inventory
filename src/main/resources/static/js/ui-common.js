@@ -39,6 +39,33 @@ window.MISDCommon = (function (jqueryGlobal) {
         return toast;
     }
 
+    function initPageUI({
+        themeToggleId = 'themeToggleBtn',
+        setupTheme = true,
+        successToastId = null,
+        errorToastId = null,
+        errorToastDelay = 4000,
+        initializeSelect2Modals = false,
+        select2ModalSelector = '.modal',
+        select2DropdownSelector = '.select2-dropdown'
+    } = {}) {
+        if (setupTheme && themeToggleId) {
+            setupThemeToggle(themeToggleId);
+        }
+
+        if (successToastId) {
+            showToast(successToastId);
+        }
+
+        if (errorToastId) {
+            showToast(errorToastId, errorToastDelay);
+        }
+
+        if (initializeSelect2Modals) {
+            initSelect2Modals(select2ModalSelector, select2DropdownSelector);
+        }
+    }
+
     function initSelect2Modals(modalSelector = '.modal', dropdownSelector = '.select2-dropdown') {
         if (!$) {
             return;
@@ -333,9 +360,399 @@ window.MISDCommon = (function (jqueryGlobal) {
         });
     }
 
+    function updateUrlSearchParams(mutateParams) {
+        const params = new URLSearchParams(window.location.search);
+        mutateParams(params);
+        const nextUrl = `${window.location.pathname}${params.toString() ? `?${params.toString()}` : ''}`;
+        window.history.replaceState({}, '', nextUrl);
+    }
+
+    function buildDataTableExportButtons({
+        csvClassName = 'btn btn-primary btn-sm me-2 text-white',
+        excelClassName = 'btn btn-success btn-sm text-white',
+        csvText = 'Export to CSV',
+        excelText = 'Export to Excel'
+    } = {}) {
+        return [
+            { extend: 'csv', className: csvClassName, text: csvText },
+            { extend: 'excel', className: excelClassName, text: excelText }
+        ];
+    }
+
+    function buildStandardDataTableConfig({
+        pageLength = 25,
+        lengthMenu = [[10, 25, 50, -1], [10, 25, 50, 'All']],
+        order = [[0, 'asc']],
+        dom = "<'row mb-3'<'col-sm-12 col-md-4'l><'col-sm-12 col-md-4 text-center'B><'col-sm-12 col-md-4'f>>" +
+        "<'row'<'col-sm-12'tr>>" +
+        "<'row pt-2'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
+        buttons = null,
+        exportButtonOptions = {},
+        language = null
+    } = {}) {
+        const config = {
+            pageLength,
+            lengthMenu,
+            order,
+            buttons: buttons || buildDataTableExportButtons(exportButtonOptions),
+            dom
+        };
+
+        if (language) {
+            config.language = language;
+        }
+
+        return config;
+    }
+
+    function clearDataTableFilters(table, {
+        stateKey = null,
+        searchParam = 'search',
+        pageParam = 'page',
+        searchInputSelector = '.dataTables_filter input'
+    } = {}) {
+        table.search('');
+        table.columns().search('');
+        table.page(0).draw();
+
+        document.querySelectorAll(searchInputSelector).forEach(input => {
+            input.value = '';
+            input.dispatchEvent(new Event('keyup', { bubbles: true }));
+        });
+
+        if (stateKey) {
+            sessionStorage.removeItem(stateKey);
+        }
+
+        updateUrlSearchParams(params => {
+            params.delete(searchParam);
+            params.delete(pageParam);
+        });
+    }
+
+    function attachDataTableClearButton({
+        filterContainerSelector,
+        buttonId,
+        onClear,
+        buttonLabel = 'Clear',
+        buttonClass = 'btn btn-outline-secondary btn-sm',
+        ariaLabel = 'Clear table search',
+        searchInputClass = 'me-2'
+    }) {
+        const filterContainer = document.querySelector(filterContainerSelector);
+        if (!filterContainer) {
+            return null;
+        }
+
+        const searchInput = filterContainer.querySelector('input[type="search"]');
+        if (searchInput && searchInputClass) {
+            searchInputClass.split(' ').filter(Boolean).forEach(className => {
+                searchInput.classList.add(className);
+            });
+        }
+
+        let button = document.getElementById(buttonId);
+        if (!button) {
+            button = document.createElement('button');
+            button.type = 'button';
+            button.id = buttonId;
+            button.className = buttonClass;
+            button.setAttribute('aria-label', ariaLabel);
+            button.textContent = buttonLabel;
+            filterContainer.appendChild(button);
+        }
+
+        if (typeof onClear === 'function' && button.dataset.misdBound !== 'true') {
+            button.addEventListener('click', onClear);
+            button.dataset.misdBound = 'true';
+        }
+
+        return button;
+    }
+
+    function getDataTableState(table, includeOrder = true) {
+        const state = {
+            search: table.search(),
+            page: table.page.info().page
+        };
+
+        if (includeOrder) {
+            state.order = table.order();
+        }
+
+        return state;
+    }
+
+    function syncDataTableStateToSessionAndUrl(table, {
+        stateKey,
+        searchParam = 'search',
+        pageParam = 'page',
+        includeOrder = true
+    }) {
+        const state = getDataTableState(table, includeOrder);
+
+        updateUrlSearchParams(params => {
+            if (state.search) {
+                params.set(searchParam, state.search);
+            } else {
+                params.delete(searchParam);
+            }
+
+            params.set(pageParam, String(state.page));
+        });
+
+        if (stateKey) {
+            sessionStorage.setItem(stateKey, JSON.stringify(state));
+        }
+    }
+
+    function restoreDataTableStateFromSessionAndUrl(table, {
+        stateKey,
+        searchParam = 'search',
+        pageParam = 'page',
+        defaultPage = 0,
+        restoreOrder = true,
+        warningMessage = 'Unable to restore saved table state.'
+    }) {
+        const savedState = stateKey ? sessionStorage.getItem(stateKey) : null;
+        const params = new URLSearchParams(window.location.search);
+        const urlSearch = params.get(searchParam) || '';
+        const urlPage = Number(params.get(pageParam));
+
+        try {
+            const state = savedState ? JSON.parse(savedState) : null;
+            const searchValue = urlSearch || (state && state.search ? state.search : '');
+            const pageValue = Number.isFinite(urlPage) && urlPage >= 0
+                ? urlPage
+                : (state && typeof state.page === 'number' ? state.page : defaultPage);
+
+            table.search(searchValue || '');
+
+            if (restoreOrder && state && state.order) {
+                table.order(state.order);
+            }
+
+            table.page(pageValue).draw(false);
+        } catch (error) {
+            console.warn(warningMessage, error);
+        }
+    }
+
+    function renderDocumentsTable({
+        documents,
+        bodySelector,
+        emptySelector,
+        printButtonClass,
+        deleteButtonClass,
+        emptyText = null
+    }) {
+        if (!$) {
+            return;
+        }
+
+        const body = $(bodySelector);
+        const empty = $(emptySelector);
+        body.empty();
+
+        if (!documents || !documents.length) {
+            empty.removeClass('d-none');
+            if (emptyText) {
+                empty.text(emptyText);
+            }
+            return;
+        }
+
+        empty.addClass('d-none');
+        documents.forEach(doc => {
+            const viewUrl = `/documents/${doc.documentId}/view`;
+            const downloadUrl = `/documents/${doc.documentId}/download`;
+
+            body.append(`
+                <tr>
+                    <td>${escapeHtml(doc.documentCategory || 'N/A')}</td>
+                    <td>
+                        <div class="fw-semibold">${escapeHtml(doc.fileName || 'Unnamed file')}</div>
+                        <div class="small text-muted">${formatBytes(doc.fileSize || 0)}</div>
+                    </td>
+                    <td>${escapeHtml(formatUploadDate(doc.uploadDate))}</td>
+                    <td class="text-center">
+                        <div class="btn-group btn-group-sm" role="group">
+                            <a class="btn btn-outline-primary" href="${viewUrl}" target="_blank">View</a>
+                            <a class="btn btn-outline-success" href="${downloadUrl}">Download</a>
+                            <button type="button" class="btn btn-outline-secondary ${printButtonClass}" data-doc-id="${doc.documentId}">Print</button>
+                            <button type="button" class="btn btn-outline-danger ${deleteButtonClass}" data-doc-id="${doc.documentId}">Remove</button>
+                        </div>
+                    </td>
+                </tr>
+            `);
+        });
+    }
+
+    function loadDocumentsForReference({
+        refType,
+        refId,
+        bodySelector,
+        emptySelector,
+        printButtonClass,
+        deleteButtonClass,
+        emptyText = null,
+        loadErrorText = 'Unable to load documents.'
+    }) {
+        if (!$) {
+            return;
+        }
+
+        if (!refId) {
+            renderDocumentsTable({
+                documents: [],
+                bodySelector,
+                emptySelector,
+                printButtonClass,
+                deleteButtonClass,
+                emptyText
+            });
+            return;
+        }
+
+        $.get('/documents/list', { refType: refType, refId: refId })
+            .done(function (documents) {
+                renderDocumentsTable({
+                    documents: documents || [],
+                    bodySelector,
+                    emptySelector,
+                    printButtonClass,
+                    deleteButtonClass,
+                    emptyText
+                });
+            })
+            .fail(function () {
+                $(emptySelector).removeClass('d-none').text(loadErrorText);
+                $(bodySelector).empty();
+            });
+    }
+
+    function getDocumentUploadSelection({
+        fileInputSelector,
+        previewSelector,
+        requireFilesMessage = 'Please select file(s) to upload.',
+        requireCategoryMessage = 'Select one document category for each file.'
+    }) {
+        const fileInput = document.querySelector(fileInputSelector);
+        if (!fileInput) {
+            return {
+                isValid: false,
+                message: 'File input not found.',
+                files: [],
+                categorySelects: [],
+                fileInput: null
+            };
+        }
+
+        if (!validateFileInputBySize(fileInput)) {
+            return {
+                isValid: false,
+                message: null,
+                files: [],
+                categorySelects: [],
+                fileInput
+            };
+        }
+
+        const files = Array.from(fileInput.files || []);
+        if (!files.length) {
+            return {
+                isValid: false,
+                message: requireFilesMessage,
+                files,
+                categorySelects: [],
+                fileInput
+            };
+        }
+
+        const categorySelects = Array.from(document.querySelectorAll(`${previewSelector} select[name="documentCategories"]`));
+        const missingCategory = categorySelects.some(select => !select.value);
+
+        if (missingCategory || categorySelects.length !== files.length) {
+            return {
+                isValid: false,
+                message: requireCategoryMessage,
+                files,
+                categorySelects,
+                fileInput
+            };
+        }
+
+        return {
+            isValid: true,
+            message: null,
+            files,
+            categorySelects,
+            fileInput
+        };
+    }
+
+    function buildDocumentUploadFormData({ refType, refId, files, categorySelects }) {
+        const formData = new FormData();
+        formData.append('refType', refType);
+        formData.append('refId', refId);
+
+        files.forEach(file => formData.append('documentFiles', file));
+        categorySelects.forEach(select => formData.append('documentCategories', select.value));
+
+        return formData;
+    }
+
+    function resetDocumentDetailUI({
+        bodySelector,
+        emptySelector,
+        emptyText = 'No documents attached yet.',
+        fileInputSelector,
+        previewInputSelector,
+        previewListSelector,
+        previewTemplateSelector
+    }) {
+        if ($) {
+            $(bodySelector).empty();
+            $(emptySelector).removeClass('d-none').text(emptyText);
+        }
+
+        const fileInput = document.querySelector(fileInputSelector);
+        if (fileInput) {
+            fileInput.value = '';
+        }
+
+        renderDocumentPreviewBySelectors(previewInputSelector, previewListSelector, previewTemplateSelector);
+    }
+
+    function appendDataTableStateToFormAction(form, state, {
+        searchParam = 'search',
+        pageParam = 'page'
+    } = {}) {
+        const formElement = form instanceof HTMLElement ? form : (form?.[0] || null);
+        if (!formElement) {
+            return;
+        }
+
+        const params = new URLSearchParams(window.location.search);
+
+        if (state.search) {
+            params.set(searchParam, state.search);
+        } else {
+            params.delete(searchParam);
+        }
+
+        params.set(pageParam, String(state.page));
+
+        const actionValue = formElement.getAttribute('action') || window.location.pathname;
+        const actionUrl = new URL(actionValue, window.location.origin);
+        actionUrl.search = params.toString();
+        formElement.setAttribute('action', `${actionUrl.pathname}${actionUrl.search}`);
+    }
+
     return {
         setupThemeToggle: setupThemeToggle,
         showToast: showToast,
+        initPageUI: initPageUI,
         initSelect2Modals: initSelect2Modals,
         bindClick: bindClick,
         bindModalShow: bindModalShow,
@@ -350,6 +767,19 @@ window.MISDCommon = (function (jqueryGlobal) {
         showUploadError: showUploadError,
         clearUploadError: clearUploadError,
         validateFileInputBySize: validateFileInputBySize,
-        renderDocumentPreviewBySelectors: renderDocumentPreviewBySelectors
+        renderDocumentPreviewBySelectors: renderDocumentPreviewBySelectors,
+        buildDataTableExportButtons: buildDataTableExportButtons,
+        buildStandardDataTableConfig: buildStandardDataTableConfig,
+        clearDataTableFilters: clearDataTableFilters,
+        attachDataTableClearButton: attachDataTableClearButton,
+        getDataTableState: getDataTableState,
+        syncDataTableStateToSessionAndUrl: syncDataTableStateToSessionAndUrl,
+        restoreDataTableStateFromSessionAndUrl: restoreDataTableStateFromSessionAndUrl,
+        renderDocumentsTable: renderDocumentsTable,
+        loadDocumentsForReference: loadDocumentsForReference,
+        getDocumentUploadSelection: getDocumentUploadSelection,
+        buildDocumentUploadFormData: buildDocumentUploadFormData,
+        resetDocumentDetailUI: resetDocumentDetailUI,
+        appendDataTableStateToFormAction: appendDataTableStateToFormAction
     };
 })(window.jQuery);

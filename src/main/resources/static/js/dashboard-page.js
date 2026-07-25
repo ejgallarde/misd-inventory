@@ -1,5 +1,10 @@
 $(document).ready(function () {
-    MISDCommon.setupThemeToggle('themeToggleBtn');
+    MISDCommon.initPageUI({
+        themeToggleId: 'themeToggleBtn',
+        successToastId: 'successToast',
+        errorToastId: 'errorToast',
+        errorToastDelay: 4000
+    });
 
     $('button[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
         $('button[data-bs-toggle="tab"]').removeClass('text-dark').addClass('text-secondary');
@@ -10,8 +15,6 @@ $(document).ready(function () {
         }
     });
 
-    MISDCommon.showToast('successToast');
-
     const storedDashboardTab = sessionStorage.getItem('dashboardActiveTab');
     if (storedDashboardTab) {
         const triggerButton = document.querySelector(`#assetTabs button[data-bs-target="#${storedDashboardTab}"]`);
@@ -19,23 +22,15 @@ $(document).ready(function () {
             new bootstrap.Tab(triggerButton).show();
         }
     }
-    MISDCommon.showToast('errorToast', 4000);
-
-    const defaultTableConfig = {
-        pageLength: 10,
-        lengthMenu: [[5, 10, 25, -1], [5, 10, 25, 'All']],
-        buttons: [
-            { extend: 'csv', className: 'btn btn-secondary btn-sm me-1', text: 'Export to CSV' },
-            { extend: 'excel', className: 'btn btn-secondary btn-sm', text: 'Export to Excel' }
-        ],
-        dom: "<'row mb-3'<'col-sm-12 col-md-4'l><'col-sm-12 col-md-4 text-center'B><'col-sm-12 col-md-4'f>>" +
-            "<'row'<'col-sm-12'tr>>" +
-            "<'row pt-2'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>"
-    };
-
     function initDashboardTable(selector, order, emptyMessage) {
-        return $(selector).DataTable($.extend(true, {}, defaultTableConfig, {
+        return $(selector).DataTable(MISDCommon.buildStandardDataTableConfig({
+            pageLength: 10,
+            lengthMenu: [[5, 10, 25, -1], [5, 10, 25, 'All']],
             order: order,
+            exportButtonOptions: {
+                csvClassName: 'btn btn-secondary btn-sm me-1',
+                excelClassName: 'btn btn-secondary btn-sm'
+            },
             language: {
                 emptyTable: emptyMessage
             }

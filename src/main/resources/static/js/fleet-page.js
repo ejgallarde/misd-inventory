@@ -1,102 +1,52 @@
 $(document).ready(function () {
     let currentFleetReferenceId = null;
 
-    function renderFleetDocuments(documents) {
-        const body = $('#fleetDocumentsTableBody');
-        const empty = $('#fleetDocumentsEmpty');
-        body.empty();
+    const fleetDocumentConfig = {
+        refType: 'VEHICLE',
+        bodySelector: '#fleetDocumentsTableBody',
+        emptySelector: '#fleetDocumentsEmpty',
+        printButtonClass: 'fleet-doc-print',
+        deleteButtonClass: 'fleet-doc-delete',
+        emptyText: 'No documents attached yet.',
+        loadErrorText: 'Unable to load documents.',
+        fileInputSelector: '#fleetDetailDocumentFiles',
+        previewListSelector: '#fleetDetailDocumentPreview',
+        previewTemplateSelector: '#fleetDetailDocumentCategoryTemplate'
+    };
 
-        if (!documents || !documents.length) {
-            empty.removeClass('d-none');
-            return;
-        }
-
-        empty.addClass('d-none');
-        documents.forEach(doc => {
-            const viewUrl = `/documents/${doc.documentId}/view`;
-            const downloadUrl = `/documents/${doc.documentId}/download`;
-            body.append(`
-                <tr>
-                    <td>${MISDCommon.escapeHtml(doc.documentCategory || 'N/A')}</td>
-                    <td>
-                        <div class="fw-semibold">${MISDCommon.escapeHtml(doc.fileName || 'Unnamed file')}</div>
-                        <div class="small text-muted">${MISDCommon.formatBytes(doc.fileSize || 0)}</div>
-                    </td>
-                    <td>${MISDCommon.escapeHtml(MISDCommon.formatUploadDate(doc.uploadDate))}</td>
-                    <td class="text-center">
-                        <div class="btn-group btn-group-sm" role="group">
-                            <a class="btn btn-outline-primary" href="${viewUrl}" target="_blank">View</a>
-                            <a class="btn btn-outline-success" href="${downloadUrl}">Download</a>
-                            <button type="button" class="btn btn-outline-secondary fleet-doc-print" data-doc-id="${doc.documentId}">Print</button>
-                            <button type="button" class="btn btn-outline-danger fleet-doc-delete" data-doc-id="${doc.documentId}">Remove</button>
-                        </div>
-                    </td>
-                </tr>
-            `);
+    function loadFleetDocuments(refId) {
+        MISDCommon.loadDocumentsForReference({
+            refType: fleetDocumentConfig.refType,
+            refId: refId,
+            bodySelector: fleetDocumentConfig.bodySelector,
+            emptySelector: fleetDocumentConfig.emptySelector,
+            printButtonClass: fleetDocumentConfig.printButtonClass,
+            deleteButtonClass: fleetDocumentConfig.deleteButtonClass,
+            emptyText: fleetDocumentConfig.emptyText,
+            loadErrorText: fleetDocumentConfig.loadErrorText
         });
     }
 
-    function loadFleetDocuments(refId) {
-        if (!refId) {
-            renderFleetDocuments([]);
-            return;
-        }
+    MISDCommon.initPageUI({
+        themeToggleId: 'themeToggleBtn',
+        successToastId: 'successToast',
+        initializeSelect2Modals: true
+    });
 
-        $.get('/documents/list', { refType: 'VEHICLE', refId: refId })
-            .done(function (documents) {
-                renderFleetDocuments(documents || []);
-            })
-            .fail(function () {
-                $('#fleetDocumentsEmpty').removeClass('d-none').text('Unable to load documents.');
-                $('#fleetDocumentsTableBody').empty();
-            });
-    }
-
-    function clearFleetFilters(table) {
-        table.search('');
-        table.columns().search('');
-        table.page(0).draw();
-        $('.dataTables_filter input').val('').trigger('keyup');
-        sessionStorage.removeItem('fleetTableState');
-        const params = new URLSearchParams(window.location.search);
-        params.delete('search');
-        params.delete('page');
-        const nextUrl = `${window.location.pathname}${params.toString() ? `?${params.toString()}` : ''}`;
-        window.history.replaceState({}, '', nextUrl);
-    }
-
-    MISDCommon.setupThemeToggle('themeToggleBtn');
-
-    MISDCommon.showToast('successToast');
-
-    const fleetTable = $('#fleetTable').DataTable({
+    const fleetTable = $('#fleetTable').DataTable(MISDCommon.buildStandardDataTableConfig({
         pageLength: 25,
         lengthMenu: [[10, 25, 50, -1], [10, 25, 50, 'All']],
-        order: [[0, 'asc']],
-        buttons: [
-            { extend: 'csv', className: 'btn btn-primary btn-sm me-2 text-white', text: 'Export to CSV' },
-            { extend: 'excel', className: 'btn btn-success btn-sm text-white', text: 'Export to Excel' }
-        ],
-        dom: "<'row mb-3'<'col-sm-12 col-md-4'l><'col-sm-12 col-md-4 text-center'B><'col-sm-12 col-md-4'f>>" +
-            "<'row'<'col-sm-12'tr>>" +
-            "<'row pt-2'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>"
+        order: [[0, 'asc']]
+    }));
+
+    MISDCommon.attachDataTableClearButton({
+        filterContainerSelector: '#fleetTable_filter',
+        buttonId: 'clearFleetFiltersBtn',
+        ariaLabel: 'Clear fleet table search',
+        onClear: function () {
+            MISDCommon.clearDataTableFilters(fleetTable, { stateKey: 'fleetTableState' });
+        }
     });
-
-    const fleetFilterContainer = $('#fleetTable_filter');
-    const fleetSearchInput = fleetFilterContainer.find('input[type="search"]');
-
-    fleetSearchInput.addClass('me-2');
-    if (!document.getElementById('clearFleetFiltersBtn')) {
-        fleetFilterContainer.append(
-            '<button class="btn btn-outline-secondary btn-sm" type="button" id="clearFleetFiltersBtn" aria-label="Clear fleet table search">Clear</button>'
-        );
-    }
-
-    $('#clearFleetFiltersBtn').on('click', function () {
-        clearFleetFilters(fleetTable);
-    });
-
-    MISDCommon.initSelect2Modals();
 
     MISDCommon.bindClick('.action-btn', function (button) {
         const vId = button.data('id');
@@ -135,7 +85,11 @@ $(document).ready(function () {
     }
 
     $('#fleetDetailDocumentFiles').on('change', function () {
-        MISDCommon.renderDocumentPreviewBySelectors('#fleetDetailDocumentFiles', '#fleetDetailDocumentPreview', '#fleetDetailDocumentCategoryTemplate');
+        MISDCommon.renderDocumentPreviewBySelectors(
+            fleetDocumentConfig.fileInputSelector,
+            fleetDocumentConfig.previewListSelector,
+            fleetDocumentConfig.previewTemplateSelector
+        );
     });
 
     $('#uploadFleetDocumentsBtn').on('click', function () {
@@ -144,29 +98,24 @@ $(document).ready(function () {
             return;
         }
 
-        const fileInput = document.getElementById('fleetDetailDocumentFiles');
-        if (!MISDCommon.validateFileInputBySize(fileInput)) {
+        const uploadSelection = MISDCommon.getDocumentUploadSelection({
+            fileInputSelector: fleetDocumentConfig.fileInputSelector,
+            previewSelector: fleetDocumentConfig.previewListSelector
+        });
+
+        if (!uploadSelection.isValid) {
+            if (uploadSelection.message) {
+                alert(uploadSelection.message);
+            }
             return;
         }
 
-        const files = Array.from(fileInput.files || []);
-        if (!files.length) {
-            alert('Please select file(s) to upload.');
-            return;
-        }
-
-        const categorySelects = Array.from(document.querySelectorAll('#fleetDetailDocumentPreview select[name="documentCategories"]'));
-        const missingCategory = categorySelects.some(select => !select.value);
-        if (missingCategory || categorySelects.length !== files.length) {
-            alert('Select one document category for each file.');
-            return;
-        }
-
-        const formData = new FormData();
-        formData.append('refType', 'VEHICLE');
-        formData.append('refId', currentFleetReferenceId);
-        files.forEach(file => formData.append('documentFiles', file));
-        categorySelects.forEach(select => formData.append('documentCategories', select.value));
+        const formData = MISDCommon.buildDocumentUploadFormData({
+            refType: fleetDocumentConfig.refType,
+            refId: currentFleetReferenceId,
+            files: uploadSelection.files,
+            categorySelects: uploadSelection.categorySelects
+        });
 
         $.ajax({
             url: '/documents/add',
@@ -175,8 +124,15 @@ $(document).ready(function () {
             processData: false,
             contentType: false,
             success: function () {
-                fileInput.value = '';
-                MISDCommon.renderDocumentPreviewBySelectors('#fleetDetailDocumentFiles', '#fleetDetailDocumentPreview', '#fleetDetailDocumentCategoryTemplate');
+                MISDCommon.resetDocumentDetailUI({
+                    bodySelector: fleetDocumentConfig.bodySelector,
+                    emptySelector: fleetDocumentConfig.emptySelector,
+                    emptyText: fleetDocumentConfig.emptyText,
+                    fileInputSelector: fleetDocumentConfig.fileInputSelector,
+                    previewInputSelector: fleetDocumentConfig.fileInputSelector,
+                    previewListSelector: fleetDocumentConfig.previewListSelector,
+                    previewTemplateSelector: fleetDocumentConfig.previewTemplateSelector
+                });
                 loadFleetDocuments(currentFleetReferenceId);
             },
             error: function (xhr) {
@@ -214,12 +170,14 @@ $(document).ready(function () {
 
     $('#fleetDetailModal').on('hidden.bs.modal', function () {
         currentFleetReferenceId = null;
-        $('#fleetDocumentsTableBody').empty();
-        $('#fleetDocumentsEmpty').removeClass('d-none').text('No documents attached yet.');
-        const fileInput = document.getElementById('fleetDetailDocumentFiles');
-        if (fileInput) {
-            fileInput.value = '';
-        }
-        MISDCommon.renderDocumentPreviewBySelectors('#fleetDetailDocumentFiles', '#fleetDetailDocumentPreview', '#fleetDetailDocumentCategoryTemplate');
+        MISDCommon.resetDocumentDetailUI({
+            bodySelector: fleetDocumentConfig.bodySelector,
+            emptySelector: fleetDocumentConfig.emptySelector,
+            emptyText: fleetDocumentConfig.emptyText,
+            fileInputSelector: fleetDocumentConfig.fileInputSelector,
+            previewInputSelector: fleetDocumentConfig.fileInputSelector,
+            previewListSelector: fleetDocumentConfig.previewListSelector,
+            previewTemplateSelector: fleetDocumentConfig.previewTemplateSelector
+        });
     });
 });

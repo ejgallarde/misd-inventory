@@ -1,102 +1,52 @@
 $(document).ready(function () {
     let currentPropertyReferenceId = null;
 
-    function renderPropertyDocuments(documents) {
-        const body = $('#propertyDocumentsTableBody');
-        const empty = $('#propertyDocumentsEmpty');
-        body.empty();
+    const propertyDocumentConfig = {
+        refType: 'PROPERTY',
+        bodySelector: '#propertyDocumentsTableBody',
+        emptySelector: '#propertyDocumentsEmpty',
+        printButtonClass: 'property-doc-print',
+        deleteButtonClass: 'property-doc-delete',
+        emptyText: 'No documents attached yet.',
+        loadErrorText: 'Unable to load documents.',
+        fileInputSelector: '#propertyDetailDocumentFiles',
+        previewListSelector: '#propertyDetailDocumentPreview',
+        previewTemplateSelector: '#propertyDetailDocumentCategoryTemplate'
+    };
 
-        if (!documents || !documents.length) {
-            empty.removeClass('d-none');
-            return;
-        }
-
-        empty.addClass('d-none');
-        documents.forEach(doc => {
-            const viewUrl = `/documents/${doc.documentId}/view`;
-            const downloadUrl = `/documents/${doc.documentId}/download`;
-            body.append(`
-                <tr>
-                    <td>${MISDCommon.escapeHtml(doc.documentCategory || 'N/A')}</td>
-                    <td>
-                        <div class="fw-semibold">${MISDCommon.escapeHtml(doc.fileName || 'Unnamed file')}</div>
-                        <div class="small text-muted">${MISDCommon.formatBytes(doc.fileSize || 0)}</div>
-                    </td>
-                    <td>${MISDCommon.escapeHtml(MISDCommon.formatUploadDate(doc.uploadDate))}</td>
-                    <td class="text-center">
-                        <div class="btn-group btn-group-sm" role="group">
-                            <a class="btn btn-outline-primary" href="${viewUrl}" target="_blank">View</a>
-                            <a class="btn btn-outline-success" href="${downloadUrl}">Download</a>
-                            <button type="button" class="btn btn-outline-secondary property-doc-print" data-doc-id="${doc.documentId}">Print</button>
-                            <button type="button" class="btn btn-outline-danger property-doc-delete" data-doc-id="${doc.documentId}">Remove</button>
-                        </div>
-                    </td>
-                </tr>
-            `);
+    function loadPropertyDocuments(refId) {
+        MISDCommon.loadDocumentsForReference({
+            refType: propertyDocumentConfig.refType,
+            refId: refId,
+            bodySelector: propertyDocumentConfig.bodySelector,
+            emptySelector: propertyDocumentConfig.emptySelector,
+            printButtonClass: propertyDocumentConfig.printButtonClass,
+            deleteButtonClass: propertyDocumentConfig.deleteButtonClass,
+            emptyText: propertyDocumentConfig.emptyText,
+            loadErrorText: propertyDocumentConfig.loadErrorText
         });
     }
 
-    function loadPropertyDocuments(refId) {
-        if (!refId) {
-            renderPropertyDocuments([]);
-            return;
-        }
+    MISDCommon.initPageUI({
+        themeToggleId: 'themeToggleBtn',
+        successToastId: 'successToast',
+        initializeSelect2Modals: true
+    });
 
-        $.get('/documents/list', { refType: 'PROPERTY', refId: refId })
-            .done(function (documents) {
-                renderPropertyDocuments(documents || []);
-            })
-            .fail(function () {
-                $('#propertyDocumentsEmpty').removeClass('d-none').text('Unable to load documents.');
-                $('#propertyDocumentsTableBody').empty();
-            });
-    }
-
-    function clearPropertyFilters(table) {
-        table.search('');
-        table.columns().search('');
-        table.page(0).draw();
-        $('.dataTables_filter input').val('').trigger('keyup');
-        sessionStorage.removeItem('propertiesTableState');
-        const params = new URLSearchParams(window.location.search);
-        params.delete('search');
-        params.delete('page');
-        const nextUrl = `${window.location.pathname}${params.toString() ? `?${params.toString()}` : ''}`;
-        window.history.replaceState({}, '', nextUrl);
-    }
-
-    MISDCommon.setupThemeToggle('themeToggleBtn');
-
-    MISDCommon.showToast('successToast');
-
-    const propertiesTable = $('#propertiesTable').DataTable({
+    const propertiesTable = $('#propertiesTable').DataTable(MISDCommon.buildStandardDataTableConfig({
         pageLength: 25,
         lengthMenu: [[10, 25, 50, -1], [10, 25, 50, 'All']],
-        order: [[1, 'asc']],
-        buttons: [
-            { extend: 'csv', className: 'btn btn-primary btn-sm me-2 text-white', text: 'Export to CSV' },
-            { extend: 'excel', className: 'btn btn-success btn-sm text-white', text: 'Export to Excel' }
-        ],
-        dom: "<'row mb-3'<'col-sm-12 col-md-4'l><'col-sm-12 col-md-4 text-center'B><'col-sm-12 col-md-4'f>>" +
-            "<'row'<'col-sm-12'tr>>" +
-            "<'row pt-2'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>"
+        order: [[1, 'asc']]
+    }));
+
+    MISDCommon.attachDataTableClearButton({
+        filterContainerSelector: '#propertiesTable_filter',
+        buttonId: 'clearPropertyFiltersBtn',
+        ariaLabel: 'Clear properties table search',
+        onClear: function () {
+            MISDCommon.clearDataTableFilters(propertiesTable, { stateKey: 'propertiesTableState' });
+        }
     });
-
-    const propertiesFilterContainer = $('#propertiesTable_filter');
-    const propertiesSearchInput = propertiesFilterContainer.find('input[type="search"]');
-
-    propertiesSearchInput.addClass('me-2');
-    if (!document.getElementById('clearPropertyFiltersBtn')) {
-        propertiesFilterContainer.append(
-            '<button class="btn btn-outline-secondary btn-sm" type="button" id="clearPropertyFiltersBtn" aria-label="Clear properties table search">Clear</button>'
-        );
-    }
-
-    $('#clearPropertyFiltersBtn').on('click', function () {
-        clearPropertyFilters(propertiesTable);
-    });
-
-    MISDCommon.initSelect2Modals();
 
     MISDCommon.bindClick('.action-btn', function (button) {
         const pId = button.data('id');
@@ -134,7 +84,11 @@ $(document).ready(function () {
     });
 
     $('#propertyDetailDocumentFiles').on('change', function () {
-        MISDCommon.renderDocumentPreviewBySelectors('#propertyDetailDocumentFiles', '#propertyDetailDocumentPreview', '#propertyDetailDocumentCategoryTemplate');
+        MISDCommon.renderDocumentPreviewBySelectors(
+            propertyDocumentConfig.fileInputSelector,
+            propertyDocumentConfig.previewListSelector,
+            propertyDocumentConfig.previewTemplateSelector
+        );
     });
 
     $('#uploadPropertyDocumentsBtn').on('click', function () {
@@ -143,29 +97,24 @@ $(document).ready(function () {
             return;
         }
 
-        const fileInput = document.getElementById('propertyDetailDocumentFiles');
-        if (!MISDCommon.validateFileInputBySize(fileInput)) {
+        const uploadSelection = MISDCommon.getDocumentUploadSelection({
+            fileInputSelector: propertyDocumentConfig.fileInputSelector,
+            previewSelector: propertyDocumentConfig.previewListSelector
+        });
+
+        if (!uploadSelection.isValid) {
+            if (uploadSelection.message) {
+                alert(uploadSelection.message);
+            }
             return;
         }
 
-        const files = Array.from(fileInput.files || []);
-        if (!files.length) {
-            alert('Please select file(s) to upload.');
-            return;
-        }
-
-        const categorySelects = Array.from(document.querySelectorAll('#propertyDetailDocumentPreview select[name="documentCategories"]'));
-        const missingCategory = categorySelects.some(select => !select.value);
-        if (missingCategory || categorySelects.length !== files.length) {
-            alert('Select one document category for each file.');
-            return;
-        }
-
-        const formData = new FormData();
-        formData.append('refType', 'PROPERTY');
-        formData.append('refId', currentPropertyReferenceId);
-        files.forEach(file => formData.append('documentFiles', file));
-        categorySelects.forEach(select => formData.append('documentCategories', select.value));
+        const formData = MISDCommon.buildDocumentUploadFormData({
+            refType: propertyDocumentConfig.refType,
+            refId: currentPropertyReferenceId,
+            files: uploadSelection.files,
+            categorySelects: uploadSelection.categorySelects
+        });
 
         $.ajax({
             url: '/documents/add',
@@ -174,8 +123,15 @@ $(document).ready(function () {
             processData: false,
             contentType: false,
             success: function () {
-                fileInput.value = '';
-                MISDCommon.renderDocumentPreviewBySelectors('#propertyDetailDocumentFiles', '#propertyDetailDocumentPreview', '#propertyDetailDocumentCategoryTemplate');
+                MISDCommon.resetDocumentDetailUI({
+                    bodySelector: propertyDocumentConfig.bodySelector,
+                    emptySelector: propertyDocumentConfig.emptySelector,
+                    emptyText: propertyDocumentConfig.emptyText,
+                    fileInputSelector: propertyDocumentConfig.fileInputSelector,
+                    previewInputSelector: propertyDocumentConfig.fileInputSelector,
+                    previewListSelector: propertyDocumentConfig.previewListSelector,
+                    previewTemplateSelector: propertyDocumentConfig.previewTemplateSelector
+                });
                 loadPropertyDocuments(currentPropertyReferenceId);
             },
             error: function (xhr) {
@@ -213,12 +169,14 @@ $(document).ready(function () {
 
     $('#propertyDetailModal').on('hidden.bs.modal', function () {
         currentPropertyReferenceId = null;
-        $('#propertyDocumentsTableBody').empty();
-        $('#propertyDocumentsEmpty').removeClass('d-none').text('No documents attached yet.');
-        const fileInput = document.getElementById('propertyDetailDocumentFiles');
-        if (fileInput) {
-            fileInput.value = '';
-        }
-        MISDCommon.renderDocumentPreviewBySelectors('#propertyDetailDocumentFiles', '#propertyDetailDocumentPreview', '#propertyDetailDocumentCategoryTemplate');
+        MISDCommon.resetDocumentDetailUI({
+            bodySelector: propertyDocumentConfig.bodySelector,
+            emptySelector: propertyDocumentConfig.emptySelector,
+            emptyText: propertyDocumentConfig.emptyText,
+            fileInputSelector: propertyDocumentConfig.fileInputSelector,
+            previewInputSelector: propertyDocumentConfig.fileInputSelector,
+            previewListSelector: propertyDocumentConfig.previewListSelector,
+            previewTemplateSelector: propertyDocumentConfig.previewTemplateSelector
+        });
     });
 });

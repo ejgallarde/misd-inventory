@@ -2,162 +2,66 @@ $(document).ready(function () {
     const clearAssetFiltersBtn = document.getElementById('clearAssetFiltersBtn');
     const tableStateKey = 'assetsTableState';
 
-    function clearAssetFilters(table) {
-        table.search('');
-        table.columns().search('');
-        table.page(0).draw();
-        $('.dataTables_filter input').val('').trigger('keyup');
-        sessionStorage.removeItem(tableStateKey);
-        const params = new URLSearchParams(window.location.search);
-        params.delete('search');
-        params.delete('page');
-        const nextUrl = `${window.location.pathname}${params.toString() ? `?${params.toString()}` : ''}`;
-        window.history.replaceState({}, '', nextUrl);
-    }
-
-    MISDCommon.setupThemeToggle('themeToggleBtn');
+    MISDCommon.initPageUI({
+        themeToggleId: 'themeToggleBtn',
+        successToastId: 'successToast',
+        initializeSelect2Modals: true
+    });
 
     if (clearAssetFiltersBtn) {
         clearAssetFiltersBtn.addEventListener('click', function () {
-            clearAssetFilters(assetsTable);
+            MISDCommon.clearDataTableFilters(assetsTable, { stateKey: tableStateKey });
         });
     }
 
-    function getAssetsTableState(table) {
-        return {
-            search: table.search(),
-            page: table.page.info().page,
-            order: table.order()
-        };
-    }
-
-    function syncAssetsTableStateToUrl(table) {
-        const state = getAssetsTableState(table);
-        const params = new URLSearchParams(window.location.search);
-
-        if (state.search) {
-            params.set('search', state.search);
-        } else {
-            params.delete('search');
-        }
-
-        params.set('page', String(state.page));
-
-        const nextUrl = `${window.location.pathname}${params.toString() ? `?${params.toString()}` : ''}`;
-        window.history.replaceState({}, '', nextUrl);
-
-        sessionStorage.setItem(tableStateKey, JSON.stringify(state));
-    }
-
-    function restoreAssetsTableState(table) {
-        const savedState = sessionStorage.getItem(tableStateKey);
-        const params = new URLSearchParams(window.location.search);
-        const urlSearch = params.get('search') || '';
-        const urlPage = Number(params.get('page')) || 0;
-
-        try {
-            const state = savedState ? JSON.parse(savedState) : null;
-            const searchValue = urlSearch || (state && state.search ? state.search : '');
-            const pageValue = Number.isFinite(urlPage) && urlPage >= 0 ? urlPage : (state && typeof state.page === 'number' ? state.page : 0);
-
-            if (searchValue) {
-                table.search(searchValue);
-            } else {
-                table.search('');
-            }
-
-            if (state && state.order) {
-                table.order(state.order);
-            }
-
-            table.page(pageValue).draw(false);
-        } catch (error) {
-            console.warn('Unable to restore saved asset table state.', error);
-        }
-    }
-
-    MISDCommon.showToast('successToast');
+    const assetDocumentConfig = {
+        refType: 'IT_EQUIPMENT',
+        bodySelector: '#assetDocumentsTableBody',
+        emptySelector: '#assetDocumentsEmpty',
+        printButtonClass: 'asset-doc-print',
+        deleteButtonClass: 'asset-doc-delete',
+        emptyText: 'No documents attached yet.',
+        loadErrorText: 'Unable to load documents.',
+        fileInputSelector: '#assetDetailDocumentFiles',
+        previewListSelector: '#assetDetailDocumentPreview',
+        previewTemplateSelector: '#assetDetailDocumentCategoryTemplate'
+    };
 
     // DataTables
-    const assetsTable = $('#assetsTable').DataTable({
+    const assetsTable = $('#assetsTable').DataTable(MISDCommon.buildStandardDataTableConfig({
         pageLength: 25,
-        lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
-        order: [[0, "asc"]],
-        buttons: [
-            { extend: 'csv', className: 'btn btn-primary btn-sm me-2 text-white', text: 'Export to CSV' },
-            { extend: 'excel', className: 'btn btn-success btn-sm text-white', text: 'Export to Excel' }
-        ],
-        dom: "<'row mb-3'<'col-sm-12 col-md-4'l><'col-sm-12 col-md-4 text-center'B><'col-sm-12 col-md-4'f>>" +
-            "<'row'<'col-sm-12'tr>>" +
-            "<'row pt-2'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>"
-    });
+        lengthMenu: [[10, 25, 50, -1], [10, 25, 50, 'All']],
+        order: [[0, 'asc']]
+    }));
 
     assetsTable.on('search.dt draw.dt order.dt page.dt', function () {
-        syncAssetsTableStateToUrl(assetsTable);
+        MISDCommon.syncDataTableStateToSessionAndUrl(assetsTable, {
+            stateKey: tableStateKey,
+            includeOrder: true
+        });
     });
 
-    restoreAssetsTableState(assetsTable);
-
-    MISDCommon.initSelect2Modals();
+    MISDCommon.restoreDataTableStateFromSessionAndUrl(assetsTable, {
+        stateKey: tableStateKey,
+        restoreOrder: true,
+        warningMessage: 'Unable to restore saved asset table state.'
+    });
 
     // --- SLIDEOUT & EDIT LOGIC ---
 
     let currentActiveAssetTag = ''; // Tracks the currently open asset
 
-    function renderAssetDocuments(documents) {
-        const body = $('#assetDocumentsTableBody');
-        const empty = $('#assetDocumentsEmpty');
-
-        body.empty();
-
-        if (!documents || !documents.length) {
-            empty.removeClass('d-none');
-            return;
-        }
-
-        empty.addClass('d-none');
-
-        documents.forEach(doc => {
-            const viewUrl = `/documents/${doc.documentId}/view`;
-            const downloadUrl = `/documents/${doc.documentId}/download`;
-
-            const row = `
-                <tr>
-                    <td>${MISDCommon.escapeHtml(doc.documentCategory || 'N/A')}</td>
-                    <td>
-                        <div class="fw-semibold">${MISDCommon.escapeHtml(doc.fileName || 'Unnamed file')}</div>
-                        <div class="small text-muted">${MISDCommon.formatBytes(doc.fileSize || 0)}</div>
-                    </td>
-                    <td>${MISDCommon.escapeHtml(MISDCommon.formatUploadDate(doc.uploadDate))}</td>
-                    <td class="text-center">
-                        <div class="btn-group btn-group-sm" role="group">
-                            <a class="btn btn-outline-primary" href="${viewUrl}" target="_blank">View</a>
-                            <a class="btn btn-outline-success" href="${downloadUrl}">Download</a>
-                            <button type="button" class="btn btn-outline-secondary asset-doc-print" data-doc-id="${doc.documentId}">Print</button>
-                            <button type="button" class="btn btn-outline-danger asset-doc-delete" data-doc-id="${doc.documentId}">Remove</button>
-                        </div>
-                    </td>
-                </tr>
-            `;
-
-            body.append(row);
-        });
-    }
-
     function loadAssetDocuments(assetTag) {
-        if (!assetTag) {
-            renderAssetDocuments([]);
-            return;
-        }
-
-        $.get('/documents/list', { refType: 'IT_EQUIPMENT', refId: assetTag })
-            .done(function (documents) {
-                renderAssetDocuments(documents || []);
-            })
-            .fail(function () {
-                $('#assetDocumentsEmpty').removeClass('d-none').text('Unable to load documents.');
-                $('#assetDocumentsTableBody').empty();
-            });
+        MISDCommon.loadDocumentsForReference({
+            refType: assetDocumentConfig.refType,
+            refId: assetTag,
+            bodySelector: assetDocumentConfig.bodySelector,
+            emptySelector: assetDocumentConfig.emptySelector,
+            printButtonClass: assetDocumentConfig.printButtonClass,
+            deleteButtonClass: assetDocumentConfig.deleteButtonClass,
+            emptyText: assetDocumentConfig.emptyText,
+            loadErrorText: assetDocumentConfig.loadErrorText
+        });
     }
 
     // Helper function to lock the form back to view-only mode
@@ -214,7 +118,10 @@ $(document).ready(function () {
 
         lockForm(); // Re-lock immediately to prevent UI flashes
 
-        syncAssetsTableStateToUrl(assetsTable);
+        MISDCommon.syncDataTableStateToSessionAndUrl(assetsTable, {
+            stateKey: tableStateKey,
+            includeOrder: true
+        });
 
         $.ajax({
             url: '/assets/update',
@@ -265,7 +172,11 @@ $(document).ready(function () {
     }
 
     $('#assetDetailDocumentFiles').on('change', function () {
-        MISDCommon.renderDocumentPreviewBySelectors('#assetDetailDocumentFiles', '#assetDetailDocumentPreview', '#assetDetailDocumentCategoryTemplate');
+        MISDCommon.renderDocumentPreviewBySelectors(
+            assetDocumentConfig.fileInputSelector,
+            assetDocumentConfig.previewListSelector,
+            assetDocumentConfig.previewTemplateSelector
+        );
     });
 
     $('#uploadAssetDocumentsBtn').on('click', function () {
@@ -274,30 +185,24 @@ $(document).ready(function () {
             return;
         }
 
-        const fileInput = document.getElementById('assetDetailDocumentFiles');
-        if (!MISDCommon.validateFileInputBySize(fileInput)) {
+        const uploadSelection = MISDCommon.getDocumentUploadSelection({
+            fileInputSelector: assetDocumentConfig.fileInputSelector,
+            previewSelector: assetDocumentConfig.previewListSelector
+        });
+
+        if (!uploadSelection.isValid) {
+            if (uploadSelection.message) {
+                alert(uploadSelection.message);
+            }
             return;
         }
 
-        const files = Array.from(fileInput.files || []);
-        if (!files.length) {
-            alert('Please select file(s) to upload.');
-            return;
-        }
-
-        const categorySelects = Array.from(document.querySelectorAll('#assetDetailDocumentPreview select[name="documentCategories"]'));
-        const missingCategory = categorySelects.some(select => !select.value);
-        if (missingCategory || categorySelects.length !== files.length) {
-            alert('Select one document category for each file.');
-            return;
-        }
-
-        const formData = new FormData();
-        formData.append('refType', 'IT_EQUIPMENT');
-        formData.append('refId', currentActiveAssetTag);
-
-        files.forEach(file => formData.append('documentFiles', file));
-        categorySelects.forEach(select => formData.append('documentCategories', select.value));
+        const formData = MISDCommon.buildDocumentUploadFormData({
+            refType: assetDocumentConfig.refType,
+            refId: currentActiveAssetTag,
+            files: uploadSelection.files,
+            categorySelects: uploadSelection.categorySelects
+        });
 
         $.ajax({
             url: '/documents/add',
@@ -306,8 +211,15 @@ $(document).ready(function () {
             processData: false,
             contentType: false,
             success: function () {
-                fileInput.value = '';
-                MISDCommon.renderDocumentPreviewBySelectors('#assetDetailDocumentFiles', '#assetDetailDocumentPreview', '#assetDetailDocumentCategoryTemplate');
+                MISDCommon.resetDocumentDetailUI({
+                    bodySelector: assetDocumentConfig.bodySelector,
+                    emptySelector: assetDocumentConfig.emptySelector,
+                    emptyText: assetDocumentConfig.emptyText,
+                    fileInputSelector: assetDocumentConfig.fileInputSelector,
+                    previewInputSelector: assetDocumentConfig.fileInputSelector,
+                    previewListSelector: assetDocumentConfig.previewListSelector,
+                    previewTemplateSelector: assetDocumentConfig.previewTemplateSelector
+                });
                 loadAssetDocuments(currentActiveAssetTag);
             },
             error: function (xhr) {
@@ -349,31 +261,21 @@ $(document).ready(function () {
 
     $('#itDetailOffcanvas').on('hidden.bs.offcanvas', function () {
         currentActiveAssetTag = '';
-        $('#assetDocumentsTableBody').empty();
-        $('#assetDocumentsEmpty').removeClass('d-none').text('No documents attached yet.');
-        const fileInput = document.getElementById('assetDetailDocumentFiles');
-        if (fileInput) {
-            fileInput.value = '';
-        }
-        MISDCommon.renderDocumentPreviewBySelectors('#assetDetailDocumentFiles', '#assetDetailDocumentPreview', '#assetDetailDocumentCategoryTemplate');
+        MISDCommon.resetDocumentDetailUI({
+            bodySelector: assetDocumentConfig.bodySelector,
+            emptySelector: assetDocumentConfig.emptySelector,
+            emptyText: assetDocumentConfig.emptyText,
+            fileInputSelector: assetDocumentConfig.fileInputSelector,
+            previewInputSelector: assetDocumentConfig.fileInputSelector,
+            previewListSelector: assetDocumentConfig.previewListSelector,
+            previewTemplateSelector: assetDocumentConfig.previewTemplateSelector
+        });
     });
 
     // Persist the current table view before action forms redirect back to the list
     $('form').on('submit', function (event) {
-        const form = $(this);
-        const state = getAssetsTableState(assetsTable);
-        const params = new URLSearchParams(window.location.search);
-
-        if (state.search) {
-            params.set('search', state.search);
-        } else {
-            params.delete('search');
-        }
-
-        params.set('page', String(state.page));
-        const actionUrl = new URL(form.attr('action') || window.location.pathname, window.location.origin);
-        actionUrl.search = params.toString();
-        form.attr('action', `${actionUrl.pathname}${actionUrl.search}`);
+        const state = MISDCommon.getDataTableState(assetsTable, true);
+        MISDCommon.appendDataTableStateToFormAction(this, state);
     });
 
     // Automatically pass the Asset Tag to the Action Modals
