@@ -281,3 +281,26 @@ body[data-theme="dark"] .documents-grid-table .doc-action-btn--print {
     height: 16px;
     display: block;
 }
+
+#itDetailOffcanvas.asset-edit-mode-active .it-field:disabled {
+    background-color: #edf3f9 !important;
+    color: #6a7b8d !important;
+    border-color: #b8c7d9 !important;
+    box-shadow: none !important;
+    opacity: 1 !important;
+    cursor: not-allowed;
+}
+
+body[data-theme="dark"] #itDetailOffcanvas.asset-edit-mode-active .it-field:disabled {
+    background-color: #182435 !important;
+    color: #8ea2b8 !important;
+    border-color: #304459 !important;
+}
+
+#itDetailOffcanvas.asset-edit-mode-active .it-field:disabled::placeholder {
+    color: #8797a8 !important;
+}
+
+body[data-theme="dark"] #itDetailOffcanvas.asset-edit-mode-active .it-field:disabled::placeholder {
+    color: #6f8096 !important;
+}

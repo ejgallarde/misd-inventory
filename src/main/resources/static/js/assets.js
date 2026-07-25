@@ -50,6 +50,11 @@ $(document).ready(function () {
     // --- SLIDEOUT & EDIT LOGIC ---
 
     let currentActiveAssetTag = ''; // Tracks the currently open asset
+    let isSerialEditableForCurrentAsset = false;
+
+    function setAssetEditMode(active) {
+        $('#itDetailOffcanvas').toggleClass('asset-edit-mode-active', active);
+    }
 
     function loadAssetDocuments(assetTag) {
         MISDCommon.loadDocumentsForReference({
@@ -67,6 +72,7 @@ $(document).ready(function () {
     // Helper function to lock the form back to view-only mode
     function lockForm() {
         $('.it-field').prop('disabled', true);
+        setAssetEditMode(false);
         $('#enableEditBtn').removeClass('d-none');
         $('#saveEditBtn, #cancelEditBtn').addClass('d-none');
     }
@@ -79,14 +85,19 @@ $(document).ready(function () {
 
     // Enable Edit Mode
     $('#enableEditBtn').on('click', function () {
-        // Unlock all fields EXCEPT Asset Tag and Serial Number
-        $('.it-field').not('#editAssetTag, #editSerialNumber').prop('disabled', false);
+        // Unlock all fields except Asset Tag.
+        // Serial Number is only editable in edit mode when initially blank.
+        $('.it-field').not('#editAssetTag').prop('disabled', false);
+        if (!isSerialEditableForCurrentAsset) {
+            $('#editSerialNumber').prop('disabled', true);
+        }
 
         // Keep 'Assigned To' locked unless Status is already 'Deployed'
         if ($('#editCurrentStatus').val() !== 'Deployed') {
             $('#editCurrentOwnerID').prop('disabled', true);
         }
 
+        setAssetEditMode(true);
         $(this).addClass('d-none');
         $('#saveEditBtn, #cancelEditBtn').removeClass('d-none');
     });
@@ -143,9 +154,13 @@ $(document).ready(function () {
         let url = `/assets/${id}`;
 
         $.get(url, function (data) {
+            const serialNumberValue = data.serialNumber == null ? '' : String(data.serialNumber);
+
             $('#editAssetTag').val(data.assetTag);
             $('#editCatalogID').val(data.catalogID);
-            $('#editSerialNumber').val(data.serialNumber);
+            $('#editSerialNumber').val(serialNumberValue);
+
+            isSerialEditableForCurrentAsset = serialNumberValue.trim() === '';
 
             let pDate = data.purchaseDate ? data.purchaseDate.split('T')[0] : '';
             $('#editPurchaseDate').val(pDate);
