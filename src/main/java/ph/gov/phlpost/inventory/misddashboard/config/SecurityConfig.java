@@ -35,7 +35,8 @@ public class SecurityConfig implements WebMvcConfigurer {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         HttpSecurity configured = http
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/login", "/logout", "/css/**", "/js/**", "/images/**", "/webjars/**",
+                        .requestMatchers("/login", "/logout", "/css/**", "/js/**", "/images/**", "/*.png",
+                                "/*.jpg", "/*.jpeg", "/*.gif", "/*.svg", "/*.webp", "/*.ico", "/webjars/**",
                                 "/error")
                         .permitAll()
                         .anyRequest().authenticated())
