@@ -577,10 +577,18 @@ window.MISDCommon = (function (jqueryGlobal) {
                     <td>${escapeHtml(formatUploadDate(doc.uploadDate))}</td>
                     <td class="text-center">
                         <div class="btn-group btn-group-sm" role="group">
-                            <a class="btn btn-outline-primary" href="${viewUrl}" target="_blank">View</a>
-                            <a class="btn btn-outline-success" href="${downloadUrl}">Download</a>
-                            <button type="button" class="btn btn-outline-secondary ${printButtonClass}" data-doc-id="${doc.documentId}">Print</button>
-                            <button type="button" class="btn btn-outline-danger ${deleteButtonClass}" data-doc-id="${doc.documentId}">Remove</button>
+                            <a class="btn btn-outline-primary doc-action-btn" href="${viewUrl}" target="_blank" title="View" aria-label="View document">
+                                <img src="/icons/view.svg" alt="" class="doc-action-icon" aria-hidden="true">
+                            </a>
+                            <a class="btn btn-outline-success doc-action-btn" href="${downloadUrl}" title="Download" aria-label="Download document">
+                                <img src="/icons/download.svg" alt="" class="doc-action-icon" aria-hidden="true">
+                            </a>
+                            <button type="button" class="btn btn-outline-secondary doc-action-btn ${printButtonClass}" data-doc-id="${doc.documentId}" title="Print" aria-label="Print document">
+                                <img src="/icons/print.svg" alt="" class="doc-action-icon" aria-hidden="true">
+                            </button>
+                            <button type="button" class="btn btn-outline-danger doc-action-btn ${deleteButtonClass}" data-doc-id="${doc.documentId}" title="Remove" aria-label="Remove document">
+                                <img src="/icons/delete.svg" alt="" class="doc-action-icon" aria-hidden="true">
+                            </button>
                         </div>
                     </td>
                 </tr>
