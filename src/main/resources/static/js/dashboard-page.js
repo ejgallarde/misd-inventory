@@ -134,15 +134,15 @@ $(document).ready(function () {
         }
     });
 
-    function formatBytes(bytes) {
-        if (!Number.isFinite(bytes) || bytes <= 0) {
-            return '0 B';
-        }
+    function removeSelectedFile(input, fileIndex) {
+        const files = Array.from(input.files || []);
+        const updatedFiles = files.filter((_, index) => index !== fileIndex);
+        MISDCommon.setInputFiles(input, updatedFiles);
+        renderDocumentPreview(input);
+    }
 
-        const units = ['B', 'KB', 'MB', 'GB'];
-        const index = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
-        const value = bytes / Math.pow(1024, index);
-        return `${value.toFixed(index === 0 ? 0 : 1)} ${units[index]}`;
+    function validateFileInputBeforeSubmit(input) {
+        return MISDCommon.validateFileInputBySize(input);
     }
 
     function renderDocumentPreview(input) {
@@ -157,13 +157,16 @@ $(document).ready(function () {
 
         previewList.innerHTML = '';
 
-        const allowedExtensions = (input.dataset.documentAllowedExtensions || '')
-            .split(',')
-            .map(value => value.trim().toLowerCase())
-            .filter(Boolean);
-        const maxSizeMb = Number.parseInt(input.dataset.documentMaxSizeMb || '10', 10);
-        const maxSizeBytes = Number.isFinite(maxSizeMb) && maxSizeMb > 0 ? maxSizeMb * 1024 * 1024 : 10 * 1024 * 1024;
-        const files = Array.from(input.files || []);
+        const validationResults = MISDCommon.getFileValidationResults(input);
+        const files = validationResults.map(result => result.file);
+        const { maxSizeMb } = MISDCommon.getUploadConstraints(input);
+        const tooLarge = validationResults.filter(result => !result.sizeAllowed).map(result => result.file.name);
+
+        if (tooLarge.length) {
+            MISDCommon.showUploadError(input, `File size exceeds ${maxSizeMb}MB: ${tooLarge.join(', ')}`);
+        } else {
+            MISDCommon.clearUploadError(input);
+        }
 
         if (files.length === 0) {
             const emptyItem = document.createElement('li');
@@ -173,7 +176,8 @@ $(document).ready(function () {
             return;
         }
 
-        files.forEach(file => {
+        validationResults.forEach((result, index) => {
+            const file = result.file;
             const item = document.createElement('li');
             item.className = 'list-group-item d-flex flex-column gap-2';
 
@@ -186,15 +190,28 @@ $(document).ready(function () {
 
             const fileMeta = document.createElement('div');
             fileMeta.className = 'text-muted small';
-            fileMeta.textContent = formatBytes(file.size);
+            fileMeta.textContent = MISDCommon.formatBytes(file.size);
 
-            fileInfo.appendChild(fileName);
-            fileInfo.appendChild(fileMeta);
+            const fileLabelWrapper = document.createElement('div');
+            fileLabelWrapper.className = 'd-flex flex-column';
+            fileLabelWrapper.appendChild(fileName);
+            fileLabelWrapper.appendChild(fileMeta);
+
+            const removeButton = document.createElement('button');
+            removeButton.type = 'button';
+            removeButton.className = 'btn btn-sm btn-outline-danger';
+            removeButton.textContent = 'X';
+            removeButton.setAttribute('aria-label', `Remove ${file.name}`);
+            removeButton.addEventListener('click', function () {
+                removeSelectedFile(input, index);
+            });
+
+            fileInfo.appendChild(fileLabelWrapper);
+            fileInfo.appendChild(removeButton);
 
             const badge = document.createElement('span');
-            const extension = file.name.includes('.') ? file.name.split('.').pop().toLowerCase() : '';
-            const typeAllowed = !allowedExtensions.length || allowedExtensions.includes(extension);
-            const sizeAllowed = file.size <= maxSizeBytes;
+            const typeAllowed = result.typeAllowed;
+            const sizeAllowed = result.sizeAllowed;
 
             if (typeAllowed && sizeAllowed) {
                 badge.className = 'badge bg-success align-self-center';
@@ -240,6 +257,30 @@ $(document).ready(function () {
         $(this).on('change', function () {
             renderDocumentPreview(this);
         });
+    });
+
+    $('#receiveAssetForm, #addVehicleOffcanvas form, #addPropertyOffcanvas form').on('submit', function (event) {
+        const documentInput = this.querySelector('.js-document-upload-input');
+        if (!documentInput) {
+            return;
+        }
+
+        if (!validateFileInputBeforeSubmit(documentInput)) {
+            event.preventDefault();
+            return;
+        }
+
+        const files = Array.from(documentInput.files || []);
+        if (!files.length) {
+            return;
+        }
+
+        const categorySelects = Array.from(this.querySelectorAll('select[name="documentCategories"]'));
+        const missingCategory = categorySelects.some(select => !select.value);
+        if (missingCategory || categorySelects.length !== files.length) {
+            event.preventDefault();
+            alert('Select one document category for each file.');
+        }
     });
 
     $('#receiveAssetOffcanvas, #addVehicleOffcanvas, #addPropertyOffcanvas').on('hidden.bs.offcanvas', function () {
