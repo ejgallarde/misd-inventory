@@ -16,6 +16,7 @@ $(document).ready(function () {
 
     const assetDocumentConfig = {
         refType: 'IT_EQUIPMENT',
+        tableSelector: '#assetDocumentsTable',
         bodySelector: '#assetDocumentsTableBody',
         emptySelector: '#assetDocumentsEmpty',
         printButtonClass: 'asset-doc-print',
@@ -56,14 +57,68 @@ $(document).ready(function () {
         $('#itDetailOffcanvas').toggleClass('asset-edit-mode-active', active);
     }
 
+    function resetDetailPanelScroll() {
+        const offcanvasBody = document.querySelector('#itDetailOffcanvas .offcanvas-body');
+        if (offcanvasBody) {
+            offcanvasBody.scrollTop = 0;
+        }
+    }
+
     function escapeValue(value) {
         return MISDCommon.escapeHtml(value == null || value === '' ? 'N/A' : String(value));
     }
 
+    function formatSpecificationValue(value) {
+        if (value == null || value === '') {
+            return 'N/A';
+        }
+
+        if (Array.isArray(value)) {
+            return value.map(item => item == null ? '' : String(item)).filter(Boolean).join(', ') || 'N/A';
+        }
+
+        if (typeof value === 'object') {
+            return JSON.stringify(value);
+        }
+
+        return String(value);
+    }
+
+    function renderSpecifications(specifications) {
+        if (!specifications) {
+            return '<div class="text-muted">N/A</div>';
+        }
+
+        let parsed = specifications;
+        if (typeof specifications === 'string') {
+            try {
+                parsed = JSON.parse(specifications);
+            } catch (error) {
+                return `<div class="mt-2 small">${MISDCommon.escapeHtml(specifications)}</div>`;
+            }
+        }
+
+        if (!parsed || Array.isArray(parsed) || typeof parsed !== 'object') {
+            return `<div class="mt-2 small">${MISDCommon.escapeHtml(formatSpecificationValue(parsed))}</div>`;
+        }
+
+        const entries = Object.entries(parsed);
+        if (!entries.length) {
+            return '<div class="text-muted">N/A</div>';
+        }
+
+        const rows = entries.map(([key, value]) => {
+            return `<li class="d-flex justify-content-between gap-2 py-1 border-bottom">
+                        <span class="fw-semibold">${MISDCommon.escapeHtml(key)}</span>
+                        <span class="text-end">${MISDCommon.escapeHtml(formatSpecificationValue(value))}</span>
+                    </li>`;
+        }).join('');
+
+        return `<ul class="list-unstyled mb-0 mt-2">${rows}</ul>`;
+    }
+
     function renderCatalogSummary(data) {
-        const specHtml = data.catalogSpecifications
-            ? `<pre class="mb-0 mt-2 small bg-body-tertiary border rounded p-2" style="white-space: pre-wrap;">${MISDCommon.escapeHtml(data.catalogSpecifications)}</pre>`
-            : `<div class="text-muted">N/A</div>`;
+        const specHtml = renderSpecifications(data.catalogSpecifications);
 
         return `
             <div class="d-grid gap-2">
@@ -76,7 +131,6 @@ $(document).ready(function () {
     }
 
     function renderAssigneeSummary(data) {
-        const managerId = data.assigneeManagerID || 'N/A';
         const managerName = data.assigneeManagerFullName || 'N/A';
 
         return `
@@ -85,7 +139,6 @@ $(document).ready(function () {
                 <div><span class="text-muted fw-semibold">Full Name:</span> ${escapeValue(data.assigneeFullName)}</div>
                 <div><span class="text-muted fw-semibold">Department:</span> ${escapeValue(data.assigneeDepartment)}</div>
                 <div><span class="text-muted fw-semibold">Division:</span> ${escapeValue(data.assigneeDivision)}</div>
-                <div><span class="text-muted fw-semibold">Manager ID:</span> ${escapeValue(managerId)}</div>
                 <div><span class="text-muted fw-semibold">Manager's Full Name:</span> ${escapeValue(managerName)}</div>
             </div>
         `;
@@ -95,6 +148,7 @@ $(document).ready(function () {
         MISDCommon.loadDocumentsForReference({
             refType: assetDocumentConfig.refType,
             refId: assetTag,
+            tableSelector: assetDocumentConfig.tableSelector,
             bodySelector: assetDocumentConfig.bodySelector,
             emptySelector: assetDocumentConfig.emptySelector,
             printButtonClass: assetDocumentConfig.printButtonClass,
@@ -116,6 +170,10 @@ $(document).ready(function () {
     MISDCommon.bindClick('.asset-detail-link', function (link) {
         currentActiveAssetTag = link.data('assettag');
         loadAssetDetails(currentActiveAssetTag);
+    });
+
+    $('#itDetailOffcanvas').on('shown.bs.offcanvas', function () {
+        resetDetailPanelScroll();
     });
 
     // Enable Edit Mode
@@ -212,6 +270,7 @@ $(document).ready(function () {
 
             lockForm(); // Ensure form starts locked
             loadAssetDocuments(data.assetTag);
+            resetDetailPanelScroll();
 
             // Show the slideout
             // Show the slideout (prevents backdrop stacking bug)
@@ -265,6 +324,7 @@ $(document).ready(function () {
             contentType: false,
             success: function () {
                 MISDCommon.resetDocumentDetailUI({
+                    tableSelector: assetDocumentConfig.tableSelector,
                     bodySelector: assetDocumentConfig.bodySelector,
                     emptySelector: assetDocumentConfig.emptySelector,
                     emptyText: assetDocumentConfig.emptyText,
@@ -305,6 +365,7 @@ $(document).ready(function () {
     $('#itDetailOffcanvas').on('hidden.bs.offcanvas', function () {
         currentActiveAssetTag = '';
         MISDCommon.resetDocumentDetailUI({
+            tableSelector: assetDocumentConfig.tableSelector,
             bodySelector: assetDocumentConfig.bodySelector,
             emptySelector: assetDocumentConfig.emptySelector,
             emptyText: assetDocumentConfig.emptyText,

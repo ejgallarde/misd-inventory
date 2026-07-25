@@ -617,6 +617,7 @@ window.MISDCommon = (function (jqueryGlobal) {
         documents,
         bodySelector,
         emptySelector,
+        tableSelector = null,
         printButtonClass,
         deleteButtonClass,
         emptyText = null
@@ -627,10 +628,14 @@ window.MISDCommon = (function (jqueryGlobal) {
 
         const body = $(bodySelector);
         const empty = $(emptySelector);
+        const table = tableSelector ? $(tableSelector) : null;
         body.empty();
 
         if (!documents || !documents.length) {
             empty.removeClass('d-none');
+            if (table && table.length) {
+                table.addClass('d-none');
+            }
             if (emptyText) {
                 empty.text(emptyText);
             }
@@ -638,6 +643,9 @@ window.MISDCommon = (function (jqueryGlobal) {
         }
 
         empty.addClass('d-none');
+        if (table && table.length) {
+            table.removeClass('d-none');
+        }
         documents.forEach(doc => {
             const viewUrl = `/documents/${doc.documentId}/view`;
             const downloadUrl = `/documents/${doc.documentId}/download`;
@@ -676,6 +684,7 @@ window.MISDCommon = (function (jqueryGlobal) {
         refId,
         bodySelector,
         emptySelector,
+        tableSelector = null,
         printButtonClass,
         deleteButtonClass,
         emptyText = null,
@@ -690,6 +699,7 @@ window.MISDCommon = (function (jqueryGlobal) {
                 documents: [],
                 bodySelector,
                 emptySelector,
+                tableSelector,
                 printButtonClass,
                 deleteButtonClass,
                 emptyText
@@ -703,6 +713,7 @@ window.MISDCommon = (function (jqueryGlobal) {
                     documents: documents || [],
                     bodySelector,
                     emptySelector,
+                    tableSelector,
                     printButtonClass,
                     deleteButtonClass,
                     emptyText
@@ -711,6 +722,9 @@ window.MISDCommon = (function (jqueryGlobal) {
             .fail(function () {
                 $(emptySelector).removeClass('d-none').text(loadErrorText);
                 $(bodySelector).empty();
+                if (tableSelector) {
+                    $(tableSelector).addClass('d-none');
+                }
             });
     }
 
@@ -789,9 +803,28 @@ window.MISDCommon = (function (jqueryGlobal) {
         }
 
         const categorySelects = Array.from(document.querySelectorAll(`${previewSelector} select[name="documentCategories"]`));
+        categorySelects.forEach(select => {
+            select.classList.remove('is-invalid');
+            if (typeof select.setCustomValidity === 'function') {
+                select.setCustomValidity('');
+            }
+        });
+
         const missingCategory = categorySelects.some(select => !select.value);
 
         if (missingCategory || categorySelects.length !== files.length) {
+            categorySelects.forEach(select => {
+                if (!select.value) {
+                    select.classList.add('is-invalid');
+                    if (typeof select.setCustomValidity === 'function') {
+                        select.setCustomValidity(requireCategoryMessage);
+                        if (typeof select.reportValidity === 'function') {
+                            select.reportValidity();
+                        }
+                    }
+                }
+            });
+
             return {
                 isValid: false,
                 message: requireCategoryMessage,
@@ -825,6 +858,7 @@ window.MISDCommon = (function (jqueryGlobal) {
         bodySelector,
         emptySelector,
         emptyText = 'No documents attached yet.',
+        tableSelector = null,
         fileInputSelector,
         previewInputSelector,
         previewListSelector,
@@ -833,6 +867,9 @@ window.MISDCommon = (function (jqueryGlobal) {
         if ($) {
             $(bodySelector).empty();
             $(emptySelector).removeClass('d-none').text(emptyText);
+            if (tableSelector) {
+                $(tableSelector).addClass('d-none');
+            }
         }
 
         const fileInput = document.querySelector(fileInputSelector);

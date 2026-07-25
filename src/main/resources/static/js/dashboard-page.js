@@ -72,6 +72,12 @@ $(document).ready(function () {
     });
 
     document.getElementById('catalogForm').addEventListener('submit', function (e) {
+        if (!this.checkValidity()) {
+            e.preventDefault();
+            this.classList.add('was-validated');
+            return;
+        }
+
         const specRows = document.querySelectorAll('.spec-row');
         const specObject = {};
 
@@ -224,7 +230,7 @@ $(document).ready(function () {
             if (categoryTemplate) {
                 const categoryLabel = document.createElement('label');
                 categoryLabel.className = 'form-label fw-semibold mb-0 small';
-                categoryLabel.textContent = 'Document category';
+                categoryLabel.innerHTML = 'Document category <span class="required-indicator" aria-hidden="true">*</span>';
 
                 const categorySelect = document.createElement('select');
                 categorySelect.className = 'form-select form-select-sm';
@@ -255,6 +261,12 @@ $(document).ready(function () {
     });
 
     $('#receiveAssetForm, #addVehicleOffcanvas form, #addPropertyOffcanvas form').on('submit', function (event) {
+        if (!this.checkValidity()) {
+            event.preventDefault();
+            this.classList.add('was-validated');
+            return;
+        }
+
         const documentInput = this.querySelector('.js-document-upload-input');
         if (!documentInput) {
             return;

@@ -341,7 +341,8 @@
             <form th:action="@{/catalog/add}" method="post" id="catalogForm">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                 <div class="mb-3">
-                    <label class="form-label fw-bold">Category</label>
+                    <label class="form-label fw-bold">Category <span class="required-indicator"
+                            aria-hidden="true">*</span></label>
                     <select class="form-select" name="category" required>
                         <option value="" selected disabled>Select Category...</option>
                         <option th:each="cat : ${equipmentCategories}" th:value="${cat}" th:text="${cat}">
@@ -349,11 +350,13 @@
                     </select>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label fw-bold">Manufacturer / Make</label>
+                    <label class="form-label fw-bold">Manufacturer / Make <span class="required-indicator"
+                            aria-hidden="true">*</span></label>
                     <input type="text" class="form-control" name="manufacturer" required>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label fw-bold">Model Name</label>
+                    <label class="form-label fw-bold">Model Name <span class="required-indicator"
+                            aria-hidden="true">*</span></label>
                     <input type="text" class="form-control" name="modelName" required>
                 </div>
                 <div class="mb-4 bg-light p-3 border rounded">
@@ -382,7 +385,8 @@
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
 
                 <div class="mb-3">
-                    <label class="form-label fw-bold text-muted small text-uppercase">Equipment Model</label>
+                    <label class="form-label fw-bold text-muted small text-uppercase">Equipment Model <span
+                            class="required-indicator" aria-hidden="true">*</span></label>
                     <select class="form-select" name="catalogID" required>
                         <option value="" disabled selected>Select from Catalog...</option>
                         <!-- Populate from the catalogMap already available on the dashboard -->
@@ -394,7 +398,8 @@
 
                 <!-- NEW: Quantity Field -->
                 <div class="mb-3">
-                    <label class="form-label fw-bold text-muted small text-uppercase">Quantity Received</label>
+                    <label class="form-label fw-bold text-muted small text-uppercase">Quantity Received <span
+                            class="required-indicator" aria-hidden="true">*</span></label>
                     <input type="number" class="form-control" id="receiveQuantity" name="quantity" value="1" min="1"
                         required>
                     <div class="form-text">Enter > 1 for bulk receiving. Asset Tags will be auto-generated.</div>

@@ -312,3 +312,29 @@ body[data-theme="dark"] #itDetailOffcanvas.asset-edit-mode-active .it-field:disa
 #itDetailOffcanvas.asset-edit-mode-active .asset-detail-view-only {
     display: none !important;
 }
+
+.required-indicator {
+    color: #dc3545;
+    font-weight: 700;
+}
+
+.js-upload-error,
+.invalid-feedback,
+.form-text.text-danger,
+.was-validated .form-control:invalid,
+.was-validated .form-select:invalid,
+.form-control.is-invalid,
+.form-select.is-invalid {
+    color: #dc3545 !important;
+}
+
+body[data-theme="dark"] .required-indicator,
+body[data-theme="dark"] .js-upload-error,
+body[data-theme="dark"] .invalid-feedback,
+body[data-theme="dark"] .form-text.text-danger,
+body[data-theme="dark"] .was-validated .form-control:invalid,
+body[data-theme="dark"] .was-validated .form-select:invalid,
+body[data-theme="dark"] .form-control.is-invalid,
+body[data-theme="dark"] .form-select.is-invalid {
+    color: #ff8b98 !important;
+}
