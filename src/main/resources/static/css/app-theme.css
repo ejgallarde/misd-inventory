@@ -199,6 +199,12 @@ body[data-theme="dark"] .navbar-dark .dropdown-toggle {
     text-decoration: underline;
 }
 
+.footer-logo {
+    height: 40px;
+    width: auto;
+    object-fit: contain;
+}
+
 .documents-grid-table {
     width: 100%;
     table-layout: fixed;

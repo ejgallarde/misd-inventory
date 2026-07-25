@@ -6,6 +6,8 @@ import ph.gov.phlpost.inventory.misddashboard.repository.PersonnelRepository;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
+import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -33,8 +35,15 @@ public class RegistryService {
     @Cacheable("catalogMap")
     public Map<Integer, EquipmentCatalog> getCatalogMap() {
         return catalogRepository.findAll().stream()
-                // Changed EquipmentCatalog::getCatalogID to c -> c.getCatalogID()
-                .collect(Collectors.toMap(c -> c.getCatalogID(), c -> c));
+                .sorted(Comparator
+                        .comparing((EquipmentCatalog c) -> normalize(c.getManufacturer()))
+                        .thenComparing(c -> normalize(c.getModelName()))
+                        .thenComparing(EquipmentCatalog::getCatalogID))
+                .collect(Collectors.toMap(
+                        EquipmentCatalog::getCatalogID,
+                        c -> c,
+                        (existing, replacement) -> existing,
+                        LinkedHashMap::new));
     }
 
     @Cacheable("departmentMap")
@@ -43,5 +52,9 @@ public class RegistryService {
                 .collect(Collectors.toMap(
                         p -> p.getEmployeeID(), // Fixed: Changed from Personnel::getEmployeeID
                         p -> p.getDepartment() != null ? p.getDepartment() : "Unassigned"));
+    }
+
+    private String normalize(String value) {
+        return value == null ? "" : value.trim().toLowerCase();
     }
 }

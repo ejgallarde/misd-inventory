@@ -24,6 +24,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Comparator;
 import java.util.stream.Collectors;
 
 @Controller
@@ -39,7 +40,19 @@ public class MainDashboardController {
     @Value("#{'${inventory.categories}'.split(',')}")
     private List<String> equipmentCategories;
 
-    @Value("${document.upload.max-size-mb:10}")
+    @Value("#{'${dropdown.vehicle-types}'.split(',')}")
+    private List<String> vehicleTypes;
+
+    @Value("#{'${dropdown.fuel-types}'.split(',')}")
+    private List<String> fuelTypes;
+
+    @Value("#{'${dropdown.property-types}'.split(',')}")
+    private List<String> propertyTypes;
+
+    @Value("#{'${dropdown.property-tax-status-add}'.split(',')}")
+    private List<String> propertyTaxStatusesAdd;
+
+    @Value("${document.upload.max-size-mb:15}")
     private int documentUploadMaxSizeMb;
 
     @Value("${document.upload.allowed-extensions:pdf,jpg,jpeg,png,doc,docx,xls,xlsx}")
@@ -98,10 +111,26 @@ public class MainDashboardController {
         // Mappings
         model.addAttribute("employeeMap", registryService.getEmployeeNameMap());
         model.addAttribute("catalogMap", registryService.getCatalogMap());
-        model.addAttribute("equipmentCategories", equipmentCategories);
+        model.addAttribute("equipmentCategories", equipmentCategories.stream()
+                .sorted(String.CASE_INSENSITIVE_ORDER)
+                .toList());
         model.addAttribute("documentUploadMaxSizeMb", documentUploadMaxSizeMb);
         model.addAttribute("documentUploadAllowedExtensions", documentUploadAllowedExtensions);
-        model.addAttribute("documentUploadCategories", documentUploadCategories);
+        model.addAttribute("documentUploadCategories", documentUploadCategories.stream()
+                .sorted(String.CASE_INSENSITIVE_ORDER)
+                .toList());
+        model.addAttribute("vehicleTypes", vehicleTypes.stream()
+                .sorted(String.CASE_INSENSITIVE_ORDER)
+                .toList());
+        model.addAttribute("fuelTypes", fuelTypes.stream()
+                .sorted(String.CASE_INSENSITIVE_ORDER)
+                .toList());
+        model.addAttribute("propertyTypes", propertyTypes.stream()
+                .sorted(String.CASE_INSENSITIVE_ORDER)
+                .toList());
+        model.addAttribute("propertyTaxStatusesAdd", propertyTaxStatusesAdd.stream()
+                .sorted(String.CASE_INSENSITIVE_ORDER)
+                .toList());
 
         return "dashboard";
     }
@@ -117,7 +146,8 @@ public class MainDashboardController {
             map.put("id", p.getEmployeeID());
             map.put("text", p.getLastName() + ", " + p.getFirstName() + " (" + p.getDepartment() + ")");
             return map;
-        }).collect(Collectors.toList());
+        }).sorted(Comparator.comparing(item -> item.get("text"), String.CASE_INSENSITIVE_ORDER))
+                .collect(Collectors.toList());
 
         Map<String, Object> response = new HashMap<>();
         response.put("results", items);

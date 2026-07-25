@@ -34,7 +34,7 @@
             <a href="/" class="navbar-brand mb-0 h1 text-decoration-none">&larr; Back to Dashboard</a>
             <div class="d-flex align-items-center gap-2">
                 <button class="btn btn-sm theme-toggle-btn fw-semibold" type="button" id="themeToggleBtn"
-                    title="Switch theme">🌗 Theme</button>
+                    title="Switch theme" aria-label="Switch theme">☀️</button>
                 <span class="navbar-text text-white">Master Real Estate & Facilities Registry</span>
             </div>
         </div>
@@ -170,9 +170,8 @@
                         <div class="mb-3">
                             <label class="form-label fw-bold">New Tax Status</label>
                             <select class="form-select" name="taxStatus" required>
-                                <option value="Paid (Current Year)">Paid (Current Year)</option>
-                                <option value="Pending">Pending</option>
-                                <option value="Overdue">Overdue</option>
+                                <option th:each="taxStatus : ${propertyTaxStatusesUpdate}" th:value="${taxStatus}"
+                                    th:text="${taxStatus}"></option>
                             </select>
                         </div>
                         <div class="mb-3">

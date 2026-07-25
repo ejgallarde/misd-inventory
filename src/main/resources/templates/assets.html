@@ -37,7 +37,7 @@
             </a>
             <div class="d-flex align-items-center gap-2">
                 <button class="btn btn-sm theme-toggle-btn fw-semibold" type="button" id="themeToggleBtn"
-                    title="Switch theme">🌗 Theme</button>
+                    title="Switch theme" aria-label="Switch theme">☀️</button>
                 <span class="navbar-text text-white">Master Asset Registry</span>
             </div>
         </div>
@@ -355,11 +355,8 @@
                         <label class="form-label fw-bold text-muted small text-uppercase">Status</label>
                         <select id="editCurrentStatus" name="currentStatus" class="form-select it-field bg-white"
                             disabled>
-                            <option value="In Storage">In Storage</option>
-                            <option value="Deployed">Deployed</option>
-                            <option value="In Warranty Repair">In Warranty Repair</option>
-                            <option value="Unserviceable">Unserviceable</option>
-                            <option value="Retired">Retired</option>
+                            <option th:each="status : ${assetStatusOptions}" th:value="${status}" th:text="${status}">
+                            </option>
                         </select>
                     </div>
                     <div class="col-md-6">

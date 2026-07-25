@@ -26,7 +26,7 @@ public class DocumentService {
     private final Set<String> allowedCategories;
 
     public DocumentService(DocumentStorageService storageService, DocumentRepository documentRepository,
-            @Value("${document.upload.max-size-mb:10}") long maxFileSizeMb,
+            @Value("${document.upload.max-size-mb:15}") long maxFileSizeMb,
             @Value("${document.upload.allowed-extensions:pdf,jpg,jpeg,png,doc,docx,xls,xlsx}") String allowedExtensionsConfig,
             @Value("#{'${document.upload.categories:Delivery Receipt,Official Receipt / Invoice,Warranty Certificate,Inspection Report,Acceptance Report,Appendix 71,Serial Number Label,Photographs,Equipment Specification Sheet,Repair or Service Report,OR/CR,Insurance Policy,Deed of Sale,Title,Tax Declaration,Property Photo,Service Report}'.split(',')}") List<String> allowedCategoriesConfig) {
         this.storageService = storageService;

@@ -35,7 +35,7 @@ public class ITAssetController {
     private final RegistryService registryService;
     private final DocumentService documentService;
 
-    @Value("${document.upload.max-size-mb:10}")
+    @Value("${document.upload.max-size-mb:15}")
     private int documentUploadMaxSizeMb;
 
     @Value("${document.upload.allowed-extensions:pdf,jpg,jpeg,png,doc,docx,xls,xlsx}")
@@ -43,6 +43,9 @@ public class ITAssetController {
 
     @Value("#{'${document.upload.categories}'.split(',')}")
     private List<String> documentUploadCategories;
+
+    @Value("#{'${dropdown.asset-statuses}'.split(',')}")
+    private List<String> assetStatusOptions;
 
     public ITAssetController(AssetRepository assetRepo,
             EquipmentCatalogRepository catalogRepo, ITAssetService assetService,
@@ -63,7 +66,12 @@ public class ITAssetController {
         model.addAttribute("departmentMap", registryService.getDepartmentMap());
         model.addAttribute("documentUploadMaxSizeMb", documentUploadMaxSizeMb);
         model.addAttribute("documentUploadAllowedExtensions", documentUploadAllowedExtensions);
-        model.addAttribute("documentUploadCategories", documentUploadCategories);
+        model.addAttribute("documentUploadCategories", documentUploadCategories.stream()
+                .sorted(String.CASE_INSENSITIVE_ORDER)
+                .toList());
+        model.addAttribute("assetStatusOptions", assetStatusOptions.stream()
+                .sorted(String.CASE_INSENSITIVE_ORDER)
+                .toList());
         return "assets";
     }
 

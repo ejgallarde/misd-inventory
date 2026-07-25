@@ -470,10 +470,8 @@
                     <div class="col-6">
                         <label class="form-label fw-bold">Vehicle Type</label>
                         <select class="form-select" name="vehicleType" required>
-                            <option value="Motorcycle">Motorcycle</option>
-                            <option value="Delivery Van">Delivery Van</option>
-                            <option value="6-Wheeler Truck">6-Wheeler Truck</option>
-                            <option value="Executive Car">Executive Car</option>
+                            <option th:each="vehicleType : ${vehicleTypes}" th:value="${vehicleType}"
+                                th:text="${vehicleType}"></option>
                         </select>
                     </div>
                 </div>
@@ -488,9 +486,8 @@
                             class="form-control" name="manufactureYear" required></div>
                     <div class="col-6"><label class="form-label fw-bold">Fuel Type</label><select class="form-select"
                             name="fuelType">
-                            <option value="Gas">Gasoline</option>
-                            <option value="Diesel">Diesel</option>
-                            <option value="EV">Electric</option>
+                            <option th:each="fuelType : ${fuelTypes}" th:value="${fuelType}"
+                                th:text="${fuelType == 'Gas' ? 'Gasoline' : fuelType}"></option>
                         </select></div>
                 </div>
                 <div class="mb-3"><label class="form-label fw-bold">Engine Number</label><input type="text"
@@ -542,10 +539,8 @@
                     <div class="col-6">
                         <label class="form-label fw-bold">Type</label>
                         <select class="form-select" name="propertyType" required>
-                            <option value="Sorting Center">Sorting Center</option>
-                            <option value="Branch Office">Branch Office</option>
-                            <option value="Warehouse">Warehouse</option>
-                            <option value="Vacant Lot">Vacant Lot</option>
+                            <option th:each="propertyType : ${propertyTypes}" th:value="${propertyType}"
+                                th:text="${propertyType}"></option>
                         </select>
                     </div>
                     <div class="col-6"><label class="form-label fw-bold">Title No.</label><input type="text"
@@ -571,9 +566,8 @@
                     <div class="col-6">
                         <label class="form-label fw-bold">Tax Status</label>
                         <select class="form-select" name="propertyTaxStatus">
-                            <option value="Paid 2026">Paid</option>
-                            <option value="Pending">Pending</option>
-                            <option value="Overdue">Overdue</option>
+                            <option th:each="taxStatus : ${propertyTaxStatusesAdd}" th:value="${taxStatus}"
+                                th:text="${taxStatus == 'Paid 2026' ? 'Paid' : taxStatus}"></option>
                         </select>
                     </div>
                 </div>

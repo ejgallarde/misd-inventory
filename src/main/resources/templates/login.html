@@ -11,10 +11,7 @@
 </head>
 
 <body class="theme-app" data-theme="light">
-    <div class="container pt-3 d-flex justify-content-end">
-        <button class="btn btn-sm theme-toggle-btn fw-semibold" type="button" id="themeToggleBtn"
-            title="Switch theme">🌗 Theme</button>
-    </div>
+    <div th:replace="~{fragments/components :: publicHeader}"></div>
     <div class="container py-5">
         <div class="row justify-content-center">
             <div class="col-md-6 col-lg-5">
