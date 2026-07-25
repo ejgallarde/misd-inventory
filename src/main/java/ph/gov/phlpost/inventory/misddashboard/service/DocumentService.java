@@ -33,13 +33,14 @@ public class DocumentService {
         this.documentRepository = documentRepository;
         this.maxFileSizeBytes = Math.max(1L, maxFileSizeMb) * 1024L * 1024L;
         this.allowedExtensions = Arrays.stream(allowedExtensionsConfig.split(","))
-                .map(String::trim)
-                .filter(extension -> !extension.isBlank())
-                .map(extension -> extension.toLowerCase(Locale.ROOT))
+                .map(token -> token == null ? "" : token.trim())
+                .filter(token -> !token.isBlank())
+                .map(token -> token.toLowerCase(Locale.ROOT))
                 .collect(Collectors.toUnmodifiableSet());
+
         this.allowedCategories = allowedCategoriesConfig.stream()
-                .map(String::trim)
-                .filter(category -> !category.isBlank())
+                .map(token -> token == null ? "" : token.trim())
+                .filter(token -> !token.isBlank())
                 .collect(Collectors.toUnmodifiableSet());
     }
 
