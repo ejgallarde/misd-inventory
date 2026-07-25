@@ -2,8 +2,10 @@ package ph.gov.phlpost.inventory.misddashboard.controller;
 
 import ph.gov.phlpost.inventory.misddashboard.model.Asset;
 import ph.gov.phlpost.inventory.misddashboard.model.EquipmentCatalog;
+import ph.gov.phlpost.inventory.misddashboard.model.Personnel;
 import ph.gov.phlpost.inventory.misddashboard.repository.AssetRepository;
 import ph.gov.phlpost.inventory.misddashboard.repository.EquipmentCatalogRepository;
+import ph.gov.phlpost.inventory.misddashboard.repository.PersonnelRepository;
 import ph.gov.phlpost.inventory.misddashboard.service.DocumentService;
 import ph.gov.phlpost.inventory.misddashboard.service.ITAssetService;
 import ph.gov.phlpost.inventory.misddashboard.service.RegistryService;
@@ -13,6 +15,8 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import org.springframework.web.util.UriUtils;
 
@@ -26,14 +30,19 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 @Controller
 public class ITAssetController {
 
     private final AssetRepository assetRepo;
     private final EquipmentCatalogRepository catalogRepo;
+    private final PersonnelRepository personnelRepo;
     private final ITAssetService assetService;
     private final RegistryService registryService;
     private final DocumentService documentService;
+    private final ObjectMapper objectMapper;
 
     @Value("${document.upload.max-size-mb:15}")
     private int documentUploadMaxSizeMb;
@@ -50,12 +59,16 @@ public class ITAssetController {
     public ITAssetController(AssetRepository assetRepo,
             EquipmentCatalogRepository catalogRepo, ITAssetService assetService,
             RegistryService registryService,
-            DocumentService documentService) {
+            DocumentService documentService,
+            PersonnelRepository personnelRepo,
+            ObjectMapper objectMapper) {
         this.assetRepo = assetRepo;
         this.catalogRepo = catalogRepo;
         this.assetService = assetService;
         this.registryService = registryService;
         this.documentService = documentService;
+        this.personnelRepo = personnelRepo;
+        this.objectMapper = objectMapper;
     }
 
     @GetMapping("/assets")
@@ -64,6 +77,7 @@ public class ITAssetController {
         model.addAttribute("employeeMap", registryService.getEmployeeNameMap());
         model.addAttribute("catalogMap", registryService.getCatalogMap());
         model.addAttribute("departmentMap", registryService.getDepartmentMap());
+        model.addAttribute("divisionMap", registryService.getDivisionMap());
         model.addAttribute("documentUploadMaxSizeMb", documentUploadMaxSizeMb);
         model.addAttribute("documentUploadAllowedExtensions", documentUploadAllowedExtensions);
         model.addAttribute("documentUploadCategories", documentUploadCategories.stream()
@@ -269,8 +283,9 @@ public class ITAssetController {
     }
 
     @GetMapping("/assets/{id}")
-    public ResponseEntity<Asset> getITAssetDetails(@PathVariable String id) {
+    public ResponseEntity<AssetDetailResponse> getITAssetDetails(@PathVariable String id) {
         return assetRepo.findById(id)
+                .map(this::toAssetDetailResponse)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
@@ -279,5 +294,112 @@ public class ITAssetController {
     public ResponseEntity<String> updateITAsset(@RequestBody Asset updatedAsset) {
         assetRepo.save(updatedAsset);
         return ResponseEntity.ok("Asset updated successfully");
+    }
+
+    private AssetDetailResponse toAssetDetailResponse(Asset asset) {
+        EquipmentCatalog catalog = registryService.getCatalogMap().get(asset.getCatalogID());
+        Personnel personnel = asset.getCurrentOwnerID() == null ? null
+                : personnelRepo.findById(asset.getCurrentOwnerID()).orElse(null);
+
+        return new AssetDetailResponse(
+                asset.getAssetTag(),
+                asset.getCatalogID(),
+                asset.getSerialNumber(),
+                asset.getPurchaseDate(),
+                asset.getPurchasePrice(),
+                asset.getCurrentOwnerID(),
+                asset.getCurrentStatus(),
+                asset.getRemarks(),
+                catalog == null ? null : catalog.getCategory(),
+                catalog == null ? null : catalog.getManufacturer(),
+                catalog == null ? null : catalog.getModelName(),
+                formatSpecifications(catalog == null ? null : catalog.getSpecifications()),
+                personnel == null ? null : personnel.getEmployeeID(),
+                personnel == null ? null : buildFullName(personnel),
+                personnel == null ? null : normalizeBlank(personnel.getDepartment()),
+                personnel == null ? null : normalizeBlank(personnel.getDivision()),
+                resolveManagerId(personnel),
+                resolveManagerFullName(personnel));
+    }
+
+    private String buildFullName(Personnel personnel) {
+        String lastName = normalizeBlank(personnel.getLastName());
+        String firstName = normalizeBlank(personnel.getFirstName());
+
+        if (lastName.isBlank() && firstName.isBlank()) {
+            return null;
+        }
+
+        if (lastName.isBlank()) {
+            return firstName;
+        }
+
+        if (firstName.isBlank()) {
+            return lastName;
+        }
+
+        return firstName + " " + lastName;
+    }
+
+    private String normalizeBlank(String value) {
+        return value == null ? "" : value.trim();
+    }
+
+    private String resolveManagerId(Personnel personnel) {
+        if (personnel == null) {
+            return null;
+        }
+
+        String managerId = normalizeBlank(personnel.getManagerID());
+        return managerId.isBlank() ? null : managerId;
+    }
+
+    private String resolveManagerFullName(Personnel personnel) {
+        String managerId = resolveManagerId(personnel);
+        if (managerId == null) {
+            return null;
+        }
+
+        Personnel manager = personnelRepo.findById(managerId).orElse(null);
+        if (manager == null) {
+            return managerId;
+        }
+
+        String managerName = buildFullName(manager);
+        return managerName == null || managerName.isBlank() ? managerId : managerName;
+    }
+
+    private String formatSpecifications(String specifications) {
+        if (specifications == null || specifications.isBlank()) {
+            return null;
+        }
+
+        try {
+            JsonNode jsonNode = objectMapper.readTree(specifications);
+            return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(jsonNode);
+        } catch (Exception ex) {
+            return specifications;
+        }
+    }
+
+    private record AssetDetailResponse(
+            String assetTag,
+            Integer catalogID,
+            String serialNumber,
+            LocalDate purchaseDate,
+            java.math.BigDecimal purchasePrice,
+            String currentOwnerID,
+            String currentStatus,
+            String remarks,
+            String catalogCategory,
+            String catalogManufacturer,
+            String catalogModelName,
+            String catalogSpecifications,
+            String assigneeEmployeeID,
+            String assigneeFullName,
+            String assigneeDepartment,
+            String assigneeDivision,
+            String assigneeManagerID,
+            String assigneeManagerFullName) {
     }
 }

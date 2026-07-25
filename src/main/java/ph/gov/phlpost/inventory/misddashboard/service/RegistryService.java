@@ -54,6 +54,14 @@ public class RegistryService {
                         p -> p.getDepartment() != null ? p.getDepartment() : "Unassigned"));
     }
 
+    @Cacheable("divisionMap")
+    public Map<String, String> getDivisionMap() {
+        return personnelRepository.findAll().stream()
+                .collect(Collectors.toMap(
+                        p -> p.getEmployeeID(),
+                        p -> p.getDivision() != null ? p.getDivision() : "Unassigned"));
+    }
+
     private String normalize(String value) {
         return value == null ? "" : value.trim().toLowerCase();
     }

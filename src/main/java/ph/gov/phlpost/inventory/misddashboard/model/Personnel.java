@@ -22,6 +22,12 @@ public class Personnel {
     @Column(name = "Department")
     private String department;
 
+    @Column(name = "Division")
+    private String division;
+
+    @Column(name = "ManagerID")
+    private String managerID;
+
     public Personnel() {
     }
 
@@ -40,5 +46,13 @@ public class Personnel {
 
     public String getDepartment() {
         return department;
+    }
+
+    public String getDivision() {
+        return division;
+    }
+
+    public String getManagerID() {
+        return managerID;
     }
 }

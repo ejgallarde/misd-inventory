@@ -63,6 +63,7 @@
                             <th>Category</th>
                             <th>Accountable Owner</th>
                             <th>Department</th>
+                            <th>Division</th>
                             <th>Status</th>
                             <th>Action</th>
                         </tr>
@@ -90,6 +91,9 @@
                             <!-- Fetched from Department Map using currentOwnerID -->
                             <td
                                 th:text="${(asset.currentOwnerID != null and departmentMap[asset.currentOwnerID] != null) ? departmentMap[asset.currentOwnerID] : 'MISD - Unassigned'}">
+                            </td>
+                            <td
+                                th:text="${(asset.currentOwnerID != null and divisionMap[asset.currentOwnerID] != null) ? divisionMap[asset.currentOwnerID] : 'MISD - Unassigned'}">
                             </td>
                             <td>
                                 <!-- Dynamic Status Badges -->
@@ -322,17 +326,31 @@
         </div>
         <div class="offcanvas-body bg-light">
             <form id="itEditForm">
+                <div class="row g-3 mb-3 asset-detail-view-only">
+                    <div class="col-lg-6">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-body">
+                                <div class="text-uppercase fw-bold text-muted small mb-2">Catalog Details</div>
+                                <div id="assetCatalogSummary" class="small"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-body">
+                                <div class="text-uppercase fw-bold text-muted small mb-2">Assigned To</div>
+                                <div id="assetAssigneeSummary" class="small"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 <div class="row g-3">
                     <div class="col-md-6">
                         <label class="form-label fw-bold text-muted small text-uppercase">Asset Tag</label>
                         <input type="text" id="editAssetTag" name="assetTag" class="form-control it-field bg-white"
                             disabled>
                     </div>
-                    <div class="col-md-6">
-                        <label class="form-label fw-bold text-muted small text-uppercase">Catalog ID</label>
-                        <input type="number" id="editCatalogID" name="catalogID" class="form-control it-field bg-white"
-                            disabled>
-                    </div>
+                    <input type="hidden" id="editCatalogID" name="catalogID">
                     <div class="col-12">
                         <label class="form-label fw-bold text-muted small text-uppercase">Serial Number</label>
                         <input type="text" id="editSerialNumber" name="serialNumber"
@@ -359,11 +377,7 @@
                             </option>
                         </select>
                     </div>
-                    <div class="col-md-6">
-                        <label class="form-label fw-bold text-muted small text-uppercase">Assigned To (ID)</label>
-                        <input type="number" id="editCurrentOwnerID" name="currentOwnerID"
-                            class="form-control it-field bg-white" disabled>
-                    </div>
+                    <input type="hidden" id="editCurrentOwnerID" name="currentOwnerID">
                     <div class="col-12">
                         <label class="form-label fw-bold text-muted small text-uppercase">Remarks</label>
                         <textarea id="editRemarks" name="remarks" class="form-control it-field bg-white" rows="3"

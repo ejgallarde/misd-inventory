@@ -304,3 +304,11 @@ body[data-theme="dark"] #itDetailOffcanvas.asset-edit-mode-active .it-field:disa
 body[data-theme="dark"] #itDetailOffcanvas.asset-edit-mode-active .it-field:disabled::placeholder {
     color: #6f8096 !important;
 }
+
+#itDetailOffcanvas:not(.asset-edit-mode-active) .asset-detail-edit-only {
+    display: none !important;
+}
+
+#itDetailOffcanvas.asset-edit-mode-active .asset-detail-view-only {
+    display: none !important;
+}

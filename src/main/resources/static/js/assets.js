@@ -56,6 +56,41 @@ $(document).ready(function () {
         $('#itDetailOffcanvas').toggleClass('asset-edit-mode-active', active);
     }
 
+    function escapeValue(value) {
+        return MISDCommon.escapeHtml(value == null || value === '' ? 'N/A' : String(value));
+    }
+
+    function renderCatalogSummary(data) {
+        const specHtml = data.catalogSpecifications
+            ? `<pre class="mb-0 mt-2 small bg-body-tertiary border rounded p-2" style="white-space: pre-wrap;">${MISDCommon.escapeHtml(data.catalogSpecifications)}</pre>`
+            : `<div class="text-muted">N/A</div>`;
+
+        return `
+            <div class="d-grid gap-2">
+                <div><span class="text-muted fw-semibold">Category:</span> ${escapeValue(data.catalogCategory)}</div>
+                <div><span class="text-muted fw-semibold">Manufacturer:</span> ${escapeValue(data.catalogManufacturer)}</div>
+                <div><span class="text-muted fw-semibold">Model Name:</span> ${escapeValue(data.catalogModelName)}</div>
+                <div><span class="text-muted fw-semibold">Specifications:</span>${specHtml}</div>
+            </div>
+        `;
+    }
+
+    function renderAssigneeSummary(data) {
+        const managerId = data.assigneeManagerID || 'N/A';
+        const managerName = data.assigneeManagerFullName || 'N/A';
+
+        return `
+            <div class="d-grid gap-2">
+                <div><span class="text-muted fw-semibold">Employee ID:</span> ${escapeValue(data.assigneeEmployeeID)}</div>
+                <div><span class="text-muted fw-semibold">Full Name:</span> ${escapeValue(data.assigneeFullName)}</div>
+                <div><span class="text-muted fw-semibold">Department:</span> ${escapeValue(data.assigneeDepartment)}</div>
+                <div><span class="text-muted fw-semibold">Division:</span> ${escapeValue(data.assigneeDivision)}</div>
+                <div><span class="text-muted fw-semibold">Manager ID:</span> ${escapeValue(managerId)}</div>
+                <div><span class="text-muted fw-semibold">Manager's Full Name:</span> ${escapeValue(managerName)}</div>
+            </div>
+        `;
+    }
+
     function loadAssetDocuments(assetTag) {
         MISDCommon.loadDocumentsForReference({
             refType: assetDocumentConfig.refType,
@@ -159,6 +194,8 @@ $(document).ready(function () {
             $('#editAssetTag').val(data.assetTag);
             $('#editCatalogID').val(data.catalogID);
             $('#editSerialNumber').val(serialNumberValue);
+            $('#assetCatalogSummary').html(renderCatalogSummary(data));
+            $('#assetAssigneeSummary').html(renderAssigneeSummary(data));
 
             isSerialEditableForCurrentAsset = serialNumberValue.trim() === '';
 
