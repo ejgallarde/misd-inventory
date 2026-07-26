@@ -298,6 +298,7 @@ public class ITAssetController {
 
     @PostMapping("/assets/update")
     public ResponseEntity<String> updateITAsset(@RequestBody Asset updatedAsset) {
+        updatedAsset.setDeploymentStatus(normalizeDeploymentStatus(updatedAsset.getDeploymentStatus()));
         assetRepo.save(updatedAsset);
         return ResponseEntity.ok("Asset updated successfully");
     }
@@ -314,7 +315,7 @@ public class ITAssetController {
                 asset.getPurchaseDate(),
                 asset.getPurchasePrice(),
                 asset.getCurrentOwnerID(),
-                asset.getDeploymentStatus(),
+                normalizeDeploymentStatus(asset.getDeploymentStatus()),
                 asset.getMaintenanceHealthStatus(),
                 asset.getLifecycleStatus(),
                 asset.getRemarks(),
@@ -328,6 +329,13 @@ public class ITAssetController {
                 personnel == null ? null : normalizeBlank(personnel.getDivision()),
                 resolveManagerId(personnel),
                 resolveManagerFullName(personnel));
+    }
+
+    private String normalizeDeploymentStatus(String deploymentStatus) {
+        if ("Deployed / Assigned".equals(deploymentStatus)) {
+            return "Deployed";
+        }
+        return deploymentStatus;
     }
 
     private String buildFullName(Personnel personnel) {

@@ -97,11 +97,16 @@
                             </td>
                             <td>
                                 <div class="d-flex flex-column gap-1 small">
-                                    <span class="badge bg-primary"
-                                        th:text="${asset.deploymentStatus != null and !#strings.isEmpty(asset.deploymentStatus) ? asset.deploymentStatus : 'N/A'}"></span>
+                                    <span
+                                        th:class="${asset.deploymentStatus == 'Missing / Unaccounted' ? 'badge bg-danger' : ((asset.deploymentStatus == 'Deployed' or asset.deploymentStatus == 'Deployed / Assigned') ? 'badge bg-success' : ((asset.deploymentStatus == 'In Stock / Available') ? 'badge bg-dark' : ((asset.deploymentStatus == 'On Loan' or asset.deploymentStatus == 'In Transit') ? 'badge bg-warning text-dark' : 'badge bg-dark')))}"
+                                        th:title="${asset.deploymentStatus == 'In Stock / Available' ? 'Ready for deployment.' : ((asset.deploymentStatus == 'Deployed' or asset.deploymentStatus == 'Deployed / Assigned') ? 'Currently assigned to a user.' : (asset.deploymentStatus == 'On Loan' ? 'Temporarily loaned and awaiting return.' : (asset.deploymentStatus == 'In Transit' ? 'Moving between locations and pending receipt.' : (asset.deploymentStatus == 'Missing / Unaccounted' ? 'Cannot be physically accounted for.' : 'Deployment status.'))))}"
+                                        data-bs-toggle="tooltip" data-bs-placement="top"
+                                        th:text="${asset.deploymentStatus != null and !#strings.isEmpty(asset.deploymentStatus) ? (asset.deploymentStatus == 'Deployed / Assigned' ? 'Deployed' : asset.deploymentStatus) : 'N/A'}"></span>
                                     <span class="badge bg-secondary"
                                         th:text="${asset.maintenanceHealthStatus != null and !#strings.isEmpty(asset.maintenanceHealthStatus) ? asset.maintenanceHealthStatus : 'N/A'}"></span>
                                     <span class="badge bg-dark"
+                                        th:title="${asset.lifecycleStatus == 'Procured / Pre-Deployment' ? 'Procured and preparing for use.' : (asset.lifecycleStatus == 'Active' ? 'Currently in active service.' : (asset.lifecycleStatus == 'End of Life (EOL)' ? 'Reached end-of-life and needs disposition planning.' : (asset.lifecycleStatus == 'Decommissioned / Retired' ? 'Removed from active service.' : (asset.lifecycleStatus == 'Disposed' ? 'Disposed from inventory.' : (asset.lifecycleStatus == 'Sold' ? 'Sold and closed out.' : 'Lifecycle status.')))))}"
+                                        data-bs-toggle="tooltip" data-bs-placement="top"
                                         th:text="${asset.lifecycleStatus != null and !#strings.isEmpty(asset.lifecycleStatus) ? asset.lifecycleStatus : 'N/A'}"></span>
                                 </div>
                             </td>
@@ -124,13 +129,13 @@
                                                 th:data-assettag="${asset.assetTag}">Assign Asset</a>
                                         </li>
                                         <li
-                                            th:if="${asset.deploymentStatus == 'Deployed / Assigned' or asset.deploymentStatus == 'On Loan'}">
+                                            th:if="${asset.deploymentStatus == 'Deployed' or asset.deploymentStatus == 'Deployed / Assigned' or asset.deploymentStatus == 'On Loan'}">
                                             <a class="dropdown-item action-btn" href="#" data-bs-toggle="modal"
                                                 data-bs-target="#assignModal"
                                                 th:data-assettag="${asset.assetTag}">Re-assign User</a>
                                         </li>
                                         <li
-                                            th:if="${asset.deploymentStatus == 'Deployed / Assigned' or asset.deploymentStatus == 'On Loan'}">
+                                            th:if="${asset.deploymentStatus == 'Deployed' or asset.deploymentStatus == 'Deployed / Assigned' or asset.deploymentStatus == 'On Loan'}">
                                             <a class="dropdown-item action-btn" href="#" data-bs-toggle="modal"
                                                 data-bs-target="#returnModal"
                                                 th:data-assettag="${asset.assetTag}">Return to MISD</a>

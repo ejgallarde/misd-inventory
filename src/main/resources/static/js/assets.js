@@ -8,6 +8,10 @@ $(document).ready(function () {
         initializeSelect2Modals: true
     });
 
+    document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function (element) {
+        bootstrap.Tooltip.getOrCreateInstance(element);
+    });
+
     if (clearAssetFiltersBtn) {
         clearAssetFiltersBtn.addEventListener('click', function () {
             MISDCommon.clearDataTableFilters(assetsTable, { stateKey: tableStateKey });
@@ -186,7 +190,7 @@ $(document).ready(function () {
         }
 
         // Keep 'Assigned To' locked unless deployment status indicates active assignment.
-        if ($('#editDeploymentStatus').val() !== 'Deployed / Assigned' && $('#editDeploymentStatus').val() !== 'On Loan') {
+        if ($('#editDeploymentStatus').val() !== 'Deployed' && $('#editDeploymentStatus').val() !== 'Deployed / Assigned' && $('#editDeploymentStatus').val() !== 'On Loan') {
             $('#editCurrentOwnerID').prop('disabled', true);
         }
 
@@ -203,7 +207,7 @@ $(document).ready(function () {
 
     // Listen for Status Changes
     $('#editDeploymentStatus').on('change', function () {
-        if ($(this).val() === 'Deployed / Assigned' || $(this).val() === 'On Loan') {
+        if ($(this).val() === 'Deployed' || $(this).val() === 'Deployed / Assigned' || $(this).val() === 'On Loan') {
             $('#editCurrentOwnerID').prop('disabled', false);
         } else {
             $('#editCurrentOwnerID').prop('disabled', true).val(''); // Clear owner if not deployed

@@ -152,11 +152,11 @@ $(document).ready(function () {
         initializeSelect2Modals: true
     });
 
-    setPropertyEditMode(false);
-
     document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function (element) {
         bootstrap.Tooltip.getOrCreateInstance(element);
     });
+
+    setPropertyEditMode(false);
 
     const propertiesTable = $('#propertiesTable').DataTable(MISDCommon.buildStandardDataTableConfig({
         pageLength: 10,

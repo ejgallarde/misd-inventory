@@ -125,6 +125,10 @@ $(document).ready(function () {
         initializeSelect2Modals: true
     });
 
+    document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function (element) {
+        bootstrap.Tooltip.getOrCreateInstance(element);
+    });
+
     setFleetEditMode(false);
 
     const fleetTable = $('#fleetTable').DataTable(MISDCommon.buildStandardDataTableConfig({

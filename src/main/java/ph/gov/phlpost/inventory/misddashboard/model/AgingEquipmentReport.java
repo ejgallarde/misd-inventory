@@ -30,6 +30,15 @@ public class AgingEquipmentReport {
     @Column(name = "AgeInYears")
     private int ageInYears;
 
+    @Column(name = "DeploymentStatus")
+    private String deploymentStatus;
+
+    @Column(name = "MaintenanceHealthStatus")
+    private String maintenanceHealthStatus;
+
+    @Column(name = "LifecycleStatus")
+    private String lifecycleStatus;
+
     // --- Empty Constructor required by JPA ---
     public AgingEquipmentReport() {
     }
@@ -57,5 +66,17 @@ public class AgingEquipmentReport {
 
     public int getAgeInYears() {
         return ageInYears;
+    }
+
+    public String getDeploymentStatus() {
+        return deploymentStatus;
+    }
+
+    public String getMaintenanceHealthStatus() {
+        return maintenanceHealthStatus;
+    }
+
+    public String getLifecycleStatus() {
+        return lifecycleStatus;
     }
 }

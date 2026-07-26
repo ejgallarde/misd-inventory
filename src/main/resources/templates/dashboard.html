@@ -80,7 +80,7 @@
                         data-bs-target="#addCatalogOffcanvas">+ Add to Catalog</button>
                 </div>
 
-                <div class="row g-3 mb-4" style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));">
+                <div class="row g-3 mb-4" style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));">
                     <div class="col">
                         <a href="/assets" class="text-decoration-none">
                             <div class="card text-white bg-primary mb-3 shadow-sm hover-effect">
@@ -110,8 +110,32 @@
                     <div class="col">
                         <div class="card text-white bg-danger mb-3 shadow-sm">
                             <div class="card-body">
-                                <h5 class="card-title">Aging (&ge;10 Yrs)</h5>
-                                <h2 class="card-text" th:text="${agingCount}">0</h2>
+                                <h5 class="card-title">Total Problematic</h5>
+                                <h2 class="card-text" th:text="${problematicAssetsCount}">0</h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="card text-white bg-danger mb-3 shadow-sm">
+                            <div class="card-body">
+                                <h5 class="card-title">Deployment Issues</h5>
+                                <h2 class="card-text" th:text="${deploymentIssueCount}">0</h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="card text-white bg-secondary mb-3 shadow-sm">
+                            <div class="card-body">
+                                <h5 class="card-title">Maintenance Issues</h5>
+                                <h2 class="card-text" th:text="${maintenanceIssueCount}">0</h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="card text-white bg-dark mb-3 shadow-sm">
+                            <div class="card-body">
+                                <h5 class="card-title">Lifecycle Issues</h5>
+                                <h2 class="card-text" th:text="${lifecycleIssueCount}">0</h2>
                             </div>
                         </div>
                     </div>
@@ -122,7 +146,7 @@
                         class="text-decoration-none">
                         <div
                             class="card-header bg-white border-bottom-0 pt-3 pb-3 d-flex justify-content-between align-items-center">
-                            <h5 class="card-title text-danger fw-bold mb-0">Action Required: Aging Equipment List</h5>
+                            <h5 class="card-title text-danger fw-bold mb-0">Action Required: Problematic IT Assets</h5>
                             <span class="text-muted">&#9660;</span>
                         </div>
                     </a>
@@ -136,17 +160,34 @@
                                         <th>Model</th>
                                         <th>Accountable Owner</th>
                                         <th>Purchase Date</th>
-                                        <th>Age</th>
+                                        <th>Status Overview</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr th:each="asset : ${agingAssets}">
+                                    <tr th:each="asset : ${problematicAssets}">
                                         <td th:text="${asset.assetTag}"></td>
                                         <td th:text="${asset.category}"></td>
                                         <td th:text="${asset.modelName}"></td>
                                         <td th:text="${asset.accountableOwner}"></td>
                                         <td th:text="${asset.purchaseDate}"></td>
-                                        <td><span class="badge bg-danger" th:text="${asset.ageInYears} + ' Yrs'"></span>
+                                        <td>
+                                            <div class="d-flex flex-column gap-1 small">
+                                                <span
+                                                    th:class="${asset.deploymentStatus == 'Missing / Unaccounted' ? 'badge bg-danger' : ((asset.deploymentStatus == 'Deployed' or asset.deploymentStatus == 'Deployed / Assigned') ? 'badge bg-success' : ((asset.deploymentStatus == 'In Stock / Available') ? 'badge bg-dark' : ((asset.deploymentStatus == 'On Loan' or asset.deploymentStatus == 'In Transit') ? 'badge bg-warning text-dark' : 'badge bg-dark')))}"
+                                                    th:title="${asset.deploymentStatus == 'In Stock / Available' ? 'Ready for deployment.' : ((asset.deploymentStatus == 'Deployed' or asset.deploymentStatus == 'Deployed / Assigned') ? 'Currently assigned to a user.' : (asset.deploymentStatus == 'On Loan' ? 'Temporarily loaned and awaiting return.' : (asset.deploymentStatus == 'In Transit' ? 'Moving between locations and pending receipt.' : (asset.deploymentStatus == 'Missing / Unaccounted' ? 'Cannot be physically accounted for.' : 'Deployment status.'))))}"
+                                                    data-bs-toggle="tooltip" data-bs-placement="top"
+                                                    th:text="${asset.deploymentStatus == 'Deployed / Assigned' ? 'Deployed' : asset.deploymentStatus}"></span>
+                                                <span
+                                                    th:class="${asset.maintenanceHealthStatus == 'Operational' ? 'badge bg-success' : ((asset.maintenanceHealthStatus == 'Degraded') ? 'badge bg-warning text-dark' : ((asset.maintenanceHealthStatus == 'Under Repair' or asset.maintenanceHealthStatus == 'Awaiting Parts') ? 'badge bg-secondary' : ((asset.maintenanceHealthStatus == 'Beyond Economic Repair (BER)') ? 'badge bg-danger' : 'badge bg-dark')))}"
+                                                    th:title="${asset.maintenanceHealthStatus == 'Operational' ? 'Fully working.' : (asset.maintenanceHealthStatus == 'Degraded' ? 'Working with reduced performance.' : (asset.maintenanceHealthStatus == 'Under Repair' ? 'Under repair by technician/vendor.' : (asset.maintenanceHealthStatus == 'Awaiting Parts' ? 'Repair pending parts availability.' : (asset.maintenanceHealthStatus == 'Beyond Economic Repair (BER)' ? 'Repair cost exceeds asset value.' : 'Maintenance health status.'))))}"
+                                                    data-bs-toggle="tooltip" data-bs-placement="top"
+                                                    th:text="${asset.maintenanceHealthStatus}"></span>
+                                                <span
+                                                    th:class="${asset.lifecycleStatus == 'Active' ? 'badge bg-success' : ((asset.lifecycleStatus == 'Procured / Pre-Deployment') ? 'badge bg-primary' : ((asset.lifecycleStatus == 'End of Life (EOL)') ? 'badge bg-danger' : 'badge bg-dark'))}"
+                                                    th:title="${asset.lifecycleStatus == 'Procured / Pre-Deployment' ? 'Procured and preparing for use.' : (asset.lifecycleStatus == 'Active' ? 'Within usable lifespan.' : (asset.lifecycleStatus == 'End of Life (EOL)' ? 'Reached end-of-life and needs disposition planning.' : (asset.lifecycleStatus == 'Decommissioned / Retired' ? 'Removed from active service.' : (asset.lifecycleStatus == 'Disposed' ? 'Disposed from inventory.' : (asset.lifecycleStatus == 'Sold' ? 'Sold and closed out.' : 'Lifecycle status.')))))}"
+                                                    data-bs-toggle="tooltip" data-bs-placement="top"
+                                                    th:text="${asset.lifecycleStatus}"></span>
+                                            </div>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -250,9 +291,7 @@
                                         <th>Year</th>
                                         <th>Accountable Owner</th>
                                         <th>Reg. Expiry</th>
-                                        <th>Administrative &amp; Legal</th>
-                                        <th>Operational &amp; Dispatch</th>
-                                        <th>Maintenance &amp; Health</th>
+                                        <th>Status Overview</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -267,14 +306,24 @@
                                             th:text="${vehicle.assignedDriverID != null ? employeeMap[vehicle.assignedDriverID] : 'Unassigned'}">
                                         </td>
                                         <td th:text="${vehicle.registrationExpiry}"></td>
-                                        <td
-                                            th:text="${vehicle.adminLegaltionalStatus != null and !#strings.isEmpty(vehicle.adminLegaltionalStatus) ? vehicle.adminLegaltionalStatus : 'N/A'}">
-                                        </td>
-                                        <td><span class="badge bg-secondary"
-                                                th:text="${vehicle.operationalStatus != null and !#strings.isEmpty(vehicle.operationalStatus) ? vehicle.operationalStatus : 'N/A'}"></span>
-                                        </td>
-                                        <td
-                                            th:text="${vehicle.maintenanceStatus != null and !#strings.isEmpty(vehicle.maintenanceStatus) ? vehicle.maintenanceStatus : 'N/A'}">
+                                        <td>
+                                            <div class="d-flex flex-column gap-1 small">
+                                                <span
+                                                    th:class="${vehicle.adminLegaltionalStatus == 'Registration Expired' or vehicle.adminLegaltionalStatus == 'Impounded' ? 'badge bg-danger' : ((vehicle.adminLegaltionalStatus == 'Active / Registered') ? 'badge bg-success' : 'badge bg-dark')}"
+                                                    th:title="${vehicle.adminLegaltionalStatus == 'Active / Registered' ? 'Legally compliant for road use.' : (vehicle.adminLegaltionalStatus == 'Registration Expired' ? 'Registration renewal is required.' : (vehicle.adminLegaltionalStatus == 'Impounded' ? 'Vehicle is impounded and cannot operate.' : (vehicle.adminLegaltionalStatus == 'Decommissioned' ? 'Removed from active fleet.' : (vehicle.adminLegaltionalStatus == 'Disposed' ? 'Disposed from fleet records.' : (vehicle.adminLegaltionalStatus == 'Sold' ? 'Sold and closed out.' : 'Administrative and legal status.')))))}"
+                                                    data-bs-toggle="tooltip" data-bs-placement="top"
+                                                    th:text="${vehicle.adminLegaltionalStatus != null and !#strings.isEmpty(vehicle.adminLegaltionalStatus) ? vehicle.adminLegaltionalStatus : 'N/A'}"></span>
+                                                <span
+                                                    th:class="${vehicle.operationalStatus == 'Available/Idle' ? 'badge bg-primary' : ((vehicle.operationalStatus == 'Dispatched/In Transit') ? 'badge bg-success' : ((vehicle.operationalStatus == 'Reserved') ? 'badge bg-warning text-dark' : ((vehicle.operationalStatus == 'Grounded' or vehicle.operationalStatus == 'Missing/Stolen' or vehicle.operationalStatus == 'Slated for Disposal') ? 'badge bg-danger' : 'badge bg-dark')))}"
+                                                    th:title="${vehicle.operationalStatus == 'Available/Idle' ? 'Ready for dispatch.' : (vehicle.operationalStatus == 'Dispatched/In Transit' ? 'Currently deployed for operations.' : (vehicle.operationalStatus == 'Reserved' ? 'Reserved and awaiting dispatch.' : (vehicle.operationalStatus == 'Grounded' ? 'Not allowed to operate pending action.' : (vehicle.operationalStatus == 'Missing/Stolen' ? 'Missing or reported stolen.' : (vehicle.operationalStatus == 'Slated for Disposal' ? 'Queued for retirement/disposal.' : 'Operational status.')))))}"
+                                                    data-bs-toggle="tooltip" data-bs-placement="top"
+                                                    th:text="${vehicle.operationalStatus != null and !#strings.isEmpty(vehicle.operationalStatus) ? vehicle.operationalStatus : 'N/A'}"></span>
+                                                <span
+                                                    th:class="${vehicle.maintenanceStatus == 'Roadworthy' ? 'badge bg-success' : ((vehicle.maintenanceStatus == 'Scheduled Maintenance') ? 'badge bg-warning text-dark' : ((vehicle.maintenanceStatus == 'Under Repair' or vehicle.maintenanceStatus == 'Awaiting Parts') ? 'badge bg-secondary' : ((vehicle.maintenanceStatus == 'Beyond Economic Repair (BER)') ? 'badge bg-danger' : 'badge bg-dark')))}"
+                                                    th:title="${vehicle.maintenanceStatus == 'Roadworthy' ? 'Vehicle is fit for operation.' : (vehicle.maintenanceStatus == 'Scheduled Maintenance' ? 'Scheduled maintenance is pending.' : (vehicle.maintenanceStatus == 'Under Repair' ? 'Actively being repaired.' : (vehicle.maintenanceStatus == 'Awaiting Parts' ? 'Repair is waiting for parts.' : (vehicle.maintenanceStatus == 'Beyond Economic Repair (BER)' ? 'Repair is no longer economical.' : 'Maintenance health status.'))))}"
+                                                    data-bs-toggle="tooltip" data-bs-placement="top"
+                                                    th:text="${vehicle.maintenanceStatus != null and !#strings.isEmpty(vehicle.maintenanceStatus) ? vehicle.maintenanceStatus : 'N/A'}"></span>
+                                            </div>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -378,10 +427,7 @@
                                         <th>Location</th>
                                         <th>Custodian</th>
                                         <th>Assessed Value</th>
-                                        <th>Tax Status</th>
-                                        <th>Legal &amp; Titling Status</th>
-                                        <th>Operational Status</th>
-                                        <th>Condition Status</th>
+                                        <th>Status Overview</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -399,18 +445,29 @@
                                         <td
                                             th:text="'PHP ' + ${#numbers.formatDecimal(prop.assessedValue, 1, 'COMMA', 2, 'POINT')}">
                                         </td>
-                                        <td><span class="badge bg-danger" th:text="${prop.propertyTaxStatus}"></span>
-                                        </td>
-                                        <td
-                                            th:text="${prop.legalTitlingStatus != null and !#strings.isEmpty(prop.legalTitlingStatus) ? prop.legalTitlingStatus : 'N/A'}">
-                                        </td>
                                         <td>
-                                            <span
-                                                th:class="${prop.operationalStatus == 'Active/In Use' ? 'badge bg-primary' : 'badge bg-secondary'}"
-                                                th:text="${prop.operationalStatus != null and !#strings.isEmpty(prop.operationalStatus) ? prop.operationalStatus : 'N/A'}"></span>
-                                        </td>
-                                        <td
-                                            th:text="${prop.conditionStatus != null and !#strings.isEmpty(prop.conditionStatus) ? prop.conditionStatus : 'N/A'}">
+                                            <div class="d-flex flex-column gap-1 small">
+                                                <span
+                                                    th:class="${prop.propertyTaxStatus != null and prop.propertyTaxStatus.startsWith('Paid') ? 'badge bg-success' : 'badge bg-danger'}"
+                                                    th:title="${prop.propertyTaxStatus != null and prop.propertyTaxStatus.startsWith('Paid') ? 'Tax obligations are up to date.' : 'Tax payment is pending or overdue.'}"
+                                                    data-bs-toggle="tooltip" data-bs-placement="top"
+                                                    th:text="${prop.propertyTaxStatus}"></span>
+                                                <span
+                                                    th:class="${prop.legalTitlingStatus == 'Titled' ? 'badge bg-success' : ((prop.legalTitlingStatus == 'In Process') ? 'badge bg-secondary' : ((prop.legalTitlingStatus == 'Under Dispute') ? 'badge bg-danger' : ((prop.legalTitlingStatus == 'Tax Declared Only' or prop.legalTitlingStatus == 'Expropriated') ? 'badge bg-warning text-dark' : 'badge bg-dark')))}"
+                                                    th:title="${prop.legalTitlingStatus == 'Titled' ? 'Title documentation is complete.' : (prop.legalTitlingStatus == 'Tax Declared Only' ? 'Tax declared but title not yet complete.' : (prop.legalTitlingStatus == 'In Process' ? 'Titling documentation is being processed.' : (prop.legalTitlingStatus == 'Leased' ? 'Property is under lease arrangement.' : (prop.legalTitlingStatus == 'Under Dispute' ? 'Property has legal dispute exposure.' : (prop.legalTitlingStatus == 'Expropriated' ? 'Subject to expropriation proceedings.' : 'Legal titling status.')))))}"
+                                                    data-bs-toggle="tooltip" data-bs-placement="top"
+                                                    th:text="${prop.legalTitlingStatus != null and !#strings.isEmpty(prop.legalTitlingStatus) ? prop.legalTitlingStatus : 'N/A'}"></span>
+                                                <span
+                                                    th:class="${prop.operationalStatus == 'Active/In Use' ? 'badge bg-success' : ((prop.operationalStatus == 'Vacant/Idle' or prop.operationalStatus == 'Slated for Disposal') ? 'badge bg-danger' : ((prop.operationalStatus == 'Under Construction') ? 'badge bg-secondary' : ((prop.operationalStatus == 'Co-Located' or prop.operationalStatus == 'Leased Out') ? 'badge bg-primary' : 'badge bg-dark')))}"
+                                                    th:title="${prop.operationalStatus == 'Active/In Use' ? 'Property is actively utilized.' : (prop.operationalStatus == 'Vacant/Idle' ? 'Property is idle and needs utilization action.' : (prop.operationalStatus == 'Co-Located' ? 'Shared operational usage with another office.' : (prop.operationalStatus == 'Leased Out' ? 'Operationally active through lease arrangement.' : (prop.operationalStatus == 'Under Construction' ? 'Construction or upgrade is ongoing.' : (prop.operationalStatus == 'Slated for Disposal' ? 'Marked for disposal.' : 'Operational status.')))))}"
+                                                    data-bs-toggle="tooltip" data-bs-placement="top"
+                                                    th:text="${prop.operationalStatus != null and !#strings.isEmpty(prop.operationalStatus) ? prop.operationalStatus : 'N/A'}"></span>
+                                                <span
+                                                    th:class="${prop.conditionStatus == 'Excellent' or prop.conditionStatus == 'Good' ? 'badge bg-success' : ((prop.conditionStatus == 'Fair') ? 'badge bg-warning text-dark' : ((prop.conditionStatus == 'Poor' or prop.conditionStatus == 'Condemned') ? 'badge bg-danger' : 'badge bg-dark'))}"
+                                                    th:title="${prop.conditionStatus == 'Excellent' ? 'Excellent physical condition.' : (prop.conditionStatus == 'Good' ? 'Good condition with routine maintenance only.' : (prop.conditionStatus == 'Fair' ? 'Needs minor repairs or monitoring.' : (prop.conditionStatus == 'Poor' ? 'Needs major intervention.' : (prop.conditionStatus == 'Condemned' ? 'Unsafe condition requiring immediate action.' : 'Condition status.'))))}"
+                                                    data-bs-toggle="tooltip" data-bs-placement="top"
+                                                    th:text="${prop.conditionStatus != null and !#strings.isEmpty(prop.conditionStatus) ? prop.conditionStatus : 'N/A'}"></span>
+                                            </div>
                                         </td>
                                     </tr>
                                 </tbody>

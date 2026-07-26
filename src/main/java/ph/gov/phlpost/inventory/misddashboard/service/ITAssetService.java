@@ -20,7 +20,7 @@ public class ITAssetService {
     public void assignAsset(String assetTag, String employeeId, String notes) {
         Asset asset = assetRepo.findById(assetTag).orElseThrow(() -> new IllegalArgumentException("Asset not found."));
         asset.setCurrentOwnerID(employeeId);
-        asset.setDeploymentStatus("Deployed / Assigned");
+        asset.setDeploymentStatus("Deployed");
         if (asset.getLifecycleStatus() == null || asset.getLifecycleStatus().isBlank()
                 || "Procured / Pre-Deployment".equals(asset.getLifecycleStatus())) {
             asset.setLifecycleStatus("Active");
