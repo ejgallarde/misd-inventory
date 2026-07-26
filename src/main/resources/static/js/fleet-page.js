@@ -34,7 +34,7 @@ $(document).ready(function () {
     });
 
     const fleetTable = $('#fleetTable').DataTable(MISDCommon.buildStandardDataTableConfig({
-        pageLength: 25,
+        pageLength: 10,
         lengthMenu: [[10, 25, 50, -1], [10, 25, 50, 'All']],
         order: [[0, 'asc']]
     }));

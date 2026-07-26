@@ -34,7 +34,7 @@ $(document).ready(function () {
     });
 
     const propertiesTable = $('#propertiesTable').DataTable(MISDCommon.buildStandardDataTableConfig({
-        pageLength: 25,
+        pageLength: 10,
         lengthMenu: [[10, 25, 50, -1], [10, 25, 50, 'All']],
         order: [[1, 'asc']]
     }));

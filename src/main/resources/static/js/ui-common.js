@@ -2,7 +2,7 @@ window.MISDCommon = (function (jqueryGlobal) {
     const $ = jqueryGlobal || null;
     const selectedFilesByInput = new WeakMap();
 
-    function applyTheme(theme, toggleButton) {
+    function applyTheme(theme, toggleButton, storageKey = 'misd-theme') {
         document.body.setAttribute('data-theme', theme);
         document.documentElement.setAttribute('data-bs-theme', theme);
 
@@ -12,19 +12,19 @@ window.MISDCommon = (function (jqueryGlobal) {
             toggleButton.setAttribute('aria-label', theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme');
         }
 
-        localStorage.setItem('misd-theme', theme);
+        sessionStorage.setItem(storageKey, theme);
     }
 
     function setupThemeToggle(buttonId, storageKey = 'misd-theme', defaultTheme = 'light') {
         const toggleButton = document.getElementById(buttonId);
-        const savedTheme = localStorage.getItem(storageKey) || defaultTheme;
+        const savedTheme = sessionStorage.getItem(storageKey) || defaultTheme;
 
-        applyTheme(savedTheme, toggleButton);
+        applyTheme(savedTheme, toggleButton, storageKey);
 
         if (toggleButton) {
             toggleButton.addEventListener('click', function () {
                 const nextTheme = document.body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-                applyTheme(nextTheme, toggleButton);
+                applyTheme(nextTheme, toggleButton, storageKey);
             });
         }
     }
