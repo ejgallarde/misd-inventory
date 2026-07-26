@@ -102,15 +102,15 @@
                                         th:class="${asset.deploymentStatus == 'Missing / Unaccounted' ? 'badge bg-danger' : ((asset.deploymentStatus == 'Deployed' or asset.deploymentStatus == 'Deployed / Assigned') ? 'badge bg-success' : ((asset.deploymentStatus == 'In Stock / Available') ? 'badge bg-dark' : ((asset.deploymentStatus == 'On Loan' or asset.deploymentStatus == 'In Transit') ? 'badge bg-warning text-dark' : 'badge bg-dark')))}"
                                         th:title="${asset.deploymentStatus == 'In Stock / Available' ? 'Ready for deployment.' : ((asset.deploymentStatus == 'Deployed' or asset.deploymentStatus == 'Deployed / Assigned') ? 'Currently assigned to a user.' : (asset.deploymentStatus == 'On Loan' ? 'Temporarily loaned and awaiting return.' : (asset.deploymentStatus == 'In Transit' ? 'Moving between locations and pending receipt.' : (asset.deploymentStatus == 'Missing / Unaccounted' ? 'Cannot be physically accounted for.' : 'Deployment status.'))))}"
                                         data-bs-toggle="tooltip" data-bs-placement="top"
-                                        th:text="${asset.deploymentStatus == 'Deployed / Assigned' ? 'Deployed' : asset.deploymentStatus}"></span>
+                                        th:text="${'Deployment: ' + (asset.deploymentStatus == 'Deployed / Assigned' ? 'Deployed' : asset.deploymentStatus)}"></span>
                                     <span class="badge bg-secondary"
                                         th:if="${asset.maintenanceHealthStatus != null and !#strings.isEmpty(asset.maintenanceHealthStatus)}"
-                                        th:text="${asset.maintenanceHealthStatus}"></span>
+                                        th:text="${'Health: ' + asset.maintenanceHealthStatus}"></span>
                                     <span class="badge bg-dark"
                                         th:if="${asset.lifecycleStatus != null and !#strings.isEmpty(asset.lifecycleStatus)}"
                                         th:title="${asset.lifecycleStatus == 'Procured / Pre-Deployment' ? 'Procured and preparing for use.' : (asset.lifecycleStatus == 'Active' ? 'Currently in active service.' : (asset.lifecycleStatus == 'End of Life (EOL)' ? 'Reached end-of-life and needs disposition planning.' : (asset.lifecycleStatus == 'Decommissioned / Retired' ? 'Removed from active service.' : (asset.lifecycleStatus == 'Disposed' ? 'Disposed from inventory.' : (asset.lifecycleStatus == 'Sold' ? 'Sold and closed out.' : 'Lifecycle status.')))))}"
                                         data-bs-toggle="tooltip" data-bs-placement="top"
-                                        th:text="${asset.lifecycleStatus}"></span>
+                                        th:text="${'Lifecycle: ' + asset.lifecycleStatus}"></span>
                                 </div>
                             </td>
 
