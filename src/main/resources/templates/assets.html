@@ -64,7 +64,7 @@
                             <th>Accountable Owner</th>
                             <th>Department</th>
                             <th>Division</th>
-                            <th>Status</th>
+                            <th>Status Overview</th>
                             <th>Action</th>
                         </tr>
                     </thead>
@@ -96,18 +96,20 @@
                                 th:text="${(asset.currentOwnerID != null and divisionMap[asset.currentOwnerID] != null) ? divisionMap[asset.currentOwnerID] : 'MISD - Unassigned'}">
                             </td>
                             <td>
-                                <!-- Dynamic Status Badges -->
-                                <span
-                                    th:class="${asset.currentStatus == 'Deployed' ? 'badge bg-success' : 
-                                               (asset.currentStatus == 'In Storage' ? 'badge bg-primary' : 
-                                               (asset.currentStatus == 'In Warranty Repair' ? 'badge bg-info text-dark' : 
-                                               (asset.currentStatus == 'Unserviceable' ? 'badge bg-warning text-dark' : 'badge bg-dark')))}"
-                                    th:text="${asset.currentStatus}"></span>
+                                <div class="d-flex flex-column gap-1 small">
+                                    <span class="badge bg-primary"
+                                        th:text="${asset.deploymentStatus != null and !#strings.isEmpty(asset.deploymentStatus) ? asset.deploymentStatus : 'N/A'}"></span>
+                                    <span class="badge bg-secondary"
+                                        th:text="${asset.maintenanceHealthStatus != null and !#strings.isEmpty(asset.maintenanceHealthStatus) ? asset.maintenanceHealthStatus : 'N/A'}"></span>
+                                    <span class="badge bg-dark"
+                                        th:text="${asset.lifecycleStatus != null and !#strings.isEmpty(asset.lifecycleStatus) ? asset.lifecycleStatus : 'N/A'}"></span>
+                                </div>
                             </td>
 
                             <!-- DYNAMIC ACTION DROPDOWN -->
                             <td>
-                                <div class="dropdown" th:if="${asset.currentStatus != 'Retired'}">
+                                <div class="dropdown"
+                                    th:if="${asset.lifecycleStatus != 'Decommissioned / Retired' and asset.lifecycleStatus != 'Disposed' and asset.lifecycleStatus != 'Sold'}">
                                     <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
                                         data-bs-toggle="dropdown" aria-expanded="false">
                                         Actions
@@ -116,17 +118,19 @@
 
                                         <!-- Deployment Actions -->
                                         <li
-                                            th:if="${asset.currentStatus == 'In Storage' or asset.currentStatus == 'In Warranty Repair'}">
+                                            th:if="${asset.deploymentStatus == 'In Stock / Available' or asset.deploymentStatus == 'In Transit'}">
                                             <a class="dropdown-item action-btn" href="#" data-bs-toggle="modal"
                                                 data-bs-target="#assignModal"
                                                 th:data-assettag="${asset.assetTag}">Assign Asset</a>
                                         </li>
-                                        <li th:if="${asset.currentStatus == 'Deployed'}">
+                                        <li
+                                            th:if="${asset.deploymentStatus == 'Deployed / Assigned' or asset.deploymentStatus == 'On Loan'}">
                                             <a class="dropdown-item action-btn" href="#" data-bs-toggle="modal"
                                                 data-bs-target="#assignModal"
                                                 th:data-assettag="${asset.assetTag}">Re-assign User</a>
                                         </li>
-                                        <li th:if="${asset.currentStatus == 'Deployed'}">
+                                        <li
+                                            th:if="${asset.deploymentStatus == 'Deployed / Assigned' or asset.deploymentStatus == 'On Loan'}">
                                             <a class="dropdown-item action-btn" href="#" data-bs-toggle="modal"
                                                 data-bs-target="#returnModal"
                                                 th:data-assettag="${asset.assetTag}">Return to MISD</a>
@@ -137,12 +141,12 @@
                                             <hr class="dropdown-divider">
                                         </li>
 
-                                        <li th:if="${asset.currentStatus != 'In Warranty Repair'}">
+                                        <li th:if="${asset.maintenanceHealthStatus != 'Under Repair'}">
                                             <a class="dropdown-item text-info action-btn fw-bold" href="#"
                                                 data-bs-toggle="modal" data-bs-target="#warrantyModal"
                                                 th:data-assettag="${asset.assetTag}">Return for Warranty</a>
                                         </li>
-                                        <li th:if="${asset.currentStatus != 'Unserviceable'}">
+                                        <li th:if="${asset.maintenanceHealthStatus != 'Beyond Economic Repair (BER)'}">
                                             <a class="dropdown-item text-warning action-btn fw-bold" href="#"
                                                 data-bs-toggle="modal" data-bs-target="#unserviceableModal"
                                                 th:data-assettag="${asset.assetTag}">Mark Unserviceable</a>
@@ -154,7 +158,9 @@
                                         </li>
                                     </ul>
                                 </div>
-                                <span th:if="${asset.currentStatus == 'Retired'}" class="text-muted small">No
+                                <span
+                                    th:if="${asset.lifecycleStatus == 'Decommissioned / Retired' or asset.lifecycleStatus == 'Disposed' or asset.lifecycleStatus == 'Sold'}"
+                                    class="text-muted small">No
                                     Actions</span>
                             </td>
                         </tr>
@@ -370,10 +376,32 @@
                         </div>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label fw-bold text-muted small text-uppercase">Status</label>
-                        <select id="editCurrentStatus" name="currentStatus" class="form-select it-field bg-white"
+                        <label class="form-label fw-bold text-muted small text-uppercase">Deployment &amp; Assignment
+                            Status</label>
+                        <select id="editDeploymentStatus" name="deploymentStatus" class="form-select it-field bg-white"
                             disabled>
-                            <option th:each="status : ${assetStatusOptions}" th:value="${status}" th:text="${status}">
+                            <option th:each="status : ${assetDeploymentStatusOptions}" th:value="${status}"
+                                th:text="${status}">
+                            </option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-muted small text-uppercase">Maintenance &amp; Health
+                            Status</label>
+                        <select id="editMaintenanceHealthStatus" name="maintenanceHealthStatus"
+                            class="form-select it-field bg-white" disabled>
+                            <option th:each="status : ${assetMaintenanceHealthStatusOptions}" th:value="${status}"
+                                th:text="${status}">
+                            </option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-muted small text-uppercase">Lifecycle &amp; Administrative
+                            Status</label>
+                        <select id="editLifecycleStatus" name="lifecycleStatus" class="form-select it-field bg-white"
+                            disabled>
+                            <option th:each="status : ${assetLifecycleStatusOptions}" th:value="${status}"
+                                th:text="${status}">
                             </option>
                         </select>
                     </div>

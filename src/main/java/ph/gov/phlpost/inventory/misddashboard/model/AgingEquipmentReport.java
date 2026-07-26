@@ -7,7 +7,7 @@ import jakarta.persistence.Table;
 import java.time.LocalDate;
 
 @Entity
-@Table(name = "vw_agingequipment") // Tells Spring to read from your SQL View
+@Table(name = "vw_agingequipment") // Kept for native query result mapping compatibility.
 public class AgingEquipmentReport {
 
     // JPA requires a primary key, so we use the unique AssetTag

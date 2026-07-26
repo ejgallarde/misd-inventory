@@ -51,8 +51,14 @@ public class ITAssetController {
     @Value("#{'${document.upload.categories}'.split(',')}")
     private List<String> documentUploadCategories;
 
-    @Value("#{'${dropdown.asset-statuses}'.split(',')}")
-    private List<String> assetStatusOptions;
+    @Value("#{'${dropdown.asset-deployment-statuses}'.split(',')}")
+    private List<String> assetDeploymentStatusOptions;
+
+    @Value("#{'${dropdown.asset-maintenance-health-statuses}'.split(',')}")
+    private List<String> assetMaintenanceHealthStatusOptions;
+
+    @Value("#{'${dropdown.asset-lifecycle-statuses}'.split(',')}")
+    private List<String> assetLifecycleStatusOptions;
 
     public ITAssetController(AssetRepository assetRepo,
             EquipmentCatalogRepository catalogRepo, ITAssetService assetService,
@@ -81,9 +87,9 @@ public class ITAssetController {
         model.addAttribute("documentUploadCategories", documentUploadCategories.stream()
                 .sorted(String.CASE_INSENSITIVE_ORDER)
                 .toList());
-        model.addAttribute("assetStatusOptions", assetStatusOptions.stream()
-                .sorted(String.CASE_INSENSITIVE_ORDER)
-                .toList());
+        model.addAttribute("assetDeploymentStatusOptions", assetDeploymentStatusOptions);
+        model.addAttribute("assetMaintenanceHealthStatusOptions", assetMaintenanceHealthStatusOptions);
+        model.addAttribute("assetLifecycleStatusOptions", assetLifecycleStatusOptions);
         return "assets";
     }
 
@@ -121,8 +127,10 @@ public class ITAssetController {
             newAsset.setPurchasePrice(baseAsset.getPurchasePrice());
             newAsset.setRemarks(baseAsset.getRemarks());
 
-            // Apply Business Rules
-            newAsset.setCurrentStatus("In Storage");
+            // Apply Business Rules for initial receipt
+            newAsset.setDeploymentStatus("In Stock / Available");
+            newAsset.setMaintenanceHealthStatus("Operational");
+            newAsset.setLifecycleStatus("Procured / Pre-Deployment");
             newAsset.setCurrentOwnerID(null);
 
             // Handle Tag and Serial Logic
@@ -306,7 +314,9 @@ public class ITAssetController {
                 asset.getPurchaseDate(),
                 asset.getPurchasePrice(),
                 asset.getCurrentOwnerID(),
-                asset.getCurrentStatus(),
+                asset.getDeploymentStatus(),
+                asset.getMaintenanceHealthStatus(),
+                asset.getLifecycleStatus(),
                 asset.getRemarks(),
                 catalog == null ? null : catalog.getCategory(),
                 catalog == null ? null : catalog.getManufacturer(),
@@ -387,7 +397,9 @@ public class ITAssetController {
             LocalDate purchaseDate,
             java.math.BigDecimal purchasePrice,
             String currentOwnerID,
-            String currentStatus,
+            String deploymentStatus,
+            String maintenanceHealthStatus,
+            String lifecycleStatus,
             String remarks,
             String catalogCategory,
             String catalogManufacturer,

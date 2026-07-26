@@ -20,7 +20,14 @@ public class ITAssetService {
     public void assignAsset(String assetTag, String employeeId, String notes) {
         Asset asset = assetRepo.findById(assetTag).orElseThrow(() -> new IllegalArgumentException("Asset not found."));
         asset.setCurrentOwnerID(employeeId);
-        asset.setCurrentStatus("Deployed");
+        asset.setDeploymentStatus("Deployed / Assigned");
+        if (asset.getLifecycleStatus() == null || asset.getLifecycleStatus().isBlank()
+                || "Procured / Pre-Deployment".equals(asset.getLifecycleStatus())) {
+            asset.setLifecycleStatus("Active");
+        }
+        if (asset.getMaintenanceHealthStatus() == null || asset.getMaintenanceHealthStatus().isBlank()) {
+            asset.setMaintenanceHealthStatus("Operational");
+        }
         assetRepo.save(asset);
         auditService.logAssignment(assetTag, employeeId, "Checkout", notes);
     }
@@ -30,7 +37,10 @@ public class ITAssetService {
         Asset asset = assetRepo.findById(assetTag).orElseThrow(() -> new IllegalArgumentException("Asset not found."));
         String prevOwner = asset.getCurrentOwnerID();
         asset.setCurrentOwnerID(null);
-        asset.setCurrentStatus("In Storage");
+        asset.setDeploymentStatus("In Stock / Available");
+        if (asset.getLifecycleStatus() == null || asset.getLifecycleStatus().isBlank()) {
+            asset.setLifecycleStatus("Active");
+        }
         assetRepo.save(asset);
         auditService.logAssignment(assetTag, prevOwner != null ? prevOwner : "MISD", "Return", notes);
     }
@@ -38,8 +48,22 @@ public class ITAssetService {
     @Transactional
     public void updateLifecycle(String assetTag, String status, String actionType, String notes) {
         Asset asset = assetRepo.findById(assetTag).orElseThrow(() -> new IllegalArgumentException("Asset not found."));
-        asset.setCurrentOwnerID(null);
-        asset.setCurrentStatus(status);
+
+        if ("In Warranty Repair".equals(status)) {
+            asset.setMaintenanceHealthStatus("Under Repair");
+            if (asset.getLifecycleStatus() == null || asset.getLifecycleStatus().isBlank()
+                    || "Procured / Pre-Deployment".equals(asset.getLifecycleStatus())) {
+                asset.setLifecycleStatus("Active");
+            }
+        } else if ("Unserviceable".equals(status)) {
+            asset.setMaintenanceHealthStatus("Beyond Economic Repair (BER)");
+            asset.setLifecycleStatus("End of Life (EOL)");
+        } else if ("Retired".equals(status)) {
+            asset.setCurrentOwnerID(null);
+            asset.setDeploymentStatus("In Stock / Available");
+            asset.setLifecycleStatus("Decommissioned / Retired");
+        }
+
         assetRepo.save(asset);
         auditService.logLifecycleEvent(assetTag, "SYSTEM", actionType, notes);
     }

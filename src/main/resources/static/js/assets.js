@@ -185,8 +185,8 @@ $(document).ready(function () {
             $('#editSerialNumber').prop('disabled', true);
         }
 
-        // Keep 'Assigned To' locked unless Status is already 'Deployed'
-        if ($('#editCurrentStatus').val() !== 'Deployed') {
+        // Keep 'Assigned To' locked unless deployment status indicates active assignment.
+        if ($('#editDeploymentStatus').val() !== 'Deployed / Assigned' && $('#editDeploymentStatus').val() !== 'On Loan') {
             $('#editCurrentOwnerID').prop('disabled', true);
         }
 
@@ -202,8 +202,8 @@ $(document).ready(function () {
     });
 
     // Listen for Status Changes
-    $('#editCurrentStatus').on('change', function () {
-        if ($(this).val() === 'Deployed') {
+    $('#editDeploymentStatus').on('change', function () {
+        if ($(this).val() === 'Deployed / Assigned' || $(this).val() === 'On Loan') {
             $('#editCurrentOwnerID').prop('disabled', false);
         } else {
             $('#editCurrentOwnerID').prop('disabled', true).val(''); // Clear owner if not deployed
@@ -263,9 +263,9 @@ $(document).ready(function () {
             $('#editPurchasePrice').val(data.purchasePrice);
             $('#editCurrentOwnerID').val(data.currentOwnerID);
 
-            // Because we changed this to a <select>, this will automatically 
-            // select the correct option if it matches exactly.
-            $('#editCurrentStatus').val(data.currentStatus);
+            $('#editDeploymentStatus').val(data.deploymentStatus);
+            $('#editMaintenanceHealthStatus').val(data.maintenanceHealthStatus);
+            $('#editLifecycleStatus').val(data.lifecycleStatus);
             $('#editRemarks').val(data.remarks);
 
             lockForm(); // Ensure form starts locked

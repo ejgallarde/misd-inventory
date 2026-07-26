@@ -30,8 +30,14 @@ public class Asset {
     @Column(name = "CurrentOwnerID")
     private String currentOwnerID;
 
-    @Column(name = "CurrentStatus")
-    private String currentStatus;
+    @Column(name = "DeploymentStatus")
+    private String deploymentStatus;
+
+    @Column(name = "MaintenanceHealthStatus")
+    private String maintenanceHealthStatus;
+
+    @Column(name = "LifecycleStatus")
+    private String lifecycleStatus;
 
     @Column(name = "Remarks", columnDefinition = "TEXT")
     private String remarks;
@@ -88,12 +94,28 @@ public class Asset {
         this.currentOwnerID = currentOwnerID;
     }
 
-    public String getCurrentStatus() {
-        return currentStatus;
+    public String getDeploymentStatus() {
+        return deploymentStatus;
     }
 
-    public void setCurrentStatus(String currentStatus) {
-        this.currentStatus = currentStatus;
+    public void setDeploymentStatus(String deploymentStatus) {
+        this.deploymentStatus = deploymentStatus;
+    }
+
+    public String getMaintenanceHealthStatus() {
+        return maintenanceHealthStatus;
+    }
+
+    public void setMaintenanceHealthStatus(String maintenanceHealthStatus) {
+        this.maintenanceHealthStatus = maintenanceHealthStatus;
+    }
+
+    public String getLifecycleStatus() {
+        return lifecycleStatus;
+    }
+
+    public void setLifecycleStatus(String lifecycleStatus) {
+        this.lifecycleStatus = lifecycleStatus;
     }
 
     public String getRemarks() {

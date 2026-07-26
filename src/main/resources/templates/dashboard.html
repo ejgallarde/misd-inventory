@@ -80,7 +80,7 @@
                         data-bs-target="#addCatalogOffcanvas">+ Add to Catalog</button>
                 </div>
 
-                <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-4 g-3 flex-nowrap overflow-auto mb-4">
+                <div class="row g-3 mb-4" style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));">
                     <div class="col">
                         <a href="/assets" class="text-decoration-none">
                             <div class="card text-white bg-primary mb-3 shadow-sm hover-effect">
@@ -167,7 +167,7 @@
                         data-bs-target="#addVehicleOffcanvas">+ Register Vehicle</button>
                 </div>
 
-                <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-7 g-3 flex-nowrap overflow-auto mb-4">
+                <div class="row g-3 mb-4" style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));">
                     <div class="col">
                         <a href="/fleet" class="text-decoration-none">
                             <div class="card text-white bg-primary mb-3 shadow-sm hover-effect">
@@ -295,7 +295,7 @@
                         data-bs-target="#addPropertyOffcanvas">+ Add Property</button>
                 </div>
 
-                <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-7 g-3 flex-nowrap overflow-auto mb-4">
+                <div class="row g-3 mb-4" style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));">
                     <div class="col">
                         <a href="/properties" class="text-decoration-none">
                             <div class="card text-white bg-primary mb-3 shadow-sm hover-effect">
@@ -376,6 +376,7 @@
                                         <th>Property Name</th>
                                         <th>Title No.</th>
                                         <th>Location</th>
+                                        <th>Custodian</th>
                                         <th>Assessed Value</th>
                                         <th>Tax Status</th>
                                         <th>Legal &amp; Titling Status</th>
@@ -391,6 +392,9 @@
                                         </td>
                                         <td
                                             th:text="${(prop.addressLine1 != null ? prop.addressLine1 : '') + (prop.city != null and !#strings.isEmpty(prop.city) ? ', ' + prop.city : '') + (prop.province != null and !#strings.isEmpty(prop.province) ? ', ' + prop.province : '')}">
+                                        </td>
+                                        <td
+                                            th:text="${prop.custodianID != null and employeeMap[prop.custodianID] != null ? employeeMap[prop.custodianID] : 'Unassigned'}">
                                         </td>
                                         <td
                                             th:text="'PHP ' + ${#numbers.formatDecimal(prop.assessedValue, 1, 'COMMA', 2, 'POINT')}">
