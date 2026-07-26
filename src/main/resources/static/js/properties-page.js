@@ -54,10 +54,19 @@ $(document).ready(function () {
 
     function setPropertyEditMode(enabled) {
         isPropertyEditMode = enabled;
-        $('.property-view-only').toggleClass('d-none', enabled);
-        $('.property-edit-only').toggleClass('d-none', !enabled);
+        $('#propertyDetailOffcanvas').toggleClass('property-edit-mode-active', enabled);
+        $('.property-detail-view-only').toggleClass('d-none', enabled);
+        $('.property-detail-edit-only').toggleClass('d-none', !enabled);
         $('#enablePropertyEditBtn').toggleClass('d-none', enabled);
         $('#savePropertyEditBtn, #cancelPropertyEditBtn').toggleClass('d-none', !enabled);
+        $('.property-field').prop('disabled', !enabled);
+    }
+
+    function resetDetailPanelScroll() {
+        const offcanvasBody = document.querySelector('#propertyDetailOffcanvas .offcanvas-body');
+        if (offcanvasBody) {
+            offcanvasBody.scrollTop = 0;
+        }
     }
 
     function fillPropertyEditFields(data) {
@@ -187,11 +196,16 @@ $(document).ready(function () {
 
             currentPropertyReferenceId = data.propertyID != null ? String(data.propertyID) : null;
             loadPropertyDocuments(currentPropertyReferenceId);
+            resetDetailPanelScroll();
 
-            bootstrap.Modal.getOrCreateInstance(document.getElementById('propertyDetailModal')).show();
+            bootstrap.Offcanvas.getOrCreateInstance(document.getElementById('propertyDetailOffcanvas')).show();
         }).fail(function () {
             alert('Unable to load property details.');
         });
+    });
+
+    $('#propertyDetailOffcanvas').on('shown.bs.offcanvas', function () {
+        resetDetailPanelScroll();
     });
 
     $('#enablePropertyEditBtn').on('click', function () {
@@ -299,6 +313,10 @@ $(document).ready(function () {
     MISDCommon.bindClick('.property-doc-delete', function (button) {
         const docId = button.data('doc-id');
         MISDCommon.deleteDocumentById(docId, {
+            useModalConfirm: true,
+            confirmTitle: 'Delete Attachment',
+            confirmMessage: 'Remove this attachment from the selected property?',
+            confirmButtonText: 'Delete',
             onSuccess: function () {
                 loadPropertyDocuments(currentPropertyReferenceId);
             },
@@ -316,7 +334,7 @@ $(document).ready(function () {
         }
     });
 
-    $('#propertyDetailModal').on('hidden.bs.modal', function () {
+    $('#propertyDetailOffcanvas').on('hidden.bs.offcanvas', function () {
         currentPropertyReferenceId = null;
         currentPropertyData = null;
         setPropertyEditMode(false);

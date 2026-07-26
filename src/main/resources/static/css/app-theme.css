@@ -326,6 +326,43 @@ body[data-theme="dark"] #itDetailOffcanvas.asset-edit-mode-active .it-field:disa
     display: none !important;
 }
 
+#fleetDetailOffcanvas.fleet-edit-mode-active .fleet-field:disabled,
+#propertyDetailOffcanvas.property-edit-mode-active .property-field:disabled {
+    background-color: #edf3f9 !important;
+    color: #6a7b8d !important;
+    border-color: #b8c7d9 !important;
+    box-shadow: none !important;
+    opacity: 1 !important;
+    cursor: not-allowed;
+}
+
+body[data-theme="dark"] #fleetDetailOffcanvas.fleet-edit-mode-active .fleet-field:disabled,
+body[data-theme="dark"] #propertyDetailOffcanvas.property-edit-mode-active .property-field:disabled {
+    background-color: #182435 !important;
+    color: #8ea2b8 !important;
+    border-color: #304459 !important;
+}
+
+#fleetDetailOffcanvas.fleet-edit-mode-active .fleet-field:disabled::placeholder,
+#propertyDetailOffcanvas.property-edit-mode-active .property-field:disabled::placeholder {
+    color: #8797a8 !important;
+}
+
+body[data-theme="dark"] #fleetDetailOffcanvas.fleet-edit-mode-active .fleet-field:disabled::placeholder,
+body[data-theme="dark"] #propertyDetailOffcanvas.property-edit-mode-active .property-field:disabled::placeholder {
+    color: #6f8096 !important;
+}
+
+#fleetDetailOffcanvas:not(.fleet-edit-mode-active) .fleet-detail-edit-only,
+#propertyDetailOffcanvas:not(.property-edit-mode-active) .property-detail-edit-only {
+    display: none !important;
+}
+
+#fleetDetailOffcanvas.fleet-edit-mode-active .fleet-detail-view-only,
+#propertyDetailOffcanvas.property-edit-mode-active .property-detail-view-only {
+    display: none !important;
+}
+
 .required-indicator {
     color: #dc3545;
     font-weight: 700;

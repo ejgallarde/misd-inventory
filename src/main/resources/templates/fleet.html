@@ -245,75 +245,112 @@
     <script th:src="@{/js/csrf.js}"></script>
     <script th:src="@{/js/fleet-page.js}"></script>
 
-    <!-- Fleet Detail Modal -->
-    <div class="modal fade" id="fleetDetailModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-xl">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Fleet Vehicle Details</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="row gy-2">
-                        <div class="col-sm-6">
-                            <label class="form-label fw-semibold">Plate Number</label>
-                            <div id="fleetDetailPlate" class="form-control-plaintext"></div>
-                        </div>
-                        <div class="col-sm-6">
-                            <label class="form-label fw-semibold">Vehicle Type</label>
-                            <div id="fleetDetailType" class="form-control-plaintext"></div>
-                        </div>
-                        <div class="col-sm-6">
-                            <label class="form-label fw-semibold">Make & Model</label>
-                            <div id="fleetDetailMakeModel" class="form-control-plaintext"></div>
-                        </div>
-                        <div class="col-sm-6">
-                            <label class="form-label fw-semibold">Manufacture Year</label>
-                            <div id="fleetDetailYear" class="form-control-plaintext"></div>
-                        </div>
-                        <div class="col-sm-6">
-                            <label class="form-label fw-semibold">Body Number</label>
-                            <div id="fleetDetailBodyNumber" class="form-control-plaintext"></div>
-                        </div>
-                        <div class="col-sm-6">
-                            <label class="form-label fw-semibold">Fuel Type</label>
-                            <div id="fleetDetailFuelType" class="form-control-plaintext"></div>
-                        </div>
-                        <div class="col-sm-6">
-                            <label class="form-label fw-semibold">Engine Number</label>
-                            <div id="fleetDetailEngineNumber" class="form-control-plaintext"></div>
-                        </div>
-                        <div class="col-sm-6">
-                            <label class="form-label fw-semibold">Chassis Number / VIN</label>
-                            <div id="fleetDetailChassisVin" class="form-control-plaintext"></div>
-                        </div>
-                        <div class="col-sm-6">
-                            <label class="form-label fw-semibold">Assigned Driver</label>
-                            <div id="fleetDetailDriver" class="form-control-plaintext"></div>
-                        </div>
-                        <div class="col-sm-6">
-                            <label class="form-label fw-semibold">Registration Expiry</label>
-                            <div id="fleetDetailRegExpiry" class="form-control-plaintext"></div>
-                        </div>
-                        <div class="col-sm-6">
-                            <label class="form-label fw-semibold">Insurance Expiry</label>
-                            <div id="fleetDetailInsuranceExpiry" class="form-control-plaintext"></div>
-                        </div>
-                        <div class="col-sm-6">
-                            <label class="form-label fw-semibold">Cost</label>
-                            <div id="fleetDetailCost" class="form-control-plaintext"></div>
-                        </div>
-                        <div class="col-sm-6">
-                            <label class="form-label fw-semibold">Current Status</label>
-                            <div id="fleetDetailStatus" class="form-control-plaintext"></div>
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label fw-semibold">Remarks</label>
-                            <div id="fleetDetailRemarks" class="form-control-plaintext"></div>
-                        </div>
+    <!-- Fleet Detail Slideout (Offcanvas) -->
+    <div class="offcanvas offcanvas-end shadow" tabindex="-1" id="fleetDetailOffcanvas"
+        aria-labelledby="fleetDetailLabel" style="width: min(860px, 96vw);">
+        <div class="offcanvas-header bg-dark text-white">
+            <h5 class="offcanvas-title mb-0" id="fleetDetailLabel">Fleet Vehicle Details</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"
+                aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body bg-light">
+            <form id="fleetEditForm">
+                <input type="hidden" id="editFleetVehicleID" name="vehicleID">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-muted small text-uppercase">Plate Number</label>
+                        <div id="fleetDetailPlate" class="form-control-plaintext fleet-detail-view-only"></div>
+                        <input type="text" id="editFleetPlateNumber" name="plateNumber"
+                            class="form-control fleet-field fleet-detail-edit-only d-none" disabled>
                     </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-muted small text-uppercase">Vehicle Type</label>
+                        <div id="fleetDetailType" class="form-control-plaintext fleet-detail-view-only"></div>
+                        <input type="text" id="editFleetVehicleType" name="vehicleType"
+                            class="form-control fleet-field fleet-detail-edit-only d-none" disabled>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-muted small text-uppercase">Make</label>
+                        <div id="fleetDetailMake" class="form-control-plaintext fleet-detail-view-only"></div>
+                        <input type="text" id="editFleetMake" name="make"
+                            class="form-control fleet-field fleet-detail-edit-only d-none" disabled>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-muted small text-uppercase">Model</label>
+                        <div id="fleetDetailModel" class="form-control-plaintext fleet-detail-view-only"></div>
+                        <input type="text" id="editFleetModel" name="model"
+                            class="form-control fleet-field fleet-detail-edit-only d-none" disabled>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-muted small text-uppercase">Manufacture Year</label>
+                        <div id="fleetDetailYear" class="form-control-plaintext fleet-detail-view-only"></div>
+                        <input type="number" id="editFleetManufactureYear" name="manufactureYear"
+                            class="form-control fleet-field fleet-detail-edit-only d-none" disabled>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-muted small text-uppercase">Body Number</label>
+                        <div id="fleetDetailBodyNumber" class="form-control-plaintext fleet-detail-view-only"></div>
+                        <input type="text" id="editFleetBodyNumber" name="bodyNumber"
+                            class="form-control fleet-field fleet-detail-edit-only d-none" disabled>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-muted small text-uppercase">Fuel Type</label>
+                        <div id="fleetDetailFuelType" class="form-control-plaintext fleet-detail-view-only"></div>
+                        <input type="text" id="editFleetFuelType" name="fuelType"
+                            class="form-control fleet-field fleet-detail-edit-only d-none" disabled>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-muted small text-uppercase">Engine Number</label>
+                        <div id="fleetDetailEngineNumber" class="form-control-plaintext fleet-detail-view-only"></div>
+                        <input type="text" id="editFleetEngineNumber" name="engineNumber"
+                            class="form-control fleet-field fleet-detail-edit-only d-none" disabled>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-muted small text-uppercase">Chassis Number / VIN</label>
+                        <div id="fleetDetailChassisVin" class="form-control-plaintext fleet-detail-view-only"></div>
+                        <input type="text" id="editFleetChassisVin" name="chassisNumberVIN"
+                            class="form-control fleet-field fleet-detail-edit-only d-none" disabled>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-muted small text-uppercase">Assigned Driver</label>
+                        <div id="fleetDetailDriver" class="form-control-plaintext"></div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-muted small text-uppercase">Registration Expiry</label>
+                        <div id="fleetDetailRegExpiry" class="form-control-plaintext fleet-detail-view-only"></div>
+                        <input type="date" id="editFleetRegistrationExpiry" name="registrationExpiry"
+                            class="form-control fleet-field fleet-detail-edit-only d-none" disabled>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-muted small text-uppercase">Insurance Expiry</label>
+                        <div id="fleetDetailInsuranceExpiry" class="form-control-plaintext fleet-detail-view-only">
+                        </div>
+                        <input type="date" id="editFleetInsuranceExpiry" name="insuranceExpiry"
+                            class="form-control fleet-field fleet-detail-edit-only d-none" disabled>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-muted small text-uppercase">Cost</label>
+                        <div id="fleetDetailCost" class="form-control-plaintext fleet-detail-view-only"></div>
+                        <input type="text" id="editFleetCost" name="cost"
+                            class="form-control fleet-field fleet-detail-edit-only d-none" disabled>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-muted small text-uppercase">Current Status</label>
+                        <div id="fleetDetailStatus" class="form-control-plaintext fleet-detail-view-only"></div>
+                        <input type="text" id="editFleetStatus" name="currentStatus"
+                            class="form-control fleet-field fleet-detail-edit-only d-none" disabled>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-bold text-muted small text-uppercase">Remarks</label>
+                        <div id="fleetDetailRemarks" class="form-control-plaintext fleet-detail-view-only"></div>
+                        <textarea id="editFleetRemarks" name="remarks"
+                            class="form-control fleet-field fleet-detail-edit-only d-none" rows="3" disabled></textarea>
+                    </div>
+                </div>
 
-                    <hr class="my-3">
+                <hr class="my-4">
+
+                <div>
                     <h6 class="fw-bold mb-3">Attached Documents</h6>
                     <div id="fleetDocumentsEmpty" class="text-muted small">No documents attached yet.</div>
                     <table class="table table-sm table-bordered align-middle mb-0 documents-grid-table">
@@ -328,7 +365,7 @@
                         <tbody id="fleetDocumentsTableBody"></tbody>
                     </table>
 
-                    <div class="mt-3">
+                    <div class="mt-3 fleet-detail-edit-only d-none">
                         <label class="form-label fw-bold text-muted small text-uppercase">Upload Additional
                             Documents</label>
                         <input type="file" id="fleetDetailDocumentFiles" class="form-control js-detail-document-input"
@@ -349,11 +386,19 @@
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+
+                <hr class="my-4">
+
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="offcanvas">Close</button>
+                    <button type="button" class="btn btn-outline-secondary w-100" id="enableFleetEditBtn">Enable Edit
+                        Mode</button>
+                    <button type="button" class="btn btn-outline-danger w-100 d-none" id="cancelFleetEditBtn">Cancel
+                        Edit</button>
+                    <button type="button" class="btn btn-primary w-100 d-none" id="saveFleetEditBtn">Save
+                        Changes</button>
                 </div>
-            </div>
+            </form>
         </div>
     </div>
 </body>

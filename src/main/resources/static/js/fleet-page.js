@@ -1,5 +1,6 @@
 $(document).ready(function () {
     let currentFleetReferenceId = null;
+    let currentFleetData = null;
 
     function formatDate(value) {
         if (!value) {
@@ -10,6 +11,20 @@ $(document).ready(function () {
             return value;
         }
         return parsed.toLocaleDateString();
+    }
+
+    function formatDateInput(value) {
+        if (!value) {
+            return '';
+        }
+        if (typeof value === 'string') {
+            return value.split('T')[0];
+        }
+        const parsed = new Date(value);
+        if (Number.isNaN(parsed.getTime())) {
+            return '';
+        }
+        return parsed.toISOString().split('T')[0];
     }
 
     const fleetDocumentConfig = {
@@ -36,6 +51,55 @@ $(document).ready(function () {
             emptyText: fleetDocumentConfig.emptyText,
             loadErrorText: fleetDocumentConfig.loadErrorText
         });
+    }
+
+    function setFleetEditMode(enabled) {
+        $('#fleetDetailOffcanvas').toggleClass('fleet-edit-mode-active', enabled);
+        $('.fleet-detail-view-only').toggleClass('d-none', enabled);
+        $('.fleet-detail-edit-only').toggleClass('d-none', !enabled);
+        $('#enableFleetEditBtn').toggleClass('d-none', enabled);
+        $('#saveFleetEditBtn, #cancelFleetEditBtn').toggleClass('d-none', !enabled);
+        $('.fleet-field').prop('disabled', !enabled);
+    }
+
+    function fillFleetEditFields(data) {
+        $('#editFleetVehicleID').val(data.vehicleID || '');
+        $('#editFleetPlateNumber').val(data.plateNumber || '');
+        $('#editFleetVehicleType').val(data.vehicleType || '');
+        $('#editFleetMake').val(data.make || '');
+        $('#editFleetModel').val(data.model || '');
+        $('#editFleetManufactureYear').val(data.manufactureYear || '');
+        $('#editFleetBodyNumber').val(data.bodyNumber || '');
+        $('#editFleetFuelType').val(data.fuelType || '');
+        $('#editFleetEngineNumber').val(data.engineNumber || '');
+        $('#editFleetChassisVin').val(data.chassisNumberVIN || '');
+        $('#editFleetRegistrationExpiry').val(formatDateInput(data.registrationExpiry));
+        $('#editFleetInsuranceExpiry').val(formatDateInput(data.insuranceExpiry));
+        $('#editFleetCost').val(data.cost || '');
+        $('#editFleetStatus').val(data.currentStatus || '');
+        $('#editFleetRemarks').val(data.remarks || '');
+    }
+
+    function buildFleetUpdatePayload() {
+        const vehicleID = Number($('#editFleetVehicleID').val());
+        return {
+            vehicleID: Number.isNaN(vehicleID) ? null : vehicleID,
+            plateNumber: $('#editFleetPlateNumber').val(),
+            vehicleType: $('#editFleetVehicleType').val(),
+            make: $('#editFleetMake').val(),
+            model: $('#editFleetModel').val(),
+            manufactureYear: $('#editFleetManufactureYear').val() || null,
+            bodyNumber: $('#editFleetBodyNumber').val(),
+            fuelType: $('#editFleetFuelType').val(),
+            engineNumber: $('#editFleetEngineNumber').val(),
+            chassisNumberVIN: $('#editFleetChassisVin').val(),
+            registrationExpiry: $('#editFleetRegistrationExpiry').val() || null,
+            insuranceExpiry: $('#editFleetInsuranceExpiry').val() || null,
+            cost: $('#editFleetCost').val(),
+            currentStatus: $('#editFleetStatus').val(),
+            remarks: $('#editFleetRemarks').val(),
+            assignedDriverID: currentFleetData?.assignedDriverID || null
+        };
     }
 
     MISDCommon.initPageUI({
@@ -80,9 +144,11 @@ $(document).ready(function () {
 
     function loadFleetDetails(vehicleId) {
         $.get('/fleet/' + vehicleId, function (data) {
+            currentFleetData = data;
             $('#fleetDetailPlate').text(data.plateNumber || 'N/A');
             $('#fleetDetailType').text(data.vehicleType || 'N/A');
-            $('#fleetDetailMakeModel').text(((data.make || '') + ' ' + (data.model || '')).trim() || 'N/A');
+            $('#fleetDetailMake').text(data.make || 'N/A');
+            $('#fleetDetailModel').text(data.model || 'N/A');
             $('#fleetDetailYear').text(data.manufactureYear || 'N/A');
             $('#fleetDetailBodyNumber').text(data.bodyNumber || 'N/A');
             $('#fleetDetailFuelType').text(data.fuelType || 'N/A');
@@ -94,13 +160,52 @@ $(document).ready(function () {
             $('#fleetDetailCost').text(data.cost || 'N/A');
             $('#fleetDetailStatus').text(data.currentStatus || 'N/A');
             $('#fleetDetailRemarks').text(data.remarks || 'N/A');
+
+            fillFleetEditFields(data);
+            setFleetEditMode(false);
+
             currentFleetReferenceId = data.vehicleID != null ? String(data.vehicleID) : null;
             loadFleetDocuments(currentFleetReferenceId);
-            bootstrap.Modal.getOrCreateInstance(document.getElementById('fleetDetailModal')).show();
+            bootstrap.Offcanvas.getOrCreateInstance(document.getElementById('fleetDetailOffcanvas')).show();
         }).fail(function () {
             alert('Unable to load fleet vehicle details.');
         });
     }
+
+    $('#enableFleetEditBtn').on('click', function () {
+        setFleetEditMode(true);
+    });
+
+    $('#cancelFleetEditBtn').on('click', function () {
+        if (!currentFleetData) {
+            setFleetEditMode(false);
+            return;
+        }
+
+        fillFleetEditFields(currentFleetData);
+        setFleetEditMode(false);
+    });
+
+    $('#saveFleetEditBtn').on('click', function () {
+        const payload = buildFleetUpdatePayload();
+        if (!payload.vehicleID) {
+            alert('No vehicle selected.');
+            return;
+        }
+
+        $.ajax({
+            url: '/fleet/update',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(payload),
+            success: function () {
+                location.reload();
+            },
+            error: function () {
+                alert('Failed to save vehicle changes.');
+            }
+        });
+    });
 
     $('#fleetDetailDocumentFiles').on('change', function () {
         MISDCommon.prepareMultiFileSelection(this);
@@ -181,8 +286,10 @@ $(document).ready(function () {
         }
     });
 
-    $('#fleetDetailModal').on('hidden.bs.modal', function () {
+    $('#fleetDetailOffcanvas').on('hidden.bs.offcanvas', function () {
         currentFleetReferenceId = null;
+        currentFleetData = null;
+        setFleetEditMode(false);
         MISDCommon.resetDocumentDetailUI({
             bodySelector: fleetDocumentConfig.bodySelector,
             emptySelector: fleetDocumentConfig.emptySelector,

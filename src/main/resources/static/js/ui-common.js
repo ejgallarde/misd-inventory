@@ -728,8 +728,78 @@ window.MISDCommon = (function (jqueryGlobal) {
             });
     }
 
+    function showActionConfirmationModal({
+        title = 'Confirm Action',
+        message = 'Continue?',
+        confirmButtonText = 'Confirm',
+        confirmButtonClass = 'btn-danger',
+        cancelButtonText = 'Cancel',
+        onConfirm
+    } = {}) {
+        if (!$ || !window.bootstrap) {
+            const accepted = window.confirm(message);
+            if (accepted && typeof onConfirm === 'function') {
+                onConfirm();
+            }
+            return;
+        }
+
+        const modalId = 'misdActionConfirmModal';
+        let modalElement = document.getElementById(modalId);
+
+        if (!modalElement) {
+            modalElement = document.createElement('div');
+            modalElement.id = modalId;
+            modalElement.className = 'modal fade';
+            modalElement.setAttribute('tabindex', '-1');
+            modalElement.setAttribute('aria-hidden', 'true');
+            modalElement.innerHTML = `
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title"></h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body"></div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-role="cancel" data-bs-dismiss="modal"></button>
+                            <button type="button" class="btn" data-role="confirm"></button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modalElement);
+        }
+
+        const titleElement = modalElement.querySelector('.modal-title');
+        const bodyElement = modalElement.querySelector('.modal-body');
+        const cancelButton = modalElement.querySelector('[data-role="cancel"]');
+        const confirmButton = modalElement.querySelector('[data-role="confirm"]');
+
+        titleElement.textContent = title;
+        bodyElement.textContent = message;
+        cancelButton.textContent = cancelButtonText;
+        confirmButton.textContent = confirmButtonText;
+        confirmButton.className = `btn ${confirmButtonClass}`;
+
+        const modalInstance = bootstrap.Modal.getOrCreateInstance(modalElement);
+        confirmButton.onclick = function () {
+            modalInstance.hide();
+            if (typeof onConfirm === 'function') {
+                onConfirm();
+            }
+        };
+
+        modalInstance.show();
+    }
+
     function deleteDocumentById(documentId, {
         confirmMessage = 'Remove this document?',
+        confirmTitle = 'Remove Document',
+        confirmButtonText = 'Remove',
+        confirmButtonClass = 'btn-danger',
+        cancelButtonText = 'Cancel',
+        useModalConfirm = false,
         defaultErrorMessage = 'Failed to remove document.',
         onSuccess = null,
         onError = null
@@ -738,28 +808,49 @@ window.MISDCommon = (function (jqueryGlobal) {
             return false;
         }
 
-        if (confirmMessage && !window.confirm(confirmMessage)) {
+        const runDeleteRequest = function () {
+            $.ajax({
+                url: `/documents/${documentId}`,
+                type: 'DELETE',
+                success: function (response) {
+                    if (typeof onSuccess === 'function') {
+                        onSuccess(response);
+                    }
+                },
+                error: function (xhr) {
+                    if (typeof onError === 'function') {
+                        onError(xhr);
+                        return;
+                    }
+
+                    const message = xhr?.responseJSON?.error || defaultErrorMessage;
+                    alert(message);
+                }
+            });
+        };
+
+        if (!confirmMessage) {
+            runDeleteRequest();
+            return true;
+        }
+
+        if (useModalConfirm) {
+            showActionConfirmationModal({
+                title: confirmTitle,
+                message: confirmMessage,
+                confirmButtonText,
+                confirmButtonClass,
+                cancelButtonText,
+                onConfirm: runDeleteRequest
+            });
+            return true;
+        }
+
+        if (!window.confirm(confirmMessage)) {
             return false;
         }
 
-        $.ajax({
-            url: `/documents/${documentId}`,
-            type: 'DELETE',
-            success: function (response) {
-                if (typeof onSuccess === 'function') {
-                    onSuccess(response);
-                }
-            },
-            error: function (xhr) {
-                if (typeof onError === 'function') {
-                    onError(xhr);
-                    return;
-                }
-
-                const message = xhr?.responseJSON?.error || defaultErrorMessage;
-                alert(message);
-            }
-        });
+        runDeleteRequest();
 
         return true;
     }

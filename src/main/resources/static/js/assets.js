@@ -345,6 +345,10 @@ $(document).ready(function () {
     MISDCommon.bindClick('.asset-doc-delete', function (button) {
         const docId = button.data('doc-id');
         MISDCommon.deleteDocumentById(docId, {
+            useModalConfirm: true,
+            confirmTitle: 'Delete Attachment',
+            confirmMessage: 'Remove this attachment from the selected asset?',
+            confirmButtonText: 'Delete',
             onSuccess: function () {
                 loadAssetDocuments(currentActiveAssetTag);
             },
