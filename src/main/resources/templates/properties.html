@@ -86,16 +86,20 @@
                                     th:class="${p.propertyTaxStatus != null and p.propertyTaxStatus.startsWith('Paid') ? 'badge bg-success' : 'badge bg-danger'}"
                                     th:text="${p.propertyTaxStatus}"></span>
                             </td>
-                            <td
-                                th:text="${p.legalTitlingStatus != null and !#strings.isEmpty(p.legalTitlingStatus) ? p.legalTitlingStatus : 'N/A'}">
+                            <td>
+                                <span
+                                    th:class="${p.legalTitlingStatus != null and !#strings.isEmpty(p.legalTitlingStatus) ? 'badge bg-light text-dark border' : 'badge bg-secondary'}"
+                                    th:text="${p.legalTitlingStatus != null and !#strings.isEmpty(p.legalTitlingStatus) ? p.legalTitlingStatus : 'N/A'}"></span>
                             </td>
                             <td>
                                 <span
                                     th:class="${p.operationalStatus == 'Active/In Use' ? 'badge bg-primary' : 'badge bg-secondary'}"
                                     th:text="${p.operationalStatus != null and !#strings.isEmpty(p.operationalStatus) ? p.operationalStatus : 'N/A'}"></span>
                             </td>
-                            <td
-                                th:text="${p.conditionStatus != null and !#strings.isEmpty(p.conditionStatus) ? p.conditionStatus : 'N/A'}">
+                            <td>
+                                <span
+                                    th:class="${p.conditionStatus != null and !#strings.isEmpty(p.conditionStatus) ? 'badge bg-light text-dark border' : 'badge bg-secondary'}"
+                                    th:text="${p.conditionStatus != null and !#strings.isEmpty(p.conditionStatus) ? p.conditionStatus : 'N/A'}"></span>
                             </td>
 
                             <!-- DYNAMIC ACTION DROPDOWN -->
@@ -329,8 +333,8 @@
                         <label class="form-label fw-semibold d-flex align-items-center gap-1">
                             Condition Status
                             <span
-                                title="Excellent: New or recently renovated; requires routine maintenance only.&#10;Good: Shows normal wear and tear but is fully functional.&#10;Fair: Requires minor repairs or component replacements (e.g., new roof, plumbing fixes).&#10;Poor: Requires major structural intervention to remain safe.&#10;Condemned: Unsafe for occupancy and slated for demolition."
-                                data-bs-toggle="tooltip" data-bs-placement="top" class="text-muted"
+                                title="Excellent: New or recently renovated; requires routine maintenance only.<br>Good: Shows normal wear and tear but is fully functional.<br>Fair: Requires minor repairs or component replacements (e.g., new roof, plumbing fixes).<br>Poor: Requires major structural intervention to remain safe.<br>Condemned: Unsafe for occupancy and slated for demolition."
+                                data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="top" class="text-muted"
                                 style="cursor: help;">&#9432;</span>
                         </label>
                         <div id="propertyDetailConditionStatus"

@@ -62,10 +62,48 @@ $(document).ready(function () {
         $('.fleet-field').prop('disabled', !enabled);
     }
 
+    function showInlineSuccessToast(message) {
+        let container = document.querySelector('.toast-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.className = 'toast-container position-fixed top-0 end-0 p-3';
+            container.style.zIndex = '1055';
+            document.body.appendChild(container);
+        }
+
+        let toastEl = document.getElementById('fleetInlineSuccessToast');
+        if (!toastEl) {
+            toastEl = document.createElement('div');
+            toastEl.id = 'fleetInlineSuccessToast';
+            toastEl.className = 'toast align-items-center text-bg-success border-0';
+            toastEl.setAttribute('role', 'alert');
+            toastEl.setAttribute('aria-live', 'assertive');
+            toastEl.setAttribute('aria-atomic', 'true');
+            toastEl.innerHTML = `
+                <div class="d-flex">
+                    <div class="toast-body fw-bold"></div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            `;
+            container.appendChild(toastEl);
+        }
+
+        const body = toastEl.querySelector('.toast-body');
+        if (body) {
+            body.textContent = message;
+        }
+
+        MISDCommon.showToast('fleetInlineSuccessToast', 1800);
+    }
+
     function fillFleetEditFields(data) {
         $('#editFleetVehicleID').val(data.vehicleID || '');
         $('#editFleetRegistrationExpiry').val(formatDateInput(data.registrationExpiry));
         $('#editFleetInsuranceExpiry').val(formatDateInput(data.insuranceExpiry));
+        $('#editFleetAdminLegalStatus').val(data.adminLegaltionalStatus || '');
+        $('#editFleetOperationalStatus').val(data.operationalStatus || '');
+        $('#editFleetMaintenanceStatus').val(data.maintenanceStatus || '');
+        $('#editFleetRemarks').val(data.remarks || '');
     }
 
     function buildFleetUpdatePayload() {
@@ -73,7 +111,11 @@ $(document).ready(function () {
         return {
             vehicleID: Number.isNaN(vehicleID) ? null : vehicleID,
             registrationExpiry: $('#editFleetRegistrationExpiry').val() || null,
-            insuranceExpiry: $('#editFleetInsuranceExpiry').val() || null
+            insuranceExpiry: $('#editFleetInsuranceExpiry').val() || null,
+            adminLegaltionalStatus: $('#editFleetAdminLegalStatus').val() || null,
+            operationalStatus: $('#editFleetOperationalStatus').val() || null,
+            maintenanceStatus: $('#editFleetMaintenanceStatus').val() || null,
+            remarks: $('#editFleetRemarks').val() || null
         };
     }
 
@@ -82,6 +124,8 @@ $(document).ready(function () {
         successToastId: 'successToast',
         initializeSelect2Modals: true
     });
+
+    setFleetEditMode(false);
 
     const fleetTable = $('#fleetTable').DataTable(MISDCommon.buildStandardDataTableConfig({
         pageLength: 10,
@@ -101,15 +145,16 @@ $(document).ready(function () {
     MISDCommon.bindClick('.action-btn', function (button) {
         const vId = button.data('id');
         const plate = button.data('plate');
+        const displayLabel = plate || `Vehicle ID ${vId}`;
 
         $('#assignVehicleID').val(vId);
-        $('#assignPlateDisplay').val(plate);
+        $('#assignPlateDisplay').val(displayLabel);
 
         $('#returnVehicleID').val(vId);
-        $('#returnPlateDisplay').text(plate);
+        $('#returnPlateDisplay').text(displayLabel);
 
         $('#retireVehicleID').val(vId);
-        $('#retirePlateDisplay').text(plate);
+        $('#retirePlateDisplay').text(displayLabel);
     });
 
     MISDCommon.bindClick('.fleet-detail-link', function (link, event) {
@@ -133,7 +178,9 @@ $(document).ready(function () {
             $('#fleetDetailRegExpiry').text(formatDate(data.registrationExpiry));
             $('#fleetDetailInsuranceExpiry').text(formatDate(data.insuranceExpiry));
             $('#fleetDetailCost').text(data.cost || 'N/A');
-            $('#fleetDetailStatus').text(data.currentStatus || 'N/A');
+            $('#fleetDetailAdminLegalStatus').text(data.adminLegaltionalStatus || 'N/A');
+            $('#fleetDetailOperationalStatus').text(data.operationalStatus || data.currentStatus || 'N/A');
+            $('#fleetDetailMaintenanceStatus').text(data.maintenanceStatus || 'N/A');
             $('#fleetDetailRemarks').text(data.remarks || 'N/A');
 
             fillFleetEditFields(data);
@@ -174,7 +221,10 @@ $(document).ready(function () {
             contentType: 'application/json',
             data: JSON.stringify(payload),
             success: function () {
-                location.reload();
+                showInlineSuccessToast('Fleet vehicle updated successfully.');
+                setTimeout(function () {
+                    location.reload();
+                }, 900);
             },
             error: function () {
                 alert('Failed to save vehicle changes.');

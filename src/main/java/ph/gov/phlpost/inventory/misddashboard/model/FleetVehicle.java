@@ -48,8 +48,14 @@ public class FleetVehicle {
     @Column(name = "AssignedDriverID")
     private String assignedDriverID;
 
-    @Column(name = "CurrentStatus")
-    private String currentStatus = "Active";
+    @Column(name = "AdminLegaltionalStatus")
+    private String adminLegaltionalStatus;
+
+    @Column(name = "OperationalStatus")
+    private String operationalStatus;
+
+    @Column(name = "MaintenanceStatus")
+    private String maintenanceStatus;
 
     @Column(name = "Cost")
     private String cost;
@@ -161,12 +167,28 @@ public class FleetVehicle {
         this.assignedDriverID = assignedDriverID;
     }
 
-    public String getCurrentStatus() {
-        return currentStatus;
+    public String getAdminLegaltionalStatus() {
+        return adminLegaltionalStatus;
     }
 
-    public void setCurrentStatus(String currentStatus) {
-        this.currentStatus = currentStatus;
+    public void setAdminLegaltionalStatus(String adminLegaltionalStatus) {
+        this.adminLegaltionalStatus = adminLegaltionalStatus;
+    }
+
+    public String getOperationalStatus() {
+        return operationalStatus;
+    }
+
+    public void setOperationalStatus(String operationalStatus) {
+        this.operationalStatus = operationalStatus;
+    }
+
+    public String getMaintenanceStatus() {
+        return maintenanceStatus;
+    }
+
+    public void setMaintenanceStatus(String maintenanceStatus) {
+        this.maintenanceStatus = maintenanceStatus;
     }
 
     public String getBodyNumber() {

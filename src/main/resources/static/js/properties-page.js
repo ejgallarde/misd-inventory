@@ -59,6 +59,58 @@ $(document).ready(function () {
         $('.property-field').prop('disabled', !enabled);
     }
 
+    function showInlineSuccessToast(message) {
+        let container = document.querySelector('.toast-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.className = 'toast-container position-fixed top-0 end-0 p-3';
+            container.style.zIndex = '1055';
+            document.body.appendChild(container);
+        }
+
+        let toastEl = document.getElementById('propertyInlineSuccessToast');
+        if (!toastEl) {
+            toastEl = document.createElement('div');
+            toastEl.id = 'propertyInlineSuccessToast';
+            toastEl.className = 'toast align-items-center text-bg-success border-0';
+            toastEl.setAttribute('role', 'alert');
+            toastEl.setAttribute('aria-live', 'assertive');
+            toastEl.setAttribute('aria-atomic', 'true');
+            toastEl.innerHTML = `
+                <div class="d-flex">
+                    <div class="toast-body fw-bold"></div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            `;
+            container.appendChild(toastEl);
+        }
+
+        const body = toastEl.querySelector('.toast-body');
+        if (body) {
+            body.textContent = message;
+        }
+
+        MISDCommon.showToast('propertyInlineSuccessToast', 1800);
+    }
+
+    function statusBadgeHtml(value, variant = 'secondary') {
+        const normalized = value == null ? '' : String(value).trim();
+        if (!normalized) {
+            return '<span class="badge bg-secondary">N/A</span>';
+        }
+
+        if (variant === 'operational') {
+            const css = normalized === 'Active/In Use' ? 'badge bg-primary' : 'badge bg-secondary';
+            return `<span class="${css}">${normalized}</span>`;
+        }
+
+        if (variant === 'neutral') {
+            return `<span class="badge bg-light text-dark border">${normalized}</span>`;
+        }
+
+        return `<span class="badge bg-secondary">${normalized}</span>`;
+    }
+
     function resetDetailPanelScroll() {
         const offcanvasBody = document.querySelector('#propertyDetailOffcanvas .offcanvas-body');
         if (offcanvasBody) {
@@ -99,6 +151,8 @@ $(document).ready(function () {
         successToastId: 'successToast',
         initializeSelect2Modals: true
     });
+
+    setPropertyEditMode(false);
 
     document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function (element) {
         bootstrap.Tooltip.getOrCreateInstance(element);
@@ -155,9 +209,9 @@ $(document).ready(function () {
             $('#propertyDetailPropertyDetails').text(data.propertyDetails || 'N/A');
             $('#propertyDetailAssessedValue').text(formatDecimal(data.assessedValue));
             $('#propertyDetailTaxStatus').text(data.propertyTaxStatus || 'N/A');
-            $('#propertyDetailLegalTitlingStatus').text(data.legalTitlingStatus || 'N/A');
-            $('#propertyDetailOperationalStatus').text(data.operationalStatus || 'N/A');
-            $('#propertyDetailConditionStatus').text(data.conditionStatus || 'N/A');
+            $('#propertyDetailLegalTitlingStatus').html(statusBadgeHtml(data.legalTitlingStatus, 'neutral'));
+            $('#propertyDetailOperationalStatus').html(statusBadgeHtml(data.operationalStatus, 'operational'));
+            $('#propertyDetailConditionStatus').html(statusBadgeHtml(data.conditionStatus, 'neutral'));
             $('#propertyDetailCustodian').text(data.custodianName || 'Unassigned');
             $('#propertyDetailRemarks').text(data.remarks || 'N/A');
 
@@ -204,7 +258,10 @@ $(document).ready(function () {
             contentType: 'application/json',
             data: JSON.stringify(payload),
             success: function () {
-                location.reload();
+                showInlineSuccessToast('Property updated successfully.');
+                setTimeout(function () {
+                    location.reload();
+                }, 900);
             },
             error: function () {
                 alert('Failed to save property changes.');

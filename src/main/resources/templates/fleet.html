@@ -62,18 +62,27 @@
                             <th>Year</th>
                             <th>Accountable Owner</th>
                             <th>Reg. Expiry</th>
-                            <th>Status</th>
+                            <th>Administrative &amp; Legal Status</th>
+                            <th>Operational &amp; Dispatch Status</th>
+                            <th>Maintenance &amp; Health Status</th>
                             <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr th:each="v : ${allVehicles}">
                             <td>
-                                <a href="#" th:data-vehicle-id="${v.vehicleID}" th:text="${v.plateNumber}"
-                                    class="text-decoration-none fw-bold fleet-detail-link">
-                                </a>
+                                <a href="#" th:if="${v.plateNumber == null or #strings.isEmpty(v.plateNumber)}"
+                                    th:data-vehicle-id="${v.vehicleID}" th:text="${v.vehicleID}"
+                                    class="text-decoration-none fw-bold fleet-detail-link"></a>
+                                <span th:if="${v.plateNumber != null and !#strings.isEmpty(v.plateNumber)}"
+                                    th:text="${v.vehicleID}"></span>
                             </td>
-                            <td class="fw-bold" th:text="${v.plateNumber}"></td>
+                            <td class="fw-bold">
+                                <a href="#" th:if="${v.plateNumber != null and !#strings.isEmpty(v.plateNumber)}"
+                                    th:data-vehicle-id="${v.vehicleID}" th:text="${v.plateNumber}"
+                                    class="text-decoration-none fleet-detail-link"></a>
+                                <span th:if="${v.plateNumber == null or #strings.isEmpty(v.plateNumber)}">N/A</span>
+                            </td>
                             <td th:text="${v.vehicleType}"></td>
                             <td th:text="${v.make + ' ' + v.model}"></td>
                             <td th:text="${v.manufactureYear}"></td>
@@ -81,32 +90,41 @@
                                 th:text="${v.assignedDriverID != null ? employeeMap[v.assignedDriverID] : 'Unassigned'}">
                             </td>
                             <td th:text="${v.registrationExpiry}"></td>
+                            <td
+                                th:text="${v.adminLegaltionalStatus != null and !#strings.isEmpty(v.adminLegaltionalStatus) ? v.adminLegaltionalStatus : 'N/A'}">
+                            </td>
                             <td>
-                                <span th:class="${v.currentStatus == 'Deployed' ? 'badge bg-success' : 
-                                               (v.currentStatus == 'Active' ? 'badge bg-primary' : 
-                                               (v.currentStatus == 'Retired' ? 'badge bg-dark' : 'badge bg-warning'))}"
-                                    th:text="${v.currentStatus}"></span>
+                                <span
+                                    th:class="${v.operationalStatus == 'Available/Idle' ? 'badge bg-primary' : 'badge bg-secondary'}"
+                                    th:text="${v.operationalStatus != null and !#strings.isEmpty(v.operationalStatus) ? v.operationalStatus : 'N/A'}"></span>
+                            </td>
+                            <td
+                                th:text="${v.maintenanceStatus != null and !#strings.isEmpty(v.maintenanceStatus) ? v.maintenanceStatus : 'N/A'}">
                             </td>
 
                             <!-- DYNAMIC ACTION DROPDOWN -->
                             <td>
-                                <div class="dropdown" th:if="${v.currentStatus != 'Retired'}">
+                                <div class="dropdown"
+                                    th:if="${v.adminLegaltionalStatus != 'Decommissioned' and v.adminLegaltionalStatus != 'Disposed' and v.adminLegaltionalStatus != 'Sold'}">
                                     <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
                                         data-bs-toggle="dropdown" aria-expanded="false">
                                         Actions
                                     </button>
                                     <ul class="dropdown-menu shadow-sm">
-                                        <li th:if="${v.currentStatus == 'Active' or v.currentStatus == 'In Repair'}">
+                                        <li
+                                            th:if="${v.operationalStatus == 'Available/Idle' or v.operationalStatus == 'Grounded'}">
                                             <a class="dropdown-item action-btn" href="#" data-bs-toggle="modal"
                                                 data-bs-target="#assignModal" th:data-id="${v.vehicleID}"
                                                 th:data-plate="${v.plateNumber}">Assign Driver</a>
                                         </li>
-                                        <li th:if="${v.currentStatus == 'Deployed'}">
+                                        <li
+                                            th:if="${v.operationalStatus == 'Dispatched/In Transit' or v.operationalStatus == 'Reserved'}">
                                             <a class="dropdown-item action-btn" href="#" data-bs-toggle="modal"
                                                 data-bs-target="#assignModal" th:data-id="${v.vehicleID}"
                                                 th:data-plate="${v.plateNumber}">Re-assign Driver</a>
                                         </li>
-                                        <li th:if="${v.currentStatus == 'Deployed'}">
+                                        <li
+                                            th:if="${v.operationalStatus == 'Dispatched/In Transit' or v.operationalStatus == 'Reserved'}">
                                             <a class="dropdown-item text-warning action-btn" href="#"
                                                 data-bs-toggle="modal" data-bs-target="#returnModal"
                                                 th:data-id="${v.vehicleID}" th:data-plate="${v.plateNumber}">Return to
@@ -123,7 +141,9 @@
                                         </li>
                                     </ul>
                                 </div>
-                                <span th:if="${v.currentStatus == 'Retired'}" class="text-muted small">No Actions</span>
+                                <span
+                                    th:if="${v.adminLegaltionalStatus == 'Decommissioned' or v.adminLegaltionalStatus == 'Disposed' or v.adminLegaltionalStatus == 'Sold'}"
+                                    class="text-muted small">No Actions</span>
                             </td>
                         </tr>
                     </tbody>
@@ -315,12 +335,46 @@
                         <div id="fleetDetailCost" class="form-control-plaintext"></div>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label fw-bold text-muted small text-uppercase">Current Status</label>
-                        <div id="fleetDetailStatus" class="form-control-plaintext"></div>
+                        <label class="form-label fw-bold text-muted small text-uppercase">Administrative &amp;
+                            Legal Status</label>
+                        <div id="fleetDetailAdminLegalStatus" class="form-control-plaintext fleet-detail-view-only">
+                        </div>
+                        <select id="editFleetAdminLegalStatus"
+                            class="form-select fleet-field fleet-detail-edit-only d-none" disabled>
+                            <option value="" selected disabled>Select administrative/legal status</option>
+                            <option th:each="status : ${fleetAdminLegalStatuses}" th:value="${status}"
+                                th:text="${status}"></option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-muted small text-uppercase">Operational &amp; Dispatch
+                            Status</label>
+                        <div id="fleetDetailOperationalStatus" class="form-control-plaintext fleet-detail-view-only">
+                        </div>
+                        <select id="editFleetOperationalStatus"
+                            class="form-select fleet-field fleet-detail-edit-only d-none" disabled>
+                            <option value="" selected disabled>Select operational/dispatch status</option>
+                            <option th:each="status : ${fleetOperationalStatuses}" th:value="${status}"
+                                th:text="${status}"></option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-muted small text-uppercase">Maintenance &amp; Health
+                            Status</label>
+                        <div id="fleetDetailMaintenanceStatus" class="form-control-plaintext fleet-detail-view-only">
+                        </div>
+                        <select id="editFleetMaintenanceStatus"
+                            class="form-select fleet-field fleet-detail-edit-only d-none" disabled>
+                            <option value="" selected disabled>Select maintenance/health status</option>
+                            <option th:each="status : ${fleetMaintenanceStatuses}" th:value="${status}"
+                                th:text="${status}"></option>
+                        </select>
                     </div>
                     <div class="col-12">
                         <label class="form-label fw-bold text-muted small text-uppercase">Remarks</label>
-                        <div id="fleetDetailRemarks" class="form-control-plaintext"></div>
+                        <div id="fleetDetailRemarks" class="form-control-plaintext fleet-detail-view-only"></div>
+                        <textarea id="editFleetRemarks" rows="2"
+                            class="form-control fleet-field fleet-detail-edit-only d-none" disabled></textarea>
                     </div>
                 </div>
 

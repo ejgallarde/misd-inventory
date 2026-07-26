@@ -38,6 +38,15 @@ public class FleetController {
     @Value("#{'${document.upload.categories}'.split(',')}")
     private List<String> documentUploadCategories;
 
+    @Value("#{'${dropdown.fleet-admin-legal-statuses}'.split(',')}")
+    private List<String> fleetAdminLegalStatuses;
+
+    @Value("#{'${dropdown.fleet-operational-statuses}'.split(',')}")
+    private List<String> fleetOperationalStatuses;
+
+    @Value("#{'${dropdown.fleet-maintenance-statuses}'.split(',')}")
+    private List<String> fleetMaintenanceStatuses;
+
     public FleetController(FleetVehicleRepository fleetRepo, FleetService fleetService,
             RegistryService registryService,
             DocumentService documentService) {
@@ -56,6 +65,9 @@ public class FleetController {
         model.addAttribute("documentUploadCategories", documentUploadCategories.stream()
                 .sorted(String.CASE_INSENSITIVE_ORDER)
                 .toList());
+        model.addAttribute("fleetAdminLegalStatuses", fleetAdminLegalStatuses);
+        model.addAttribute("fleetOperationalStatuses", fleetOperationalStatuses);
+        model.addAttribute("fleetMaintenanceStatuses", fleetMaintenanceStatuses);
         return "fleet";
     }
 
@@ -74,8 +86,14 @@ public class FleetController {
             return "redirect:/";
         }
 
-        if (newVehicle.getCurrentStatus() == null || newVehicle.getCurrentStatus().isBlank()) {
-            newVehicle.setCurrentStatus("Active");
+        if (newVehicle.getAdminLegaltionalStatus() == null || newVehicle.getAdminLegaltionalStatus().isBlank()) {
+            newVehicle.setAdminLegaltionalStatus("Active / Registered");
+        }
+        if (newVehicle.getOperationalStatus() == null || newVehicle.getOperationalStatus().isBlank()) {
+            newVehicle.setOperationalStatus("Available/Idle");
+        }
+        if (newVehicle.getMaintenanceStatus() == null || newVehicle.getMaintenanceStatus().isBlank()) {
+            newVehicle.setMaintenanceStatus("Roadworthy");
         }
 
         fleetRepo.save(newVehicle);
@@ -97,14 +115,11 @@ public class FleetController {
         }
 
         redirectAttributes.addFlashAttribute("successMessage",
-                "Success! Vehicle " + newVehicle.getPlateNumber() + " registered.");
+                "Success! Vehicle registered.");
         return "redirect:/";
     }
 
     private String validateVehicleRegistration(FleetVehicle vehicle) {
-        if (isBlank(vehicle.getPlateNumber())) {
-            return "Plate number is required.";
-        }
         if (isBlank(vehicle.getVehicleType())) {
             return "Vehicle type is required.";
         }
@@ -129,6 +144,15 @@ public class FleetController {
         }
         if (isBlank(vehicle.getChassisNumberVIN())) {
             return "Chassis number / VIN is required.";
+        }
+        if (isBlank(vehicle.getAdminLegaltionalStatus())) {
+            return "Administrative & Legal Status is required.";
+        }
+        if (isBlank(vehicle.getOperationalStatus())) {
+            return "Operational & Dispatch Status is required.";
+        }
+        if (isBlank(vehicle.getMaintenanceStatus())) {
+            return "Maintenance & Health Status is required.";
         }
         return null;
     }
@@ -202,8 +226,12 @@ public class FleetController {
                                     vehicle.getInsuranceExpiry() == null ? "" : vehicle.getInsuranceExpiry()),
                             Map.entry("assignedDriverID", assignedDriverId == null ? "" : assignedDriverId),
                             Map.entry("assignedDriverName", assignedDriverName),
-                            Map.entry("currentStatus",
-                                    vehicle.getCurrentStatus() == null ? "" : vehicle.getCurrentStatus()),
+                            Map.entry("adminLegaltionalStatus", vehicle.getAdminLegaltionalStatus() == null ? ""
+                                    : vehicle.getAdminLegaltionalStatus()),
+                            Map.entry("operationalStatus",
+                                    vehicle.getOperationalStatus() == null ? "" : vehicle.getOperationalStatus()),
+                            Map.entry("maintenanceStatus",
+                                    vehicle.getMaintenanceStatus() == null ? "" : vehicle.getMaintenanceStatus()),
                             Map.entry("cost", vehicle.getCost() == null ? "" : vehicle.getCost()),
                             Map.entry("remarks", vehicle.getRemarks() == null ? "" : vehicle.getRemarks()));
                     return ResponseEntity.ok(response);
@@ -220,7 +248,19 @@ public class FleetController {
 
         LocalDate registrationExpiry = updatedVehicle.getRegistrationExpiry();
         LocalDate insuranceExpiry = updatedVehicle.getInsuranceExpiry();
-        fleetService.updateVehicleExpiryDates(vehicleId, registrationExpiry, insuranceExpiry);
-        return ResponseEntity.ok("Vehicle expiry dates updated successfully");
+        String adminLegalStatus = updatedVehicle.getAdminLegaltionalStatus();
+        String operationalStatus = updatedVehicle.getOperationalStatus();
+        String maintenanceStatus = updatedVehicle.getMaintenanceStatus();
+        String remarks = updatedVehicle.getRemarks();
+
+        fleetService.updateVehicleDetails(
+                vehicleId,
+                registrationExpiry,
+                insuranceExpiry,
+                adminLegalStatus,
+                operationalStatus,
+                maintenanceStatus,
+                remarks);
+        return ResponseEntity.ok("Fleet vehicle details updated successfully");
     }
 }

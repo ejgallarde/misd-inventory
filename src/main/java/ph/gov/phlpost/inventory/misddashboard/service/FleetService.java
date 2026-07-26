@@ -24,7 +24,7 @@ public class FleetService {
                 .orElseThrow(() -> new IllegalArgumentException("Vehicle not found."));
 
         vehicle.setAssignedDriverID(employeeId);
-        vehicle.setCurrentStatus("Deployed");
+        vehicle.setOperationalStatus("Dispatched/In Transit");
         fleetRepo.save(vehicle);
         auditService.logAssignment(vehicle.getPlateNumber(), employeeId, "Vehicle Checkout", notes);
     }
@@ -36,7 +36,7 @@ public class FleetService {
 
         String previousDriver = vehicle.getAssignedDriverID();
         vehicle.setAssignedDriverID(null);
-        vehicle.setCurrentStatus("Active");
+        vehicle.setOperationalStatus("Available/Idle");
         fleetRepo.save(vehicle);
 
         if (previousDriver != null) {
@@ -52,18 +52,31 @@ public class FleetService {
                 .orElseThrow(() -> new IllegalArgumentException("Vehicle not found."));
 
         vehicle.setAssignedDriverID(null);
-        vehicle.setCurrentStatus("Retired");
+        vehicle.setAdminLegaltionalStatus("Decommissioned");
+        vehicle.setOperationalStatus("Slated for Disposal");
+        vehicle.setMaintenanceStatus("Beyond Economic Repair (BER)");
         fleetRepo.save(vehicle);
         auditService.logLifecycleEvent(vehicle.getPlateNumber(), "SYSTEM", "Vehicle Retired", notes);
     }
 
     @Transactional
-    public void updateVehicleExpiryDates(Integer vehicleId, LocalDate registrationExpiry, LocalDate insuranceExpiry) {
+    public void updateVehicleDetails(
+            Integer vehicleId,
+            LocalDate registrationExpiry,
+            LocalDate insuranceExpiry,
+            String adminLegalStatus,
+            String operationalStatus,
+            String maintenanceStatus,
+            String remarks) {
         FleetVehicle vehicle = fleetRepo.findById(vehicleId)
                 .orElseThrow(() -> new IllegalArgumentException("Vehicle not found."));
 
         vehicle.setRegistrationExpiry(registrationExpiry);
         vehicle.setInsuranceExpiry(insuranceExpiry);
+        vehicle.setAdminLegaltionalStatus(adminLegalStatus);
+        vehicle.setOperationalStatus(operationalStatus);
+        vehicle.setMaintenanceStatus(maintenanceStatus);
+        vehicle.setRemarks(remarks);
         fleetRepo.save(vehicle);
     }
 }

@@ -49,6 +49,15 @@ public class MainDashboardController {
         @Value("#{'${dropdown.fuel-types}'.split(',')}")
         private List<String> fuelTypes;
 
+        @Value("#{'${dropdown.fleet-admin-legal-statuses}'.split(',')}")
+        private List<String> fleetAdminLegalStatuses;
+
+        @Value("#{'${dropdown.fleet-operational-statuses}'.split(',')}")
+        private List<String> fleetOperationalStatuses;
+
+        @Value("#{'${dropdown.fleet-maintenance-statuses}'.split(',')}")
+        private List<String> fleetMaintenanceStatuses;
+
         @Value("#{'${dropdown.property-types}'.split(',')}")
         private List<String> propertyTypes;
 
@@ -110,14 +119,25 @@ public class MainDashboardController {
 
                 // Fleet
                 model.addAttribute("totalVehicles", fleetRepo.count());
-                model.addAttribute("vehiclesInRepair", fleetRepo.countVehiclesInRepair());
+                model.addAttribute("totalProblematicVehicles", fleetRepo.countProblematicVehicles());
+                model.addAttribute("vehiclesWithAdminLegalIssues", fleetRepo.countVehiclesWithAdminLegalIssues());
+                model.addAttribute("vehiclesWithOperationalMaintenanceIssues",
+                                fleetRepo.countVehiclesWithOperationalMaintenanceIssues());
                 model.addAttribute("expiringRegistrations", fleetRepo.countExpiringRegistrations());
-                model.addAttribute("agingVehicles", fleetRepo.findAgingVehicles());
+                model.addAttribute("soldVehicles", fleetRepo.countSoldVehicles());
+                model.addAttribute("disposedOrDecommissionedVehicles",
+                                fleetRepo.countDisposedOrDecommissionedVehicles());
+                model.addAttribute("problematicVehicles", fleetRepo.findProblematicVehicles());
 
                 // Properties
                 model.addAttribute("totalProperties", propertyRepo.count());
+                model.addAttribute("problematicPropertiesCount", propertyRepo.countProblematicProperties());
                 model.addAttribute("totalLandArea", propertyRepo.sumTotalLandArea());
                 model.addAttribute("pendingTaxesCount", propertyRepo.countPropertiesNeedingPayment());
+                model.addAttribute("propertiesWithLegalIssues", propertyRepo.countPropertiesWithLegalIssues());
+                model.addAttribute("propertiesWithOperationalIssues",
+                                propertyRepo.countPropertiesWithOperationalIssues());
+                model.addAttribute("propertiesWithConditionIssues", propertyRepo.countPropertiesWithConditionIssues());
                 model.addAttribute("pendingProperties", propertyRepo.findPropertiesNeedingPayment());
 
                 // Mappings
@@ -138,6 +158,9 @@ public class MainDashboardController {
                 model.addAttribute("fuelTypes", fuelTypes.stream()
                                 .sorted(String.CASE_INSENSITIVE_ORDER)
                                 .toList());
+                model.addAttribute("fleetAdminLegalStatuses", fleetAdminLegalStatuses);
+                model.addAttribute("fleetOperationalStatuses", fleetOperationalStatuses);
+                model.addAttribute("fleetMaintenanceStatuses", fleetMaintenanceStatuses);
                 model.addAttribute("propertyTypes", propertyTypes.stream()
                                 .sorted(String.CASE_INSENSITIVE_ORDER)
                                 .toList());

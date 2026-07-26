@@ -80,8 +80,8 @@
                         data-bs-target="#addCatalogOffcanvas">+ Add to Catalog</button>
                 </div>
 
-                <div class="row mb-4">
-                    <div class="col-md-3">
+                <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-4 g-3 flex-nowrap overflow-auto mb-4">
+                    <div class="col">
                         <a href="/assets" class="text-decoration-none">
                             <div class="card text-white bg-primary mb-3 shadow-sm hover-effect">
                                 <div class="card-body">
@@ -91,7 +91,7 @@
                             </div>
                         </a>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col">
                         <div class="card text-white bg-success mb-3 shadow-sm">
                             <div class="card-body">
                                 <h5 class="card-title">Deployed</h5>
@@ -99,7 +99,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col">
                         <div class="card text-white bg-warning mb-3 shadow-sm">
                             <div class="card-body">
                                 <h5 class="card-title">In Maintenance</h5>
@@ -107,7 +107,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col">
                         <div class="card text-white bg-danger mb-3 shadow-sm">
                             <div class="card-body">
                                 <h5 class="card-title">Aging (&ge;10 Yrs)</h5>
@@ -167,8 +167,8 @@
                         data-bs-target="#addVehicleOffcanvas">+ Register Vehicle</button>
                 </div>
 
-                <div class="row mb-4">
-                    <div class="col-md-4">
+                <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-7 g-3 flex-nowrap overflow-auto mb-4">
+                    <div class="col">
                         <a href="/fleet" class="text-decoration-none">
                             <div class="card text-white bg-primary mb-3 shadow-sm hover-effect">
                                 <div class="card-body">
@@ -178,19 +178,51 @@
                             </div>
                         </a>
                     </div>
-                    <div class="col-md-4">
-                        <div class="card text-white bg-warning mb-3 shadow-sm">
+                    <div class="col">
+                        <div class="card text-white bg-secondary mb-3 shadow-sm">
                             <div class="card-body">
-                                <h5 class="card-title">In Shop / Repair</h5>
-                                <h2 class="card-text" th:text="${vehiclesInRepair}">0</h2>
+                                <h5 class="card-title">Total Problematic</h5>
+                                <h2 class="card-text" th:text="${totalProblematicVehicles}">0</h2>
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col">
                         <div class="card text-white bg-danger mb-3 shadow-sm">
+                            <div class="card-body">
+                                <h5 class="card-title">Admin / Legal Issues</h5>
+                                <h2 class="card-text" th:text="${vehiclesWithAdminLegalIssues}">0</h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="card text-white bg-warning mb-3 shadow-sm">
+                            <div class="card-body">
+                                <h5 class="card-title">Operational / Maintenance Issues</h5>
+                                <h2 class="card-text" th:text="${vehiclesWithOperationalMaintenanceIssues}">0</h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="card text-white bg-dark mb-3 shadow-sm">
                             <div class="card-body">
                                 <h5 class="card-title">Expiring Registrations (30 Days)</h5>
                                 <h2 class="card-text" th:text="${expiringRegistrations}">0</h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="card text-white bg-success mb-3 shadow-sm">
+                            <div class="card-body">
+                                <h5 class="card-title">Sold</h5>
+                                <h2 class="card-text" th:text="${soldVehicles}">0</h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="card text-white bg-info mb-3 shadow-sm">
+                            <div class="card-body">
+                                <h5 class="card-title">Disposed / Decommissioned</h5>
+                                <h2 class="card-text" th:text="${disposedOrDecommissionedVehicles}">0</h2>
                             </div>
                         </div>
                     </div>
@@ -201,7 +233,7 @@
                         class="text-decoration-none">
                         <div
                             class="card-header bg-white border-bottom-0 pt-3 pb-3 d-flex justify-content-between align-items-center">
-                            <h5 class="card-title text-danger fw-bold mb-0">Action Required: Aging Vehicles (&ge;10 Yrs)
+                            <h5 class="card-title text-danger fw-bold mb-0">Action Required: Problematic Vehicles
                             </h5>
                             <span class="text-muted">&#9660;</span>
                         </div>
@@ -218,12 +250,16 @@
                                         <th>Year</th>
                                         <th>Accountable Owner</th>
                                         <th>Reg. Expiry</th>
-                                        <th>Status</th>
+                                        <th>Administrative &amp; Legal</th>
+                                        <th>Operational &amp; Dispatch</th>
+                                        <th>Maintenance &amp; Health</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr th:each="vehicle : ${agingVehicles}">
-                                        <td class="fw-bold" th:text="${vehicle.plateNumber}"></td>
+                                    <tr th:each="vehicle : ${problematicVehicles}">
+                                        <td class="fw-bold"
+                                            th:text="${vehicle.plateNumber != null and !#strings.isEmpty(vehicle.plateNumber) ? vehicle.plateNumber : ('Vehicle ID ' + vehicle.vehicleID)}">
+                                        </td>
                                         <td th:text="${vehicle.vehicleType}"></td>
                                         <td th:text="${vehicle.make + ' ' + vehicle.model}"></td>
                                         <td th:text="${vehicle.manufactureYear}"></td>
@@ -231,7 +267,14 @@
                                             th:text="${vehicle.assignedDriverID != null ? employeeMap[vehicle.assignedDriverID] : 'Unassigned'}">
                                         </td>
                                         <td th:text="${vehicle.registrationExpiry}"></td>
-                                        <td><span class="badge bg-secondary" th:text="${vehicle.currentStatus}"></span>
+                                        <td
+                                            th:text="${vehicle.adminLegaltionalStatus != null and !#strings.isEmpty(vehicle.adminLegaltionalStatus) ? vehicle.adminLegaltionalStatus : 'N/A'}">
+                                        </td>
+                                        <td><span class="badge bg-secondary"
+                                                th:text="${vehicle.operationalStatus != null and !#strings.isEmpty(vehicle.operationalStatus) ? vehicle.operationalStatus : 'N/A'}"></span>
+                                        </td>
+                                        <td
+                                            th:text="${vehicle.maintenanceStatus != null and !#strings.isEmpty(vehicle.maintenanceStatus) ? vehicle.maintenanceStatus : 'N/A'}">
                                         </td>
                                     </tr>
                                 </tbody>
@@ -252,8 +295,8 @@
                         data-bs-target="#addPropertyOffcanvas">+ Add Property</button>
                 </div>
 
-                <div class="row mb-4">
-                    <div class="col-md-4">
+                <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-7 g-3 flex-nowrap overflow-auto mb-4">
+                    <div class="col">
                         <a href="/properties" class="text-decoration-none">
                             <div class="card text-white bg-primary mb-3 shadow-sm hover-effect">
                                 <div class="card-body">
@@ -263,7 +306,15 @@
                             </div>
                         </a>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col">
+                        <div class="card text-white bg-secondary mb-3 shadow-sm">
+                            <div class="card-body">
+                                <h5 class="card-title">Total Problematic</h5>
+                                <h2 class="card-text" th:text="${problematicPropertiesCount}">0</h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col">
                         <div class="card text-white bg-success mb-3 shadow-sm">
                             <div class="card-body">
                                 <h5 class="card-title">Total Land Area (sqm)</h5>
@@ -272,11 +323,35 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col">
                         <div class="card text-white bg-danger mb-3 shadow-sm">
                             <div class="card-body">
                                 <h5 class="card-title">Pending Tax / Dues</h5>
                                 <h2 class="card-text" th:text="${pendingTaxesCount}">0</h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="card text-white bg-warning mb-3 shadow-sm">
+                            <div class="card-body">
+                                <h5 class="card-title">Legal / Titling Issues</h5>
+                                <h2 class="card-text" th:text="${propertiesWithLegalIssues}">0</h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="card text-white bg-dark mb-3 shadow-sm">
+                            <div class="card-body">
+                                <h5 class="card-title">Operational Issues</h5>
+                                <h2 class="card-text" th:text="${propertiesWithOperationalIssues}">0</h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="card text-white bg-info mb-3 shadow-sm">
+                            <div class="card-body">
+                                <h5 class="card-title">Condition Issues</h5>
+                                <h2 class="card-text" th:text="${propertiesWithConditionIssues}">0</h2>
                             </div>
                         </div>
                     </div>
@@ -489,9 +564,10 @@
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                 <div class="row mb-3">
                     <div class="col-6"><label class="form-label fw-bold">Plate Number</label><input type="text"
-                            class="form-control" name="plateNumber" required></div>
+                            class="form-control" name="plateNumber"></div>
                     <div class="col-6">
-                        <label class="form-label fw-bold">Vehicle Type</label>
+                        <label class="form-label fw-bold">Vehicle Type <span class="required-indicator"
+                                aria-hidden="true">*</span></label>
                         <select class="form-select" name="vehicleType" required>
                             <option value="" selected disabled>Select vehicle type</option>
                             <option th:each="vehicleType : ${vehicleTypes}" th:value="${vehicleType}"
@@ -500,39 +576,75 @@
                     </div>
                 </div>
                 <div class="row mb-3">
-                    <div class="col-5"><label class="form-label fw-bold">Make</label><input type="text"
-                            class="form-control" name="make" placeholder="e.g. Toyota" required></div>
-                    <div class="col-7"><label class="form-label fw-bold">Model</label><input type="text"
-                            class="form-control" name="model" placeholder="e.g. Hiace" required></div>
+                    <div class="col-5"><label class="form-label fw-bold">Make <span class="required-indicator"
+                                aria-hidden="true">*</span></label><input type="text" class="form-control" name="make"
+                            placeholder="e.g. Toyota" required></div>
+                    <div class="col-7"><label class="form-label fw-bold">Model <span class="required-indicator"
+                                aria-hidden="true">*</span></label><input type="text" class="form-control" name="model"
+                            placeholder="e.g. Hiace" required></div>
                 </div>
                 <div class="row mb-3">
-                    <div class="col-6"><label class="form-label fw-bold">Year</label><select class="form-select"
-                            name="manufactureYear" required>
+                    <div class="col-6"><label class="form-label fw-bold">Year <span class="required-indicator"
+                                aria-hidden="true">*</span></label><select class="form-select" name="manufactureYear"
+                            required>
                             <option value="" selected disabled>Select year</option>
                             <option th:each="year : ${vehicleYears}" th:value="${year}" th:text="${year}"></option>
                         </select></div>
-                    <div class="col-6"><label class="form-label fw-bold">Fuel Type</label><select class="form-select"
-                            name="fuelType" required>
+                    <div class="col-6"><label class="form-label fw-bold">Fuel Type <span class="required-indicator"
+                                aria-hidden="true">*</span></label><select class="form-select" name="fuelType" required>
                             <option value="" selected disabled>Select fuel type</option>
                             <option th:each="fuelType : ${fuelTypes}" th:value="${fuelType}"
                                 th:text="${fuelType == 'Gas' ? 'Gasoline' : fuelType}"></option>
                         </select></div>
                 </div>
-                <div class="mb-3"><label class="form-label fw-bold">Engine Number</label><input type="text"
-                        class="form-control" name="engineNumber" required></div>
-                <div class="mb-3"><label class="form-label fw-bold">Chassis Number / VIN</label><input type="text"
+                <div class="mb-3"><label class="form-label fw-bold">Engine Number <span class="required-indicator"
+                            aria-hidden="true">*</span></label><input type="text" class="form-control"
+                        name="engineNumber" required></div>
+                <div class="mb-3"><label class="form-label fw-bold">Chassis Number / VIN <span
+                            class="required-indicator" aria-hidden="true">*</span></label><input type="text"
                         class="form-control" name="chassisNumberVIN" required></div>
                 <div class="mb-3"><label class="form-label fw-bold">Body Number</label><input type="text"
                         class="form-control" name="bodyNumber"></div>
+                <div class="row mb-3">
+                    <div class="col-6">
+                        <label class="form-label fw-bold">Administrative &amp; Legal Status <span
+                                class="required-indicator" aria-hidden="true">*</span></label>
+                        <select class="form-select" name="adminLegaltionalStatus" required>
+                            <option value="" selected disabled>Select administrative/legal status</option>
+                            <option th:each="status : ${fleetAdminLegalStatuses}" th:value="${status}"
+                                th:text="${status}"></option>
+                        </select>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label fw-bold">Operational &amp; Dispatch Status <span
+                                class="required-indicator" aria-hidden="true">*</span></label>
+                        <select class="form-select" name="operationalStatus" required>
+                            <option value="" selected disabled>Select operational/dispatch status</option>
+                            <option th:each="status : ${fleetOperationalStatuses}" th:value="${status}"
+                                th:text="${status}"></option>
+                        </select>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Maintenance &amp; Health Status <span class="required-indicator"
+                            aria-hidden="true">*</span></label>
+                    <select class="form-select" name="maintenanceStatus" required>
+                        <option value="" selected disabled>Select maintenance/health status</option>
+                        <option th:each="status : ${fleetMaintenanceStatuses}" th:value="${status}" th:text="${status}">
+                        </option>
+                    </select>
+                </div>
                 <div class="mb-3"><label class="form-label fw-bold">Cost</label><input type="text" class="form-control"
                         name="cost" placeholder="e.g. 1500000.00"></div>
                 <div class="mb-3"><label class="form-label fw-bold">Remarks</label><textarea class="form-control"
                         name="remarks" rows="2" placeholder="e.g. Initial registration details"></textarea></div>
                 <div class="row mb-4">
-                    <div class="col-6"><label class="form-label fw-bold">Reg. Expiry</label><input type="date"
-                            class="form-control" name="registrationExpiry" required></div>
-                    <div class="col-6"><label class="form-label fw-bold">Ins. Expiry</label><input type="date"
-                            class="form-control" name="insuranceExpiry" required></div>
+                    <div class="col-6"><label class="form-label fw-bold">Reg. Expiry <span class="required-indicator"
+                                aria-hidden="true">*</span></label><input type="date" class="form-control"
+                            name="registrationExpiry" required></div>
+                    <div class="col-6"><label class="form-label fw-bold">Ins. Expiry <span class="required-indicator"
+                                aria-hidden="true">*</span></label><input type="date" class="form-control"
+                            name="insuranceExpiry" required></div>
                 </div>
                 <div class="mb-3"><label class="form-label fw-bold">Attach Documents</label><input type="file"
                         class="form-control js-document-upload-input" name="documentFiles" multiple
@@ -566,12 +678,14 @@
             <form th:action="@{/properties/add}" method="post" enctype="multipart/form-data">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                 <div class="mb-3">
-                    <label class="form-label fw-bold">Property Name</label>
+                    <label class="form-label fw-bold">Property Name <span class="required-indicator"
+                            aria-hidden="true">*</span></label>
                     <input type="text" class="form-control" name="propertyName" placeholder="e.g. CMEC" required>
                 </div>
                 <div class="row mb-3">
                     <div class="col-6">
-                        <label class="form-label fw-bold">Type</label>
+                        <label class="form-label fw-bold">Type <span class="required-indicator"
+                                aria-hidden="true">*</span></label>
                         <select class="form-select" id="propertyTypeInput" name="propertyType" required>
                             <option value="" selected disabled>Select property type</option>
                             <option th:each="propertyType : ${propertyTypes}" th:value="${propertyType}"
@@ -588,13 +702,15 @@
                         </label>
                     </div>
                     <div id="propertyTitleFieldWrap" class="mb-3 d-none">
-                        <label class="form-label fw-bold" id="propertyIdentifierLabel">Title No.</label>
+                        <label class="form-label fw-bold" id="propertyIdentifierLabel">Title No. <span
+                                class="required-indicator" aria-hidden="true">*</span></label>
                         <input type="text" class="form-control" id="propertyTitleNumberInput" name="titleNumber"
                             placeholder="Required for lot properties">
                     </div>
 
                     <div id="propertyTaxDeclarationFieldWrap" class="mb-3 d-none">
-                        <label class="form-label fw-bold" id="propertyTaxDeclarationLabel">Tax Declaration No.</label>
+                        <label class="form-label fw-bold" id="propertyTaxDeclarationLabel">Tax Declaration No.
+                            <span class="required-indicator" aria-hidden="true">*</span></label>
                         <input type="text" class="form-control" id="propertyTaxDeclarationNumberInput"
                             name="taxDeclarationNumber" placeholder="Required for non-lot properties">
                     </div>
@@ -604,19 +720,22 @@
                     <textarea class="form-control" name="propertyDetails" rows="2"
                         placeholder="Describe notable property information"></textarea>
                 </div>
-                <div class="mb-3"><label class="form-label fw-bold">Address Line 1</label><input type="text"
-                        class="form-control" name="addressLine1" required></div>
+                <div class="mb-3"><label class="form-label fw-bold">Address Line 1 <span class="required-indicator"
+                            aria-hidden="true">*</span></label><input type="text" class="form-control"
+                        name="addressLine1" required></div>
                 <div class="mb-3"><label class="form-label fw-bold">Address Line 2</label><input type="text"
                         class="form-control" name="addressLine2"></div>
                 <div class="row mb-3">
                     <div class="col-6">
-                        <label class="form-label fw-bold">Province</label>
+                        <label class="form-label fw-bold">Province <span class="required-indicator"
+                                aria-hidden="true">*</span></label>
                         <select class="form-select" id="propertyProvince" name="province" required>
                             <option value="" selected disabled>Select province</option>
                         </select>
                     </div>
                     <div class="col-6">
-                        <label class="form-label fw-bold">City / Municipality</label>
+                        <label class="form-label fw-bold">City / Municipality <span class="required-indicator"
+                                aria-hidden="true">*</span></label>
                         <select class="form-select" id="propertyCity" name="city" required disabled>
                             <option value="" selected disabled>Select city/municipality</option>
                         </select>
@@ -624,7 +743,8 @@
                 </div>
                 <div class="row mb-3">
                     <div class="col-6">
-                        <label class="form-label fw-bold">Barangay</label>
+                        <label class="form-label fw-bold">Barangay <span class="required-indicator"
+                                aria-hidden="true">*</span></label>
                         <select class="form-select" id="propertyBarangay" name="barangay" required disabled>
                             <option value="" selected disabled>Select barangay</option>
                         </select>
@@ -636,7 +756,8 @@
                     <div class="col-6"><label class="form-label fw-bold">Acquisition Date</label><input type="date"
                             class="form-control" name="acquisitionDate"></div>
                     <div class="col-6">
-                        <label class="form-label fw-bold">Legal &amp; Titling Status</label>
+                        <label class="form-label fw-bold">Legal &amp; Titling Status <span class="required-indicator"
+                                aria-hidden="true">*</span></label>
                         <select class="form-select" name="legalTitlingStatus" required>
                             <option value="" selected disabled>Select legal/titling status</option>
                             <option th:each="status : ${propertyLegalTitlingStatuses}" th:value="${status}"
@@ -646,7 +767,8 @@
                 </div>
                 <div class="row mb-3">
                     <div class="col-6">
-                        <label class="form-label fw-bold">Operational &amp; Utilization Status</label>
+                        <label class="form-label fw-bold">Operational &amp; Utilization Status <span
+                                class="required-indicator" aria-hidden="true">*</span></label>
                         <select class="form-select" name="operationalStatus" required>
                             <option value="" selected disabled>Select operational status</option>
                             <option th:each="status : ${propertyOperationalStatuses}" th:value="${status}"
@@ -657,9 +779,10 @@
                         <label class="form-label fw-bold d-flex align-items-center gap-1">
                             Condition Status
                             <span
-                                title="Excellent: New or recently renovated; requires routine maintenance only.&#10;Good: Shows normal wear and tear but is fully functional.&#10;Fair: Requires minor repairs or component replacements (e.g., new roof, plumbing fixes).&#10;Poor: Requires major structural intervention to remain safe.&#10;Condemned: Unsafe for occupancy and slated for demolition."
-                                data-bs-toggle="tooltip" data-bs-placement="top" class="text-muted"
+                                title="Excellent: New or recently renovated; requires routine maintenance only.<br>Good: Shows normal wear and tear but is fully functional.<br>Fair: Requires minor repairs or component replacements (e.g., new roof, plumbing fixes).<br>Poor: Requires major structural intervention to remain safe.<br>Condemned: Unsafe for occupancy and slated for demolition."
+                                data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="top" class="text-muted"
                                 style="cursor: help;">&#9432;</span>
+                            <span class="required-indicator" aria-hidden="true">*</span>
                         </label>
                         <select class="form-select" name="conditionStatus" required>
                             <option value="" selected disabled>Select condition status</option>
