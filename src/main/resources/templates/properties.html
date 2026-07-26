@@ -56,16 +56,20 @@
                             <th>Property Name</th>
                             <th>Type</th>
                             <th>Address</th>
-                            <th>Custodian (ID)</th>
+                            <th>Custodian</th>
                             <th>Lot Area (sqm)</th>
                             <th>Tax Status</th>
-                            <th>Status</th>
+                            <th>Legal &amp; Titling Status</th>
+                            <th>Operational Status</th>
+                            <th>Condition Status</th>
                             <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr th:each="p : ${allProperties}">
-                            <td class="fw-bold" th:text="${p.titleNumber != null ? p.titleNumber : 'N/A'}"></td>
+                            <td class="fw-bold"
+                                th:text="${p.titleNumber != null and !#strings.isEmpty(p.titleNumber) ? p.titleNumber : (p.taxDeclarationNumber != null and !#strings.isEmpty(p.taxDeclarationNumber) ? p.taxDeclarationNumber : 'N/A')}">
+                            </td>
                             <td>
                                 <a href="#" class="text-decoration-none fw-bold property-detail-link"
                                     th:data-property-id="${p.propertyID}"
@@ -82,10 +86,16 @@
                                     th:class="${p.propertyTaxStatus != null and p.propertyTaxStatus.startsWith('Paid') ? 'badge bg-success' : 'badge bg-danger'}"
                                     th:text="${p.propertyTaxStatus}"></span>
                             </td>
+                            <td
+                                th:text="${p.legalTitlingStatus != null and !#strings.isEmpty(p.legalTitlingStatus) ? p.legalTitlingStatus : 'N/A'}">
+                            </td>
                             <td>
                                 <span
-                                    th:class="${p.currentStatus == 'Active' ? 'badge bg-primary' : 'badge bg-secondary'}"
-                                    th:text="${p.currentStatus}"></span>
+                                    th:class="${p.operationalStatus == 'Active/In Use' ? 'badge bg-primary' : 'badge bg-secondary'}"
+                                    th:text="${p.operationalStatus != null and !#strings.isEmpty(p.operationalStatus) ? p.operationalStatus : 'N/A'}"></span>
+                            </td>
+                            <td
+                                th:text="${p.conditionStatus != null and !#strings.isEmpty(p.conditionStatus) ? p.conditionStatus : 'N/A'}">
                             </td>
 
                             <!-- DYNAMIC ACTION DROPDOWN -->
@@ -205,62 +215,44 @@
                 <div class="row gy-2">
                     <div class="col-sm-6">
                         <label class="form-label fw-semibold">Property Name</label>
-                        <div id="propertyDetailName" class="form-control-plaintext property-detail-view-only"></div>
-                        <input type="text" id="editPropertyName"
-                            class="form-control property-field property-detail-edit-only d-none" required>
+                        <div id="propertyDetailName" class="form-control-plaintext"></div>
                     </div>
                     <div class="col-sm-6">
                         <label class="form-label fw-semibold">Property Type</label>
-                        <div id="propertyDetailType" class="form-control-plaintext property-detail-view-only"></div>
-                        <input type="text" id="editPropertyType"
-                            class="form-control property-field property-detail-edit-only d-none" required>
+                        <div id="propertyDetailType" class="form-control-plaintext"></div>
                     </div>
                     <div class="col-sm-6">
                         <label class="form-label fw-semibold">Title Number</label>
-                        <div id="propertyDetailTitle" class="form-control-plaintext property-detail-view-only"></div>
-                        <input type="text" id="editPropertyTitle"
-                            class="form-control property-field property-detail-edit-only d-none">
+                        <div id="propertyDetailTitle" class="form-control-plaintext"></div>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="form-label fw-semibold">Tax Declaration Number</label>
+                        <div id="propertyDetailTaxDeclaration" class="form-control-plaintext"></div>
                     </div>
                     <div class="col-sm-6">
                         <label class="form-label fw-semibold">Address Line 1</label>
-                        <div id="propertyDetailAddressLine1" class="form-control-plaintext property-detail-view-only">
+                        <div id="propertyDetailAddressLine1" class="form-control-plaintext">
                         </div>
-                        <input type="text" id="editPropertyAddressLine1"
-                            class="form-control property-field property-detail-edit-only d-none" required>
                     </div>
                     <div class="col-sm-6">
                         <label class="form-label fw-semibold">Address Line 2</label>
-                        <div id="propertyDetailAddressLine2" class="form-control-plaintext property-detail-view-only">
+                        <div id="propertyDetailAddressLine2" class="form-control-plaintext">
                         </div>
-                        <input type="text" id="editPropertyAddressLine2"
-                            class="form-control property-field property-detail-edit-only d-none">
                     </div>
                     <div class="col-sm-6">
                         <label class="form-label fw-semibold">Province</label>
-                        <div id="propertyDetailProvince" class="form-control-plaintext property-detail-view-only">
+                        <div id="propertyDetailProvince" class="form-control-plaintext">
                         </div>
-                        <select id="editPropertyProvince"
-                            class="form-select property-field property-detail-edit-only d-none" required>
-                            <option value="" selected disabled>Select province</option>
-                        </select>
                     </div>
                     <div class="col-sm-6">
                         <label class="form-label fw-semibold">City / Municipality</label>
-                        <div id="propertyDetailCity" class="form-control-plaintext property-detail-view-only">
+                        <div id="propertyDetailCity" class="form-control-plaintext">
                         </div>
-                        <select id="editPropertyCity"
-                            class="form-select property-field property-detail-edit-only d-none" required disabled>
-                            <option value="" selected disabled>Select city/municipality</option>
-                        </select>
                     </div>
                     <div class="col-sm-6">
                         <label class="form-label fw-semibold">Barangay</label>
-                        <div id="propertyDetailBarangay" class="form-control-plaintext property-detail-view-only">
+                        <div id="propertyDetailBarangay" class="form-control-plaintext">
                         </div>
-                        <select id="editPropertyBarangay"
-                            class="form-select property-field property-detail-edit-only d-none" required disabled>
-                            <option value="" selected disabled>Select barangay</option>
-                        </select>
                     </div>
                     <div class="col-sm-6">
                         <label class="form-label fw-semibold">Zip Code</label>
@@ -271,25 +263,29 @@
                     </div>
                     <div class="col-sm-6">
                         <label class="form-label fw-semibold">Acquisition Date</label>
-                        <div id="propertyDetailAcquisitionDate"
-                            class="form-control-plaintext property-detail-view-only">
+                        <div id="propertyDetailAcquisitionDate" class="form-control-plaintext">
                         </div>
-                        <input type="date" id="editPropertyAcquisitionDate"
-                            class="form-control property-field property-detail-edit-only d-none">
                     </div>
                     <div class="col-sm-6">
                         <label class="form-label fw-semibold">Lot Area (sqm)</label>
                         <div id="propertyDetailLotArea" class="form-control-plaintext property-detail-view-only">
                         </div>
-                        <input type="number" id="editPropertyLotAreaSqm"
+                        <input type="number" id="editPropertyLotArea"
                             class="form-control property-field property-detail-edit-only d-none" step="0.01">
                     </div>
                     <div class="col-sm-6">
                         <label class="form-label fw-semibold">Floor Area (sqm)</label>
                         <div id="propertyDetailFloorArea" class="form-control-plaintext property-detail-view-only">
                         </div>
-                        <input type="number" id="editPropertyFloorAreaSqm"
+                        <input type="number" id="editPropertyFloorArea"
                             class="form-control property-field property-detail-edit-only d-none" step="0.01">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">Property Details</label>
+                        <div id="propertyDetailPropertyDetails"
+                            class="form-control-plaintext property-detail-view-only"></div>
+                        <textarea id="editPropertyDetails"
+                            class="form-control property-field property-detail-edit-only d-none" rows="2"></textarea>
                     </div>
                     <div class="col-sm-6">
                         <label class="form-label fw-semibold">Assessed Value</label>
@@ -306,18 +302,55 @@
                             class="form-control property-field property-detail-edit-only d-none">
                     </div>
                     <div class="col-sm-6">
-                        <label class="form-label fw-semibold">Current Status</label>
-                        <div id="propertyDetailStatus" class="form-control-plaintext property-detail-view-only">
+                        <label class="form-label fw-semibold">Legal &amp; Titling Status</label>
+                        <div id="propertyDetailLegalTitlingStatus"
+                            class="form-control-plaintext property-detail-view-only">
                         </div>
-                        <input type="text" id="editPropertyStatus"
-                            class="form-control property-field property-detail-edit-only d-none">
+                        <select id="editPropertyLegalTitlingStatus"
+                            class="form-select property-field property-detail-edit-only d-none">
+                            <option value="" selected disabled>Select legal/titling status</option>
+                            <option th:each="status : ${propertyLegalTitlingStatuses}" th:value="${status}"
+                                th:text="${status}"></option>
+                        </select>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="form-label fw-semibold">Operational &amp; Utilization Status</label>
+                        <div id="propertyDetailOperationalStatus"
+                            class="form-control-plaintext property-detail-view-only">
+                        </div>
+                        <select id="editPropertyOperationalStatus"
+                            class="form-select property-field property-detail-edit-only d-none">
+                            <option value="" selected disabled>Select operational status</option>
+                            <option th:each="status : ${propertyOperationalStatuses}" th:value="${status}"
+                                th:text="${status}"></option>
+                        </select>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="form-label fw-semibold d-flex align-items-center gap-1">
+                            Condition Status
+                            <span
+                                title="Excellent: New or recently renovated; requires routine maintenance only.&#10;Good: Shows normal wear and tear but is fully functional.&#10;Fair: Requires minor repairs or component replacements (e.g., new roof, plumbing fixes).&#10;Poor: Requires major structural intervention to remain safe.&#10;Condemned: Unsafe for occupancy and slated for demolition."
+                                data-bs-toggle="tooltip" data-bs-placement="top" class="text-muted"
+                                style="cursor: help;">&#9432;</span>
+                        </label>
+                        <div id="propertyDetailConditionStatus"
+                            class="form-control-plaintext property-detail-view-only">
+                        </div>
+                        <select id="editPropertyConditionStatus"
+                            class="form-select property-field property-detail-edit-only d-none">
+                            <option value="" selected disabled>Select condition status</option>
+                            <option th:each="status : ${propertyConditionStatuses}" th:value="${status}"
+                                th:text="${status}"></option>
+                        </select>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="form-label fw-semibold">Custodian</label>
+                        <div id="propertyDetailCustodian" class="form-control-plaintext"></div>
                     </div>
                     <div class="col-12">
                         <label class="form-label fw-semibold">Remarks</label>
-                        <div id="propertyDetailRemarks" class="form-control-plaintext property-detail-view-only">
+                        <div id="propertyDetailRemarks" class="form-control-plaintext">
                         </div>
-                        <textarea id="editPropertyRemarks"
-                            class="form-control property-field property-detail-edit-only d-none" rows="2"></textarea>
                     </div>
                 </div>
 

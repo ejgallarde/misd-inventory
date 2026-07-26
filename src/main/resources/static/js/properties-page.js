@@ -1,8 +1,6 @@
 $(document).ready(function () {
     let currentPropertyReferenceId = null;
     let currentPropertyData = null;
-    let isPropertyEditMode = false;
-    let propertyEditLocationCascade = null;
 
     function formatDecimal(value) {
         if (value === null || value === undefined || value === '') {
@@ -53,7 +51,6 @@ $(document).ready(function () {
     }
 
     function setPropertyEditMode(enabled) {
-        isPropertyEditMode = enabled;
         $('#propertyDetailOffcanvas').toggleClass('property-edit-mode-active', enabled);
         $('.property-detail-view-only').toggleClass('d-none', enabled);
         $('.property-detail-edit-only').toggleClass('d-none', !enabled);
@@ -69,67 +66,31 @@ $(document).ready(function () {
         }
     }
 
-    function fillPropertyEditFields(data) {
+    function fillPropertyEditableFields(data) {
         $('#editPropertyID').val(data.propertyID || '');
-        $('#editPropertyName').val(data.propertyName || '');
-        $('#editPropertyType').val(data.propertyType || '');
-        $('#editPropertyTitle').val(data.titleNumber || '');
-        $('#editPropertyAddressLine1').val(data.addressLine1 || '');
-        $('#editPropertyAddressLine2').val(data.addressLine2 || '');
-        $('#editPropertyZipCode').val(data.zipCode || '');
-        $('#editPropertyAcquisitionDate').val(data.acquisitionDate || '');
-        $('#editPropertyLotAreaSqm').val(data.lotAreaSqm || '');
-        $('#editPropertyFloorAreaSqm').val(data.floorAreaSqm || '');
         $('#editPropertyAssessedValue').val(data.assessedValue || '');
         $('#editPropertyTaxStatus').val(data.propertyTaxStatus || '');
-        $('#editPropertyStatus').val(data.currentStatus || '');
-        $('#editPropertyRemarks').val(data.remarks || '');
-    }
-
-    function initPropertyEditLocationCascade() {
-        if (!window.MISDLocationCascade || typeof window.MISDLocationCascade.createController !== 'function') {
-            return;
-        }
-
-        if (!propertyEditLocationCascade) {
-            propertyEditLocationCascade = window.MISDLocationCascade.createController({
-                provinceSelector: '#editPropertyProvince',
-                citySelector: '#editPropertyCity',
-                barangaySelector: '#editPropertyBarangay',
-                zipSelector: '#editPropertyZipCode'
-            });
-        }
-
-        if (propertyEditLocationCascade && currentPropertyData) {
-            propertyEditLocationCascade.loadWithSelection({
-                province: currentPropertyData.province,
-                city: currentPropertyData.city,
-                barangay: currentPropertyData.barangay,
-                zipCode: currentPropertyData.zipCode
-            });
-        }
+        $('#editPropertyLegalTitlingStatus').val(data.legalTitlingStatus || '');
+        $('#editPropertyOperationalStatus').val(data.operationalStatus || '');
+        $('#editPropertyConditionStatus').val(data.conditionStatus || '');
+        $('#editPropertyZipCode').val(data.zipCode || '');
+        $('#editPropertyLotArea').val(data.lotAreaSqm || '');
+        $('#editPropertyFloorArea').val(data.floorAreaSqm || '');
+        $('#editPropertyDetails').val(data.propertyDetails || '');
     }
 
     function buildPropertyUpdatePayload() {
         return {
             propertyID: Number($('#editPropertyID').val()),
-            propertyName: $('#editPropertyName').val(),
-            propertyType: $('#editPropertyType').val(),
-            titleNumber: $('#editPropertyTitle').val(),
-            addressLine1: $('#editPropertyAddressLine1').val(),
-            addressLine2: $('#editPropertyAddressLine2').val(),
-            province: $('#editPropertyProvince').val(),
-            city: $('#editPropertyCity').val(),
-            barangay: $('#editPropertyBarangay').val(),
-            zipCode: $('#editPropertyZipCode').val(),
-            acquisitionDate: $('#editPropertyAcquisitionDate').val() || null,
-            lotAreaSqm: $('#editPropertyLotAreaSqm').val() || null,
-            floorAreaSqm: $('#editPropertyFloorAreaSqm').val() || null,
             assessedValue: $('#editPropertyAssessedValue').val() || null,
             propertyTaxStatus: $('#editPropertyTaxStatus').val(),
-            currentStatus: $('#editPropertyStatus').val(),
-            remarks: $('#editPropertyRemarks').val(),
-            custodianID: currentPropertyData?.custodianID || null
+            legalTitlingStatus: $('#editPropertyLegalTitlingStatus').val(),
+            operationalStatus: $('#editPropertyOperationalStatus').val(),
+            conditionStatus: $('#editPropertyConditionStatus').val(),
+            zipCode: $('#editPropertyZipCode').val(),
+            lotAreaSqm: $('#editPropertyLotArea').val() || null,
+            floorAreaSqm: $('#editPropertyFloorArea').val() || null,
+            propertyDetails: $('#editPropertyDetails').val()
         };
     }
 
@@ -137,6 +98,10 @@ $(document).ready(function () {
         themeToggleId: 'themeToggleBtn',
         successToastId: 'successToast',
         initializeSelect2Modals: true
+    });
+
+    document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function (element) {
+        bootstrap.Tooltip.getOrCreateInstance(element);
     });
 
     const propertiesTable = $('#propertiesTable').DataTable(MISDCommon.buildStandardDataTableConfig({
@@ -177,6 +142,7 @@ $(document).ready(function () {
             $('#propertyDetailName').text(data.propertyName || 'N/A');
             $('#propertyDetailType').text(data.propertyType || 'N/A');
             $('#propertyDetailTitle').text(data.titleNumber || 'N/A');
+            $('#propertyDetailTaxDeclaration').text(data.taxDeclarationNumber || 'N/A');
             $('#propertyDetailAddressLine1').text(data.addressLine1 || 'N/A');
             $('#propertyDetailAddressLine2').text(data.addressLine2 || 'N/A');
             $('#propertyDetailProvince').text(data.province || 'N/A');
@@ -186,12 +152,16 @@ $(document).ready(function () {
             $('#propertyDetailAcquisitionDate').text(formatDate(data.acquisitionDate));
             $('#propertyDetailLotArea').text(formatDecimal(data.lotAreaSqm));
             $('#propertyDetailFloorArea').text(formatDecimal(data.floorAreaSqm));
+            $('#propertyDetailPropertyDetails').text(data.propertyDetails || 'N/A');
             $('#propertyDetailAssessedValue').text(formatDecimal(data.assessedValue));
             $('#propertyDetailTaxStatus').text(data.propertyTaxStatus || 'N/A');
-            $('#propertyDetailStatus').text(data.currentStatus || 'N/A');
+            $('#propertyDetailLegalTitlingStatus').text(data.legalTitlingStatus || 'N/A');
+            $('#propertyDetailOperationalStatus').text(data.operationalStatus || 'N/A');
+            $('#propertyDetailConditionStatus').text(data.conditionStatus || 'N/A');
+            $('#propertyDetailCustodian').text(data.custodianName || 'Unassigned');
             $('#propertyDetailRemarks').text(data.remarks || 'N/A');
 
-            fillPropertyEditFields(data);
+            fillPropertyEditableFields(data);
             setPropertyEditMode(false);
 
             currentPropertyReferenceId = data.propertyID != null ? String(data.propertyID) : null;
@@ -210,7 +180,6 @@ $(document).ready(function () {
 
     $('#enablePropertyEditBtn').on('click', function () {
         setPropertyEditMode(true);
-        initPropertyEditLocationCascade();
     });
 
     $('#cancelPropertyEditBtn').on('click', function () {
@@ -218,15 +187,7 @@ $(document).ready(function () {
             setPropertyEditMode(false);
             return;
         }
-        fillPropertyEditFields(currentPropertyData);
-        if (propertyEditLocationCascade) {
-            propertyEditLocationCascade.loadWithSelection({
-                province: currentPropertyData.province,
-                city: currentPropertyData.city,
-                barangay: currentPropertyData.barangay,
-                zipCode: currentPropertyData.zipCode
-            });
-        }
+        fillPropertyEditableFields(currentPropertyData);
         setPropertyEditMode(false);
     });
 

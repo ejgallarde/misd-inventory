@@ -74,7 +74,7 @@
 
                 <!-- Tab Specific Actions -->
                 <div class="d-flex justify-content-end mb-3 gap-2">
-                    <button class="btn btn-outline-primary shadow-sm" type="button" data-bs-toggle="offcanvas"
+                    <button class="btn btn-primary shadow-sm" type="button" data-bs-toggle="offcanvas"
                         data-bs-target="#receiveAssetOffcanvas">+ Receive Asset</button>
                     <button class="btn btn-success shadow-sm" type="button" data-bs-toggle="offcanvas"
                         data-bs-target="#addCatalogOffcanvas">+ Add to Catalog</button>
@@ -248,7 +248,6 @@
 
                 <!-- Tab Specific Actions -->
                 <div class="d-flex justify-content-end mb-3 gap-2">
-                    <a href="/admin/locations" class="btn btn-outline-primary shadow-sm">Manage PSGC Data</a>
                     <button class="btn btn-success shadow-sm" type="button" data-bs-toggle="offcanvas"
                         data-bs-target="#addPropertyOffcanvas">+ Add Property</button>
                 </div>
@@ -304,12 +303,17 @@
                                         <th>Location</th>
                                         <th>Assessed Value</th>
                                         <th>Tax Status</th>
+                                        <th>Legal &amp; Titling Status</th>
+                                        <th>Operational Status</th>
+                                        <th>Condition Status</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr th:each="prop : ${pendingProperties}">
                                         <td class="fw-bold" th:text="${prop.propertyName}"></td>
-                                        <td th:text="${prop.titleNumber}"></td>
+                                        <td
+                                            th:text="${prop.titleNumber != null and !#strings.isEmpty(prop.titleNumber) ? prop.titleNumber : (prop.taxDeclarationNumber != null and !#strings.isEmpty(prop.taxDeclarationNumber) ? prop.taxDeclarationNumber : 'N/A')}">
+                                        </td>
                                         <td
                                             th:text="${(prop.addressLine1 != null ? prop.addressLine1 : '') + (prop.city != null and !#strings.isEmpty(prop.city) ? ', ' + prop.city : '') + (prop.province != null and !#strings.isEmpty(prop.province) ? ', ' + prop.province : '')}">
                                         </td>
@@ -317,6 +321,17 @@
                                             th:text="'PHP ' + ${#numbers.formatDecimal(prop.assessedValue, 1, 'COMMA', 2, 'POINT')}">
                                         </td>
                                         <td><span class="badge bg-danger" th:text="${prop.propertyTaxStatus}"></span>
+                                        </td>
+                                        <td
+                                            th:text="${prop.legalTitlingStatus != null and !#strings.isEmpty(prop.legalTitlingStatus) ? prop.legalTitlingStatus : 'N/A'}">
+                                        </td>
+                                        <td>
+                                            <span
+                                                th:class="${prop.operationalStatus == 'Active/In Use' ? 'badge bg-primary' : 'badge bg-secondary'}"
+                                                th:text="${prop.operationalStatus != null and !#strings.isEmpty(prop.operationalStatus) ? prop.operationalStatus : 'N/A'}"></span>
+                                        </td>
+                                        <td
+                                            th:text="${prop.conditionStatus != null and !#strings.isEmpty(prop.conditionStatus) ? prop.conditionStatus : 'N/A'}">
                                         </td>
                                     </tr>
                                 </tbody>
@@ -557,13 +572,37 @@
                 <div class="row mb-3">
                     <div class="col-6">
                         <label class="form-label fw-bold">Type</label>
-                        <select class="form-select" name="propertyType" required>
+                        <select class="form-select" id="propertyTypeInput" name="propertyType" required>
+                            <option value="" selected disabled>Select property type</option>
                             <option th:each="propertyType : ${propertyTypes}" th:value="${propertyType}"
                                 th:text="${propertyType}"></option>
                         </select>
                     </div>
-                    <div class="col-6"><label class="form-label fw-bold">Title No.</label><input type="text"
-                            class="form-control" name="titleNumber"></div>
+                </div>
+                <div id="propertyIdentifierSection" class="d-none">
+                    <div id="propertyTitleNotAvailableWrap" class="form-check mt-n2 mb-3 d-none">
+                        <input class="form-check-input" type="checkbox" id="propertyTitleNotAvailableCheckbox"
+                            name="titleNotAvailable" value="true">
+                        <label class="form-check-label small" for="propertyTitleNotAvailableCheckbox">
+                            Title Number is not available
+                        </label>
+                    </div>
+                    <div id="propertyTitleFieldWrap" class="mb-3 d-none">
+                        <label class="form-label fw-bold" id="propertyIdentifierLabel">Title No.</label>
+                        <input type="text" class="form-control" id="propertyTitleNumberInput" name="titleNumber"
+                            placeholder="Required for lot properties">
+                    </div>
+
+                    <div id="propertyTaxDeclarationFieldWrap" class="mb-3 d-none">
+                        <label class="form-label fw-bold" id="propertyTaxDeclarationLabel">Tax Declaration No.</label>
+                        <input type="text" class="form-control" id="propertyTaxDeclarationNumberInput"
+                            name="taxDeclarationNumber" placeholder="Required for non-lot properties">
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Property Details</label>
+                    <textarea class="form-control" name="propertyDetails" rows="2"
+                        placeholder="Describe notable property information"></textarea>
                 </div>
                 <div class="mb-3"><label class="form-label fw-bold">Address Line 1</label><input type="text"
                         class="form-control" name="addressLine1" required></div>
@@ -596,8 +635,38 @@
                 <div class="row mb-3">
                     <div class="col-6"><label class="form-label fw-bold">Acquisition Date</label><input type="date"
                             class="form-control" name="acquisitionDate"></div>
-                    <div class="col-6"><label class="form-label fw-bold">Current Status</label><input type="text"
-                            class="form-control" name="currentStatus" placeholder="Active"></div>
+                    <div class="col-6">
+                        <label class="form-label fw-bold">Legal &amp; Titling Status</label>
+                        <select class="form-select" name="legalTitlingStatus" required>
+                            <option value="" selected disabled>Select legal/titling status</option>
+                            <option th:each="status : ${propertyLegalTitlingStatuses}" th:value="${status}"
+                                th:text="${status}"></option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-6">
+                        <label class="form-label fw-bold">Operational &amp; Utilization Status</label>
+                        <select class="form-select" name="operationalStatus" required>
+                            <option value="" selected disabled>Select operational status</option>
+                            <option th:each="status : ${propertyOperationalStatuses}" th:value="${status}"
+                                th:text="${status}"></option>
+                        </select>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label fw-bold d-flex align-items-center gap-1">
+                            Condition Status
+                            <span
+                                title="Excellent: New or recently renovated; requires routine maintenance only.&#10;Good: Shows normal wear and tear but is fully functional.&#10;Fair: Requires minor repairs or component replacements (e.g., new roof, plumbing fixes).&#10;Poor: Requires major structural intervention to remain safe.&#10;Condemned: Unsafe for occupancy and slated for demolition."
+                                data-bs-toggle="tooltip" data-bs-placement="top" class="text-muted"
+                                style="cursor: help;">&#9432;</span>
+                        </label>
+                        <select class="form-select" name="conditionStatus" required>
+                            <option value="" selected disabled>Select condition status</option>
+                            <option th:each="status : ${propertyConditionStatuses}" th:value="${status}"
+                                th:text="${status}"></option>
+                        </select>
+                    </div>
                 </div>
                 <div class="row mb-3">
                     <div class="col-6"><label class="form-label fw-bold">Lot Area (sqm)</label><input type="number"

@@ -6,8 +6,10 @@ import ph.gov.phlpost.inventory.misddashboard.service.DocumentService;
 import ph.gov.phlpost.inventory.misddashboard.service.FleetService;
 import ph.gov.phlpost.inventory.misddashboard.service.RegistryService;
 
+import java.time.LocalDate;
 import java.time.Year;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
@@ -172,18 +174,53 @@ public class FleetController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<FleetVehicle> getVehicleDetails(@PathVariable Integer id) {
+    public ResponseEntity<Map<String, Object>> getVehicleDetails(@PathVariable Integer id) {
         return fleetRepo.findById(id)
-                .map(ResponseEntity::ok)
+                .map(vehicle -> {
+                    String assignedDriverId = vehicle.getAssignedDriverID();
+                    String assignedDriverName = assignedDriverId == null || assignedDriverId.isBlank()
+                            ? "Unassigned"
+                            : registryService.getEmployeeNameMap().getOrDefault(assignedDriverId, assignedDriverId);
+
+                    Map<String, Object> response = Map.ofEntries(
+                            Map.entry("vehicleID", vehicle.getVehicleID()),
+                            Map.entry("plateNumber", vehicle.getPlateNumber() == null ? "" : vehicle.getPlateNumber()),
+                            Map.entry("bodyNumber", vehicle.getBodyNumber() == null ? "" : vehicle.getBodyNumber()),
+                            Map.entry("vehicleType", vehicle.getVehicleType() == null ? "" : vehicle.getVehicleType()),
+                            Map.entry("make", vehicle.getMake() == null ? "" : vehicle.getMake()),
+                            Map.entry("model", vehicle.getModel() == null ? "" : vehicle.getModel()),
+                            Map.entry("manufactureYear",
+                                    vehicle.getManufactureYear() == null ? "" : vehicle.getManufactureYear()),
+                            Map.entry("engineNumber",
+                                    vehicle.getEngineNumber() == null ? "" : vehicle.getEngineNumber()),
+                            Map.entry("chassisNumberVIN",
+                                    vehicle.getChassisNumberVIN() == null ? "" : vehicle.getChassisNumberVIN()),
+                            Map.entry("fuelType", vehicle.getFuelType() == null ? "" : vehicle.getFuelType()),
+                            Map.entry("registrationExpiry",
+                                    vehicle.getRegistrationExpiry() == null ? "" : vehicle.getRegistrationExpiry()),
+                            Map.entry("insuranceExpiry",
+                                    vehicle.getInsuranceExpiry() == null ? "" : vehicle.getInsuranceExpiry()),
+                            Map.entry("assignedDriverID", assignedDriverId == null ? "" : assignedDriverId),
+                            Map.entry("assignedDriverName", assignedDriverName),
+                            Map.entry("currentStatus",
+                                    vehicle.getCurrentStatus() == null ? "" : vehicle.getCurrentStatus()),
+                            Map.entry("cost", vehicle.getCost() == null ? "" : vehicle.getCost()),
+                            Map.entry("remarks", vehicle.getRemarks() == null ? "" : vehicle.getRemarks()));
+                    return ResponseEntity.ok(response);
+                })
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping("/update")
     public ResponseEntity<String> updateVehicle(@RequestBody FleetVehicle updatedVehicle) {
-        if (fleetRepo.existsById(updatedVehicle.getVehicleID())) {
-            fleetRepo.save(updatedVehicle);
-            return ResponseEntity.ok("Vehicle updated successfully");
+        Integer vehicleId = updatedVehicle.getVehicleID();
+        if (vehicleId == null || !fleetRepo.existsById(vehicleId)) {
+            return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.notFound().build();
+
+        LocalDate registrationExpiry = updatedVehicle.getRegistrationExpiry();
+        LocalDate insuranceExpiry = updatedVehicle.getInsuranceExpiry();
+        fleetService.updateVehicleExpiryDates(vehicleId, registrationExpiry, insuranceExpiry);
+        return ResponseEntity.ok("Vehicle expiry dates updated successfully");
     }
 }

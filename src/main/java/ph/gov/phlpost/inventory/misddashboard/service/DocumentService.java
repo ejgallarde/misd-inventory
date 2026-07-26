@@ -5,7 +5,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.multipart.MultipartFile;
 
 import ph.gov.phlpost.inventory.misddashboard.model.Document;
+import ph.gov.phlpost.inventory.misddashboard.model.FleetVehicle;
+import ph.gov.phlpost.inventory.misddashboard.model.RealEstateProperty;
 import ph.gov.phlpost.inventory.misddashboard.repository.DocumentRepository;
+import ph.gov.phlpost.inventory.misddashboard.repository.FleetVehicleRepository;
+import ph.gov.phlpost.inventory.misddashboard.repository.RealEstatePropertyRepository;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -21,16 +25,22 @@ public class DocumentService {
 
     private final DocumentStorageService storageService;
     private final DocumentRepository documentRepository;
+    private final FleetVehicleRepository fleetVehicleRepository;
+    private final RealEstatePropertyRepository realEstatePropertyRepository;
     private final long maxFileSizeBytes;
     private final Set<String> allowedExtensions;
     private final Set<String> allowedCategories;
 
     public DocumentService(DocumentStorageService storageService, DocumentRepository documentRepository,
+            FleetVehicleRepository fleetVehicleRepository,
+            RealEstatePropertyRepository realEstatePropertyRepository,
             @Value("${document.upload.max-size-mb:15}") long maxFileSizeMb,
             @Value("${document.upload.allowed-extensions:pdf,jpg,jpeg,png,doc,docx,xls,xlsx}") String allowedExtensionsConfig,
             @Value("#{'${document.upload.categories:Delivery Receipt,Official Receipt / Invoice,Warranty Certificate,Inspection Report,Acceptance Report,Appendix 71,Serial Number Label,Photographs,Equipment Specification Sheet,Repair or Service Report,OR/CR,Insurance Policy,Deed of Sale,Title,Tax Declaration,Property Photo,Service Report}'.split(',')}") List<String> allowedCategoriesConfig) {
         this.storageService = storageService;
         this.documentRepository = documentRepository;
+        this.fleetVehicleRepository = fleetVehicleRepository;
+        this.realEstatePropertyRepository = realEstatePropertyRepository;
         this.maxFileSizeBytes = Math.max(1L, maxFileSizeMb) * 1024L * 1024L;
         this.allowedExtensions = Arrays.stream(allowedExtensionsConfig.split(","))
                 .map(token -> token == null ? "" : token.trim())
@@ -151,8 +161,9 @@ public class DocumentService {
                 ? "SystemUser"
                 : uploadedBy.trim();
 
+        String storageEntityId = resolveStorageEntityId(normalizedReferenceType, normalizedReferenceId);
         String objectKey = storageService.uploadDocument(file, toStorageFolder(normalizedReferenceType),
-                normalizedReferenceId);
+                storageEntityId);
 
         Document document = new Document();
         document.setReferenceType(normalizedReferenceType);
@@ -263,5 +274,60 @@ public class DocumentService {
             case "IT_EQUIPMENT" -> "it-equipment";
             default -> throw new IllegalArgumentException("Unsupported reference type: " + referenceType);
         };
+    }
+
+    private String resolveStorageEntityId(String normalizedReferenceType, String normalizedReferenceId) {
+        return switch (normalizedReferenceType) {
+            case "VEHICLE" -> resolveVehicleStorageId(normalizedReferenceId);
+            case "PROPERTY" -> resolvePropertyStorageId(normalizedReferenceId);
+            default -> normalizedReferenceId;
+        };
+    }
+
+    private String resolveVehicleStorageId(String normalizedReferenceId) {
+        Integer vehicleId = parseInteger(normalizedReferenceId);
+        if (vehicleId == null) {
+            return normalizedReferenceId;
+        }
+
+        return fleetVehicleRepository.findById(vehicleId)
+                .map(FleetVehicle::getPlateNumber)
+                .filter(value -> value != null && !value.isBlank())
+                .map(String::trim)
+                .orElse(normalizedReferenceId);
+    }
+
+    private String resolvePropertyStorageId(String normalizedReferenceId) {
+        Integer propertyId = parseInteger(normalizedReferenceId);
+        if (propertyId == null) {
+            return normalizedReferenceId;
+        }
+
+        return realEstatePropertyRepository.findById(propertyId)
+                .map(this::resolvePropertyIdentifier)
+                .orElse(normalizedReferenceId);
+    }
+
+    private String resolvePropertyIdentifier(RealEstateProperty property) {
+        String titleNumber = property.getTitleNumber();
+        if (titleNumber != null && !titleNumber.isBlank()) {
+            return titleNumber.trim();
+        }
+
+        String taxDeclarationNumber = property.getTaxDeclarationNumber();
+        if (taxDeclarationNumber != null && !taxDeclarationNumber.isBlank()) {
+            return taxDeclarationNumber.trim();
+        }
+
+        Integer propertyId = property.getPropertyID();
+        return propertyId == null ? "property" : "property-" + propertyId;
+    }
+
+    private Integer parseInteger(String value) {
+        try {
+            return Integer.valueOf(value);
+        } catch (NumberFormatException exception) {
+            return null;
+        }
     }
 }

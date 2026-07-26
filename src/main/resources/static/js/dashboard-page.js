@@ -6,6 +6,10 @@ $(document).ready(function () {
         errorToastDelay: 4000
     });
 
+    document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function (element) {
+        bootstrap.Tooltip.getOrCreateInstance(element);
+    });
+
     $('button[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
         $('button[data-bs-toggle="tab"]').removeClass('text-dark').addClass('text-secondary');
         $(e.target).removeClass('text-secondary').addClass('text-dark');
@@ -104,6 +108,85 @@ $(document).ready(function () {
         }
     });
 
+    function updatePropertyIdentifierRules() {
+        const propertyTypeInput = document.getElementById('propertyTypeInput');
+        const propertyIdentifierSection = document.getElementById('propertyIdentifierSection');
+        const propertyTitleFieldWrap = document.getElementById('propertyTitleFieldWrap');
+        const propertyTitleNotAvailableWrap = document.getElementById('propertyTitleNotAvailableWrap');
+        const propertyTaxDeclarationFieldWrap = document.getElementById('propertyTaxDeclarationFieldWrap');
+        const titleInput = document.getElementById('propertyTitleNumberInput');
+        const taxDeclarationInput = document.getElementById('propertyTaxDeclarationNumberInput');
+        const titleNotAvailableCheckbox = document.getElementById('propertyTitleNotAvailableCheckbox');
+
+        if (!propertyTypeInput || !propertyIdentifierSection || !propertyTitleFieldWrap
+            || !propertyTitleNotAvailableWrap || !propertyTaxDeclarationFieldWrap
+            || !titleInput || !taxDeclarationInput || !titleNotAvailableCheckbox) {
+            return;
+        }
+
+        const propertyTypeRaw = propertyTypeInput.value || '';
+        const propertyType = propertyTypeRaw.toLowerCase();
+        const hasTypeSelection = propertyTypeRaw.trim() !== '';
+        const isLot = propertyType === 'lot';
+        const titleNotAvailable = titleNotAvailableCheckbox.checked;
+
+        propertyIdentifierSection.classList.toggle('d-none', !hasTypeSelection);
+
+        if (!hasTypeSelection) {
+            titleInput.required = false;
+            titleInput.disabled = false;
+            titleInput.value = '';
+            taxDeclarationInput.required = false;
+            taxDeclarationInput.disabled = false;
+            taxDeclarationInput.value = '';
+            titleNotAvailableCheckbox.checked = false;
+            propertyTitleFieldWrap.classList.add('d-none');
+            propertyTitleNotAvailableWrap.classList.add('d-none');
+            propertyTaxDeclarationFieldWrap.classList.add('d-none');
+            return;
+        }
+
+        if (isLot) {
+            propertyTitleNotAvailableWrap.classList.remove('d-none');
+            propertyTitleFieldWrap.classList.toggle('d-none', titleNotAvailable);
+            propertyTaxDeclarationFieldWrap.classList.toggle('d-none', !titleNotAvailable);
+
+            titleInput.disabled = titleNotAvailable;
+            titleInput.required = !titleNotAvailable;
+            taxDeclarationInput.disabled = !titleNotAvailable;
+            taxDeclarationInput.required = titleNotAvailable;
+
+            if (titleNotAvailable) {
+                titleInput.value = '';
+            } else {
+                taxDeclarationInput.value = '';
+            }
+            return;
+        }
+
+        titleNotAvailableCheckbox.checked = false;
+        propertyTitleNotAvailableWrap.classList.add('d-none');
+        propertyTitleFieldWrap.classList.add('d-none');
+        propertyTaxDeclarationFieldWrap.classList.remove('d-none');
+
+        titleInput.required = false;
+        titleInput.disabled = true;
+        titleInput.value = '';
+
+        taxDeclarationInput.disabled = false;
+        taxDeclarationInput.required = true;
+    }
+
+    const propertyTypeInput = document.getElementById('propertyTypeInput');
+    const propertyTitleNotAvailableCheckbox = document.getElementById('propertyTitleNotAvailableCheckbox');
+    if (propertyTypeInput) {
+        propertyTypeInput.addEventListener('change', updatePropertyIdentifierRules);
+    }
+    if (propertyTitleNotAvailableCheckbox) {
+        propertyTitleNotAvailableCheckbox.addEventListener('change', updatePropertyIdentifierRules);
+    }
+    updatePropertyIdentifierRules();
+
     function removeSelectedFile(input, fileIndex) {
         const files = Array.from(input.files || []);
         const updatedFiles = files.filter((_, index) => index !== fileIndex);
@@ -131,7 +214,6 @@ $(document).ready(function () {
         const files = validationResults.map(result => result.file);
         const { maxSizeMb } = MISDCommon.getUploadConstraints(input);
         const tooLarge = validationResults.filter(result => !result.sizeAllowed).map(result => result.file.name);
-
         if (tooLarge.length) {
             MISDCommon.showUploadError(input, `File size exceeds ${maxSizeMb}MB: ${tooLarge.join(', ')}`);
         } else {
@@ -230,6 +312,10 @@ $(document).ready(function () {
     });
 
     $('#receiveAssetForm, #addVehicleOffcanvas form, #addPropertyOffcanvas form').on('submit', function (event) {
+        if (this.id !== 'receiveAssetForm' && this.closest('#addPropertyOffcanvas')) {
+            updatePropertyIdentifierRules();
+        }
+
         if (!this.checkValidity()) {
             event.preventDefault();
             this.classList.add('was-validated');
@@ -263,6 +349,10 @@ $(document).ready(function () {
         const form = this.querySelector('form');
         if (form) {
             form.reset();
+        }
+
+        if (this.id === 'addPropertyOffcanvas') {
+            updatePropertyIdentifierRules();
         }
 
         $(this).find('.js-document-upload-input').each(function () {

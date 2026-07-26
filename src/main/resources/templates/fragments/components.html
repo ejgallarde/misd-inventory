@@ -29,6 +29,12 @@
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userProfileMenuButton">
                         <li>
+                            <a class="dropdown-item" href="/admin/locations">Manage PSGC Data</a>
+                        </li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li>
                             <form th:action="@{/logout}" method="post" class="d-inline w-100">
                                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                                 <button type="submit" class="dropdown-item">Logout</button>

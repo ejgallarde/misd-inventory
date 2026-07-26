@@ -22,6 +22,12 @@ public class RealEstateProperty {
     @Column(name = "TitleNumber", unique = true)
     private String titleNumber;
 
+    @Column(name = "TaxDeclarationNumber", unique = true)
+    private String taxDeclarationNumber;
+
+    @Column(name = "PropertyDetails", columnDefinition = "TEXT")
+    private String propertyDetails;
+
     @Column(name = "AddressLine1")
     private String addressLine1;
 
@@ -55,8 +61,14 @@ public class RealEstateProperty {
     @Column(name = "PropertyTaxStatus")
     private String propertyTaxStatus;
 
-    @Column(name = "CurrentStatus")
-    private String currentStatus = "Active";
+    @Column(name = "LegalTitlingStatus")
+    private String legalTitlingStatus;
+
+    @Column(name = "OperationalStatus")
+    private String operationalStatus;
+
+    @Column(name = "ConditionStatus")
+    private String conditionStatus;
 
     @Column(name = "CustodianID")
     private String custodianID;
@@ -94,6 +106,22 @@ public class RealEstateProperty {
 
     public void setTitleNumber(String titleNumber) {
         this.titleNumber = titleNumber;
+    }
+
+    public String getTaxDeclarationNumber() {
+        return taxDeclarationNumber;
+    }
+
+    public void setTaxDeclarationNumber(String taxDeclarationNumber) {
+        this.taxDeclarationNumber = taxDeclarationNumber;
+    }
+
+    public String getPropertyDetails() {
+        return propertyDetails;
+    }
+
+    public void setPropertyDetails(String propertyDetails) {
+        this.propertyDetails = propertyDetails;
     }
 
     public String getAddressLine1() {
@@ -184,12 +212,28 @@ public class RealEstateProperty {
         this.propertyTaxStatus = propertyTaxStatus;
     }
 
-    public String getCurrentStatus() {
-        return currentStatus;
+    public String getLegalTitlingStatus() {
+        return legalTitlingStatus;
     }
 
-    public void setCurrentStatus(String currentStatus) {
-        this.currentStatus = currentStatus;
+    public void setLegalTitlingStatus(String legalTitlingStatus) {
+        this.legalTitlingStatus = legalTitlingStatus;
+    }
+
+    public String getOperationalStatus() {
+        return operationalStatus;
+    }
+
+    public void setOperationalStatus(String operationalStatus) {
+        this.operationalStatus = operationalStatus;
+    }
+
+    public String getConditionStatus() {
+        return conditionStatus;
+    }
+
+    public void setConditionStatus(String conditionStatus) {
+        this.conditionStatus = conditionStatus;
     }
 
     public String getCustodianID() {

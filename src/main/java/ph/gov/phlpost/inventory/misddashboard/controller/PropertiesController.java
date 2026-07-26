@@ -7,6 +7,7 @@ import ph.gov.phlpost.inventory.misddashboard.service.DocumentService;
 import ph.gov.phlpost.inventory.misddashboard.service.RegistryService;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
@@ -39,6 +40,15 @@ public class PropertiesController {
     @Value("#{'${dropdown.property-tax-status-update}'.split(',')}")
     private List<String> propertyTaxStatusesUpdate;
 
+    @Value("#{'${dropdown.property-legal-titling-statuses}'.split(',')}")
+    private List<String> propertyLegalTitlingStatuses;
+
+    @Value("#{'${dropdown.property-operational-statuses}'.split(',')}")
+    private List<String> propertyOperationalStatuses;
+
+    @Value("#{'${dropdown.property-condition-statuses}'.split(',')}")
+    private List<String> propertyConditionStatuses;
+
     public PropertiesController(RealEstatePropertyRepository propertyRepo, RegistryService registryService,
             AuditLogService auditService,
             DocumentService documentService) {
@@ -60,23 +70,31 @@ public class PropertiesController {
         model.addAttribute("propertyTaxStatusesUpdate", propertyTaxStatusesUpdate.stream()
                 .sorted(String.CASE_INSENSITIVE_ORDER)
                 .toList());
+        model.addAttribute("propertyLegalTitlingStatuses", propertyLegalTitlingStatuses);
+        model.addAttribute("propertyOperationalStatuses", propertyOperationalStatuses);
+        model.addAttribute("propertyConditionStatuses", propertyConditionStatuses);
         return "properties";
     }
 
     @PostMapping("/add")
     public String addProperty(@ModelAttribute RealEstateProperty newProperty,
+            @RequestParam(value = "titleNotAvailable", defaultValue = "false") boolean titleNotAvailable,
             @RequestParam(value = "documentFiles", required = false) MultipartFile[] documentFiles,
             @RequestParam(value = "documentCategories", required = false) String[] documentCategories,
             Authentication authentication,
             RedirectAttributes redirectAttributes) {
-        String validationError = validatePropertyRegistration(newProperty);
+        String validationError = validatePropertyRegistration(newProperty, titleNotAvailable);
         if (validationError != null) {
             redirectAttributes.addFlashAttribute("errorMessage", validationError);
             return "redirect:/";
         }
 
-        if (newProperty.getCurrentStatus() == null || newProperty.getCurrentStatus().isBlank()) {
-            newProperty.setCurrentStatus("Active");
+        if (titleNotAvailable) {
+            newProperty.setTitleNumber(null);
+        }
+
+        if (newProperty.getOperationalStatus() == null || newProperty.getOperationalStatus().isBlank()) {
+            newProperty.setOperationalStatus("Active/In Use");
         }
 
         propertyRepo.save(newProperty);
@@ -101,7 +119,7 @@ public class PropertiesController {
         return "redirect:/";
     }
 
-    private String validatePropertyRegistration(RealEstateProperty property) {
+    private String validatePropertyRegistration(RealEstateProperty property, boolean titleNotAvailable) {
         if (isBlank(property.getPropertyName())) {
             return "Property name is required.";
         }
@@ -120,11 +138,45 @@ public class PropertiesController {
         if (isBlank(property.getBarangay())) {
             return "Barangay is required.";
         }
+        if (isBlank(property.getLegalTitlingStatus())) {
+            return "Legal & Titling Status is required.";
+        }
+        if (isBlank(property.getOperationalStatus())) {
+            return "Operational & Utilization Status is required.";
+        }
+        if (isBlank(property.getConditionStatus())) {
+            return "Condition Status is required.";
+        }
+
+        String propertyType = normalize(property.getPropertyType());
+        String titleNumber = normalize(property.getTitleNumber());
+        String taxDeclarationNumber = normalize(property.getTaxDeclarationNumber());
+
+        if (isLotType(propertyType)) {
+            if (titleNotAvailable) {
+                if (taxDeclarationNumber.isEmpty()) {
+                    return "Tax Declaration number is required when Title Number is not available.";
+                }
+            } else if (titleNumber.isEmpty()) {
+                return "Title Number is required for lot properties.";
+            }
+        } else if (taxDeclarationNumber.isEmpty()) {
+            return "Tax Declaration number is required for non-lot properties.";
+        }
+
         return null;
     }
 
     private boolean isBlank(String value) {
         return value == null || value.trim().isEmpty();
+    }
+
+    private String normalize(String value) {
+        return value == null ? "" : value.trim();
+    }
+
+    private boolean isLotType(String propertyType) {
+        return propertyType != null && propertyType.equalsIgnoreCase("Lot");
     }
 
     @PostMapping("/assign-custodian")
@@ -162,15 +214,80 @@ public class PropertiesController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<RealEstateProperty> getPropertyDetails(@PathVariable Integer id) {
+    public ResponseEntity<Map<String, Object>> getPropertyDetails(@PathVariable Integer id) {
         return propertyRepo.findById(id)
-                .map(ResponseEntity::ok)
+                .map(property -> {
+                    String custodianId = property.getCustodianID();
+                    String custodianName = custodianId == null || custodianId.isBlank()
+                            ? "Unassigned"
+                            : registryService.getEmployeeNameMap().getOrDefault(custodianId, custodianId);
+
+                    Map<String, Object> response = Map.ofEntries(
+                            Map.entry("propertyID", property.getPropertyID()),
+                            Map.entry("propertyType",
+                                    property.getPropertyType() == null ? "" : property.getPropertyType()),
+                            Map.entry("propertyName",
+                                    property.getPropertyName() == null ? "" : property.getPropertyName()),
+                            Map.entry("titleNumber",
+                                    property.getTitleNumber() == null ? "" : property.getTitleNumber()),
+                            Map.entry("taxDeclarationNumber",
+                                    property.getTaxDeclarationNumber() == null ? ""
+                                            : property.getTaxDeclarationNumber()),
+                            Map.entry("propertyDetails",
+                                    property.getPropertyDetails() == null ? "" : property.getPropertyDetails()),
+                            Map.entry("addressLine1",
+                                    property.getAddressLine1() == null ? "" : property.getAddressLine1()),
+                            Map.entry("addressLine2",
+                                    property.getAddressLine2() == null ? "" : property.getAddressLine2()),
+                            Map.entry("province", property.getProvince() == null ? "" : property.getProvince()),
+                            Map.entry("city", property.getCity() == null ? "" : property.getCity()),
+                            Map.entry("barangay", property.getBarangay() == null ? "" : property.getBarangay()),
+                            Map.entry("zipCode", property.getZipCode() == null ? "" : property.getZipCode()),
+                            Map.entry("lotAreaSqm", property.getLotAreaSqm() == null ? "" : property.getLotAreaSqm()),
+                            Map.entry("floorAreaSqm",
+                                    property.getFloorAreaSqm() == null ? "" : property.getFloorAreaSqm()),
+                            Map.entry("acquisitionDate",
+                                    property.getAcquisitionDate() == null ? "" : property.getAcquisitionDate()),
+                            Map.entry("assessedValue",
+                                    property.getAssessedValue() == null ? "" : property.getAssessedValue()),
+                            Map.entry("propertyTaxStatus",
+                                    property.getPropertyTaxStatus() == null ? "" : property.getPropertyTaxStatus()),
+                            Map.entry("legalTitlingStatus",
+                                    property.getLegalTitlingStatus() == null ? ""
+                                            : property.getLegalTitlingStatus()),
+                            Map.entry("operationalStatus",
+                                    property.getOperationalStatus() == null ? "" : property.getOperationalStatus()),
+                            Map.entry("conditionStatus",
+                                    property.getConditionStatus() == null ? "" : property.getConditionStatus()),
+                            Map.entry("custodianID", custodianId == null ? "" : custodianId),
+                            Map.entry("custodianName", custodianName),
+                            Map.entry("remarks", property.getRemarks() == null ? "" : property.getRemarks()));
+                    return ResponseEntity.ok(response);
+                })
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping("/update")
     public ResponseEntity<String> updateProperty(@RequestBody RealEstateProperty updatedProp) {
-        propertyRepo.save(updatedProp);
-        return ResponseEntity.ok("Property updated successfully");
+        Integer propertyId = updatedProp.getPropertyID();
+        if (propertyId == null) {
+            return ResponseEntity.badRequest().body("Property ID is required.");
+        }
+
+        return propertyRepo.findById(propertyId)
+                .map(existing -> {
+                    existing.setAssessedValue(updatedProp.getAssessedValue());
+                    existing.setPropertyTaxStatus(updatedProp.getPropertyTaxStatus());
+                    existing.setLegalTitlingStatus(updatedProp.getLegalTitlingStatus());
+                    existing.setOperationalStatus(updatedProp.getOperationalStatus());
+                    existing.setConditionStatus(updatedProp.getConditionStatus());
+                    existing.setZipCode(updatedProp.getZipCode());
+                    existing.setLotAreaSqm(updatedProp.getLotAreaSqm());
+                    existing.setFloorAreaSqm(updatedProp.getFloorAreaSqm());
+                    existing.setPropertyDetails(updatedProp.getPropertyDetails());
+                    propertyRepo.save(existing);
+                    return ResponseEntity.ok("Property updated successfully");
+                })
+                .orElse(ResponseEntity.notFound().build());
     }
 }

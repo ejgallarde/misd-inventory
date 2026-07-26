@@ -5,6 +5,8 @@ import ph.gov.phlpost.inventory.misddashboard.repository.FleetVehicleRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+
 @Service
 public class FleetService {
 
@@ -53,5 +55,15 @@ public class FleetService {
         vehicle.setCurrentStatus("Retired");
         fleetRepo.save(vehicle);
         auditService.logLifecycleEvent(vehicle.getPlateNumber(), "SYSTEM", "Vehicle Retired", notes);
+    }
+
+    @Transactional
+    public void updateVehicleExpiryDates(Integer vehicleId, LocalDate registrationExpiry, LocalDate insuranceExpiry) {
+        FleetVehicle vehicle = fleetRepo.findById(vehicleId)
+                .orElseThrow(() -> new IllegalArgumentException("Vehicle not found."));
+
+        vehicle.setRegistrationExpiry(registrationExpiry);
+        vehicle.setInsuranceExpiry(insuranceExpiry);
+        fleetRepo.save(vehicle);
     }
 }

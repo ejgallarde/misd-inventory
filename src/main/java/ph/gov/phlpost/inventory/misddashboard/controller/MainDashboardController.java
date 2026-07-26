@@ -55,6 +55,15 @@ public class MainDashboardController {
         @Value("#{'${dropdown.property-tax-status-add}'.split(',')}")
         private List<String> propertyTaxStatusesAdd;
 
+        @Value("#{'${dropdown.property-legal-titling-statuses}'.split(',')}")
+        private List<String> propertyLegalTitlingStatuses;
+
+        @Value("#{'${dropdown.property-operational-statuses}'.split(',')}")
+        private List<String> propertyOperationalStatuses;
+
+        @Value("#{'${dropdown.property-condition-statuses}'.split(',')}")
+        private List<String> propertyConditionStatuses;
+
         @Value("${document.upload.max-size-mb:15}")
         private int documentUploadMaxSizeMb;
 
@@ -135,6 +144,9 @@ public class MainDashboardController {
                 model.addAttribute("propertyTaxStatusesAdd", propertyTaxStatusesAdd.stream()
                                 .sorted(String.CASE_INSENSITIVE_ORDER)
                                 .toList());
+                model.addAttribute("propertyLegalTitlingStatuses", propertyLegalTitlingStatuses);
+                model.addAttribute("propertyOperationalStatuses", propertyOperationalStatuses);
+                model.addAttribute("propertyConditionStatuses", propertyConditionStatuses);
 
                 return "dashboard";
         }

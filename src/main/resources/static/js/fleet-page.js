@@ -64,41 +64,16 @@ $(document).ready(function () {
 
     function fillFleetEditFields(data) {
         $('#editFleetVehicleID').val(data.vehicleID || '');
-        $('#editFleetPlateNumber').val(data.plateNumber || '');
-        $('#editFleetVehicleType').val(data.vehicleType || '');
-        $('#editFleetMake').val(data.make || '');
-        $('#editFleetModel').val(data.model || '');
-        $('#editFleetManufactureYear').val(data.manufactureYear || '');
-        $('#editFleetBodyNumber').val(data.bodyNumber || '');
-        $('#editFleetFuelType').val(data.fuelType || '');
-        $('#editFleetEngineNumber').val(data.engineNumber || '');
-        $('#editFleetChassisVin').val(data.chassisNumberVIN || '');
         $('#editFleetRegistrationExpiry').val(formatDateInput(data.registrationExpiry));
         $('#editFleetInsuranceExpiry').val(formatDateInput(data.insuranceExpiry));
-        $('#editFleetCost').val(data.cost || '');
-        $('#editFleetStatus').val(data.currentStatus || '');
-        $('#editFleetRemarks').val(data.remarks || '');
     }
 
     function buildFleetUpdatePayload() {
         const vehicleID = Number($('#editFleetVehicleID').val());
         return {
             vehicleID: Number.isNaN(vehicleID) ? null : vehicleID,
-            plateNumber: $('#editFleetPlateNumber').val(),
-            vehicleType: $('#editFleetVehicleType').val(),
-            make: $('#editFleetMake').val(),
-            model: $('#editFleetModel').val(),
-            manufactureYear: $('#editFleetManufactureYear').val() || null,
-            bodyNumber: $('#editFleetBodyNumber').val(),
-            fuelType: $('#editFleetFuelType').val(),
-            engineNumber: $('#editFleetEngineNumber').val(),
-            chassisNumberVIN: $('#editFleetChassisVin').val(),
             registrationExpiry: $('#editFleetRegistrationExpiry').val() || null,
-            insuranceExpiry: $('#editFleetInsuranceExpiry').val() || null,
-            cost: $('#editFleetCost').val(),
-            currentStatus: $('#editFleetStatus').val(),
-            remarks: $('#editFleetRemarks').val(),
-            assignedDriverID: currentFleetData?.assignedDriverID || null
+            insuranceExpiry: $('#editFleetInsuranceExpiry').val() || null
         };
     }
 
@@ -154,7 +129,7 @@ $(document).ready(function () {
             $('#fleetDetailFuelType').text(data.fuelType || 'N/A');
             $('#fleetDetailEngineNumber').text(data.engineNumber || 'N/A');
             $('#fleetDetailChassisVin').text(data.chassisNumberVIN || 'N/A');
-            $('#fleetDetailDriver').text(data.assignedDriverID || 'Unassigned');
+            $('#fleetDetailDriver').text(data.assignedDriverName || 'Unassigned');
             $('#fleetDetailRegExpiry').text(formatDate(data.registrationExpiry));
             $('#fleetDetailInsuranceExpiry').text(formatDate(data.insuranceExpiry));
             $('#fleetDetailCost').text(data.cost || 'N/A');
