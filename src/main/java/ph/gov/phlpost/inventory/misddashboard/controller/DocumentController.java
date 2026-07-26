@@ -10,7 +10,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import ph.gov.phlpost.inventory.misddashboard.model.Document;
 import ph.gov.phlpost.inventory.misddashboard.service.DocumentService;
 
@@ -28,24 +27,6 @@ public class DocumentController {
 
     public DocumentController(DocumentService documentService) {
         this.documentService = documentService;
-    }
-
-    @PostMapping("/upload")
-    public String handleFileUpload(@RequestParam("file") MultipartFile file,
-            @RequestParam("refType") String refType,
-            @RequestParam("refId") String refId,
-            @RequestParam("category") String category,
-            RedirectAttributes redirectAttributes) {
-        try {
-            documentService.uploadAndSaveDocument(file, refType, refId, category, "SystemUser");
-
-            redirectAttributes.addFlashAttribute("successMessage", "File uploaded successfully!");
-        } catch (IOException e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Upload failed: " + e.getMessage());
-        } catch (IllegalArgumentException e) {
-            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
-        }
-        return "redirect:/";
     }
 
     @GetMapping("/list")
@@ -78,6 +59,9 @@ public class DocumentController {
         } catch (IOException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Upload failed: " + e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Unexpected upload failure: " + e.getMessage()));
         }
     }
 

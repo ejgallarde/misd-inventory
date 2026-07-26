@@ -92,37 +92,6 @@ $(document).ready(function () {
         document.getElementById('specifications').value = JSON.stringify(specObject);
     });
 
-    function loadVehicleDetails(id) {
-        $.get('/api/assets/fleet/' + id, function (data) {
-            $('#editVehicleId').val(data.vehicleId);
-            $('#editPlateNumber').val(data.plateNumber);
-            $('#editVehicleType').val(data.vehicleType);
-            $('#fleetModal').modal('show');
-        });
-    }
-
-    $('#enableEditBtn').on('click', function () {
-        $('.asset-field').prop('disabled', false);
-        $(this).addClass('d-none');
-        $('#saveEditBtn').removeClass('d-none');
-    });
-
-    $('#saveEditBtn').on('click', function () {
-        const formData = $('#fleetEditForm').serializeArray();
-        const json = {};
-        formData.forEach(field => json[field.name] = field.value);
-
-        $.ajax({
-            url: '/api/assets/fleet/update',
-            type: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify(json),
-            success: function () {
-                location.reload();
-            }
-        });
-    });
-
     $('#receiveQuantity').on('input', function () {
         const qty = parseInt($(this).val()) || 1;
 

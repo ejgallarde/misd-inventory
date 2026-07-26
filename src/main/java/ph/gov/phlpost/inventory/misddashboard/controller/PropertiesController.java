@@ -125,14 +125,14 @@ public class PropertiesController {
         return "redirect:/properties";
     }
 
-    @GetMapping({ "/{id}", "/properties/{id}" })
+    @GetMapping("/{id}")
     public ResponseEntity<RealEstateProperty> getPropertyDetails(@PathVariable Integer id) {
         return propertyRepo.findById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @PostMapping({ "/update", "/properties/update" })
+    @PostMapping("/update")
     public ResponseEntity<String> updateProperty(@RequestBody RealEstateProperty updatedProp) {
         propertyRepo.save(updatedProp);
         return ResponseEntity.ok("Property updated successfully");
