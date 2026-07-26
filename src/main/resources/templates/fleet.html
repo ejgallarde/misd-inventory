@@ -91,20 +91,23 @@
                             <td>
                                 <div class="d-flex flex-column gap-1 small">
                                     <span
+                                        th:if="${v.adminLegaltionalStatus != null and !#strings.isEmpty(v.adminLegaltionalStatus)}"
                                         th:class="${v.adminLegaltionalStatus == 'Registration Expired' or v.adminLegaltionalStatus == 'Impounded' ? 'badge bg-danger' : ((v.adminLegaltionalStatus == 'Active / Registered') ? 'badge bg-success' : 'badge bg-dark')}"
                                         th:title="${v.adminLegaltionalStatus == 'Active / Registered' ? 'Legally compliant for road use.' : (v.adminLegaltionalStatus == 'Registration Expired' ? 'Registration renewal is required.' : (v.adminLegaltionalStatus == 'Impounded' ? 'Vehicle is impounded and cannot operate.' : (v.adminLegaltionalStatus == 'Decommissioned' ? 'Removed from active fleet.' : (v.adminLegaltionalStatus == 'Disposed' ? 'Disposed from fleet records.' : (v.adminLegaltionalStatus == 'Sold' ? 'Sold and closed out.' : 'Administrative and legal status.')))))}"
                                         data-bs-toggle="tooltip" data-bs-placement="top"
-                                        th:text="${v.adminLegaltionalStatus != null and !#strings.isEmpty(v.adminLegaltionalStatus) ? v.adminLegaltionalStatus : 'N/A'}"></span>
+                                        th:text="${v.adminLegaltionalStatus}"></span>
                                     <span
+                                        th:if="${v.operationalStatus != null and !#strings.isEmpty(v.operationalStatus)}"
                                         th:class="${v.operationalStatus == 'Available/Idle' ? 'badge bg-primary' : ((v.operationalStatus == 'Dispatched/In Transit') ? 'badge bg-success' : ((v.operationalStatus == 'Reserved') ? 'badge bg-warning text-dark' : ((v.operationalStatus == 'Grounded' or v.operationalStatus == 'Missing/Stolen' or v.operationalStatus == 'Slated for Disposal') ? 'badge bg-danger' : 'badge bg-dark')))}"
                                         th:title="${v.operationalStatus == 'Available/Idle' ? 'Ready for dispatch.' : (v.operationalStatus == 'Dispatched/In Transit' ? 'Currently deployed for operations.' : (v.operationalStatus == 'Reserved' ? 'Reserved and awaiting dispatch.' : (v.operationalStatus == 'Grounded' ? 'Not allowed to operate pending action.' : (v.operationalStatus == 'Missing/Stolen' ? 'Missing or reported stolen.' : (v.operationalStatus == 'Slated for Disposal' ? 'Queued for retirement/disposal.' : 'Operational status.')))))}"
                                         data-bs-toggle="tooltip" data-bs-placement="top"
-                                        th:text="${v.operationalStatus != null and !#strings.isEmpty(v.operationalStatus) ? v.operationalStatus : 'N/A'}"></span>
+                                        th:text="${v.operationalStatus}"></span>
                                     <span
+                                        th:if="${v.maintenanceStatus != null and !#strings.isEmpty(v.maintenanceStatus)}"
                                         th:class="${v.maintenanceStatus == 'Roadworthy' ? 'badge bg-success' : ((v.maintenanceStatus == 'Scheduled Maintenance') ? 'badge bg-warning text-dark' : ((v.maintenanceStatus == 'Under Repair' or v.maintenanceStatus == 'Awaiting Parts') ? 'badge bg-secondary' : ((v.maintenanceStatus == 'Beyond Economic Repair (BER)') ? 'badge bg-danger' : 'badge bg-dark')))}"
                                         th:title="${v.maintenanceStatus == 'Roadworthy' ? 'Vehicle is fit for operation.' : (v.maintenanceStatus == 'Scheduled Maintenance' ? 'Scheduled maintenance is pending.' : (v.maintenanceStatus == 'Under Repair' ? 'Actively being repaired.' : (v.maintenanceStatus == 'Awaiting Parts' ? 'Repair is waiting for parts.' : (v.maintenanceStatus == 'Beyond Economic Repair (BER)' ? 'Repair is no longer economical.' : 'Maintenance health status.'))))}"
                                         data-bs-toggle="tooltip" data-bs-placement="top"
-                                        th:text="${v.maintenanceStatus != null and !#strings.isEmpty(v.maintenanceStatus) ? v.maintenanceStatus : 'N/A'}"></span>
+                                        th:text="${v.maintenanceStatus}"></span>
                                 </div>
                             </td>
 
