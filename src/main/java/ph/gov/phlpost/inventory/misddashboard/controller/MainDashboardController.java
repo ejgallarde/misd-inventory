@@ -4,7 +4,6 @@ import ph.gov.phlpost.inventory.misddashboard.model.Personnel;
 import ph.gov.phlpost.inventory.misddashboard.repository.DashboardRepository;
 import ph.gov.phlpost.inventory.misddashboard.repository.EquipmentCatalogRepository;
 import ph.gov.phlpost.inventory.misddashboard.repository.FleetVehicleRepository;
-import ph.gov.phlpost.inventory.misddashboard.repository.PersonnelRepository;
 import ph.gov.phlpost.inventory.misddashboard.repository.RealEstatePropertyRepository;
 import ph.gov.phlpost.inventory.misddashboard.service.RegistryService;
 
@@ -34,7 +33,6 @@ public class MainDashboardController {
         private final FleetVehicleRepository fleetRepo;
         private final RealEstatePropertyRepository propertyRepo;
         private final EquipmentCatalogRepository catalogRepo;
-        private final PersonnelRepository personnelRepo;
         private final RegistryService registryService;
 
         @Value("#{'${inventory.categories}'.split(',')}")
@@ -63,12 +61,11 @@ public class MainDashboardController {
 
         public MainDashboardController(DashboardRepository dashboardRepo, FleetVehicleRepository fleetRepo,
                         RealEstatePropertyRepository propertyRepo, EquipmentCatalogRepository catalogRepo,
-                        PersonnelRepository personnelRepo, RegistryService registryService) {
+                        RegistryService registryService) {
                 this.dashboardRepo = dashboardRepo;
                 this.fleetRepo = fleetRepo;
                 this.propertyRepo = propertyRepo;
                 this.catalogRepo = catalogRepo;
-                this.personnelRepo = personnelRepo;
                 this.registryService = registryService;
         }
 
