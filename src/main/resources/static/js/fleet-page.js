@@ -1,6 +1,17 @@
 $(document).ready(function () {
     let currentFleetReferenceId = null;
 
+    function formatDate(value) {
+        if (!value) {
+            return 'N/A';
+        }
+        const parsed = new Date(value);
+        if (Number.isNaN(parsed.getTime())) {
+            return value;
+        }
+        return parsed.toLocaleDateString();
+    }
+
     const fleetDocumentConfig = {
         refType: 'VEHICLE',
         bodySelector: '#fleetDocumentsTableBody',
@@ -73,9 +84,16 @@ $(document).ready(function () {
             $('#fleetDetailType').text(data.vehicleType || 'N/A');
             $('#fleetDetailMakeModel').text(((data.make || '') + ' ' + (data.model || '')).trim() || 'N/A');
             $('#fleetDetailYear').text(data.manufactureYear || 'N/A');
+            $('#fleetDetailBodyNumber').text(data.bodyNumber || 'N/A');
+            $('#fleetDetailFuelType').text(data.fuelType || 'N/A');
+            $('#fleetDetailEngineNumber').text(data.engineNumber || 'N/A');
+            $('#fleetDetailChassisVin').text(data.chassisNumberVIN || 'N/A');
             $('#fleetDetailDriver').text(data.assignedDriverID || 'Unassigned');
-            $('#fleetDetailRegExpiry').text(data.registrationExpiry || 'N/A');
+            $('#fleetDetailRegExpiry').text(formatDate(data.registrationExpiry));
+            $('#fleetDetailInsuranceExpiry').text(formatDate(data.insuranceExpiry));
+            $('#fleetDetailCost').text(data.cost || 'N/A');
             $('#fleetDetailStatus').text(data.currentStatus || 'N/A');
+            $('#fleetDetailRemarks').text(data.remarks || 'N/A');
             currentFleetReferenceId = data.vehicleID != null ? String(data.vehicleID) : null;
             loadFleetDocuments(currentFleetReferenceId);
             bootstrap.Modal.getOrCreateInstance(document.getElementById('fleetDetailModal')).show();

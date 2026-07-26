@@ -55,7 +55,7 @@
                             <th>Title No.</th>
                             <th>Property Name</th>
                             <th>Type</th>
-                            <th>Region / Location</th>
+                            <th>Address</th>
                             <th>Custodian (ID)</th>
                             <th>Lot Area (sqm)</th>
                             <th>Tax Status</th>
@@ -72,7 +72,9 @@
                                     th:text="${p.propertyName != null and !#strings.isEmpty(p.propertyName) ? p.propertyName : 'Unnamed Property'}"></a>
                             </td>
                             <td th:text="${p.propertyType}"></td>
-                            <td th:text="${p.region}"></td>
+                            <td
+                                th:text="${(p.addressLine1 != null ? p.addressLine1 : '') + (p.city != null and !#strings.isEmpty(p.city) ? ', ' + p.city : '') + (p.province != null and !#strings.isEmpty(p.province) ? ', ' + p.province : '')}">
+                            </td>
                             <td th:text="${p.custodianID != null ? employeeMap[p.custodianID] : 'Unassigned'}"></td>
                             <td th:text="${#numbers.formatDecimal(p.lotAreaSqm, 1, 'COMMA', 2, 'POINT')}"></td>
                             <td>
@@ -198,30 +200,110 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
+                    <input type="hidden" id="editPropertyID">
                     <div class="row gy-2">
                         <div class="col-sm-6">
                             <label class="form-label fw-semibold">Property Name</label>
-                            <div id="propertyDetailName" class="form-control-plaintext"></div>
+                            <div id="propertyDetailName" class="form-control-plaintext property-view-only"></div>
+                            <input type="text" id="editPropertyName" class="form-control property-edit-only d-none"
+                                required>
                         </div>
                         <div class="col-sm-6">
                             <label class="form-label fw-semibold">Property Type</label>
-                            <div id="propertyDetailType" class="form-control-plaintext"></div>
+                            <div id="propertyDetailType" class="form-control-plaintext property-view-only"></div>
+                            <input type="text" id="editPropertyType" class="form-control property-edit-only d-none"
+                                required>
                         </div>
                         <div class="col-sm-6">
                             <label class="form-label fw-semibold">Title Number</label>
-                            <div id="propertyDetailTitle" class="form-control-plaintext"></div>
+                            <div id="propertyDetailTitle" class="form-control-plaintext property-view-only"></div>
+                            <input type="text" id="editPropertyTitle" class="form-control property-edit-only d-none">
                         </div>
                         <div class="col-sm-6">
-                            <label class="form-label fw-semibold">Region</label>
-                            <div id="propertyDetailRegion" class="form-control-plaintext"></div>
+                            <label class="form-label fw-semibold">Address Line 1</label>
+                            <div id="propertyDetailAddressLine1" class="form-control-plaintext property-view-only">
+                            </div>
+                            <input type="text" id="editPropertyAddressLine1"
+                                class="form-control property-edit-only d-none" required>
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label fw-semibold">Address Line 2</label>
+                            <div id="propertyDetailAddressLine2" class="form-control-plaintext property-view-only">
+                            </div>
+                            <input type="text" id="editPropertyAddressLine2"
+                                class="form-control property-edit-only d-none">
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label fw-semibold">Province</label>
+                            <div id="propertyDetailProvince" class="form-control-plaintext property-view-only"></div>
+                            <select id="editPropertyProvince" class="form-select property-edit-only d-none" required>
+                                <option value="" selected disabled>Select province</option>
+                            </select>
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label fw-semibold">City / Municipality</label>
+                            <div id="propertyDetailCity" class="form-control-plaintext property-view-only"></div>
+                            <select id="editPropertyCity" class="form-select property-edit-only d-none" required
+                                disabled>
+                                <option value="" selected disabled>Select city/municipality</option>
+                            </select>
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label fw-semibold">Barangay</label>
+                            <div id="propertyDetailBarangay" class="form-control-plaintext property-view-only"></div>
+                            <select id="editPropertyBarangay" class="form-select property-edit-only d-none" required
+                                disabled>
+                                <option value="" selected disabled>Select barangay</option>
+                            </select>
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label fw-semibold">Zip Code</label>
+                            <div id="propertyDetailZipCode" class="form-control-plaintext property-view-only"></div>
+                            <input type="text" id="editPropertyZipCode" class="form-control property-edit-only d-none"
+                                maxlength="10">
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label fw-semibold">Acquisition Date</label>
+                            <div id="propertyDetailAcquisitionDate" class="form-control-plaintext property-view-only">
+                            </div>
+                            <input type="date" id="editPropertyAcquisitionDate"
+                                class="form-control property-edit-only d-none">
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label fw-semibold">Lot Area (sqm)</label>
+                            <div id="propertyDetailLotArea" class="form-control-plaintext property-view-only"></div>
+                            <input type="number" id="editPropertyLotAreaSqm"
+                                class="form-control property-edit-only d-none" step="0.01">
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label fw-semibold">Floor Area (sqm)</label>
+                            <div id="propertyDetailFloorArea" class="form-control-plaintext property-view-only"></div>
+                            <input type="number" id="editPropertyFloorAreaSqm"
+                                class="form-control property-edit-only d-none" step="0.01">
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label fw-semibold">Assessed Value</label>
+                            <div id="propertyDetailAssessedValue" class="form-control-plaintext property-view-only">
+                            </div>
+                            <input type="number" id="editPropertyAssessedValue"
+                                class="form-control property-edit-only d-none" step="0.01">
                         </div>
                         <div class="col-sm-6">
                             <label class="form-label fw-semibold">Tax Status</label>
-                            <div id="propertyDetailTaxStatus" class="form-control-plaintext"></div>
+                            <div id="propertyDetailTaxStatus" class="form-control-plaintext property-view-only"></div>
+                            <input type="text" id="editPropertyTaxStatus"
+                                class="form-control property-edit-only d-none">
                         </div>
                         <div class="col-sm-6">
                             <label class="form-label fw-semibold">Current Status</label>
-                            <div id="propertyDetailStatus" class="form-control-plaintext"></div>
+                            <div id="propertyDetailStatus" class="form-control-plaintext property-view-only"></div>
+                            <input type="text" id="editPropertyStatus" class="form-control property-edit-only d-none">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Remarks</label>
+                            <div id="propertyDetailRemarks" class="form-control-plaintext property-view-only"></div>
+                            <textarea id="editPropertyRemarks" class="form-control property-edit-only d-none"
+                                rows="2"></textarea>
                         </div>
                     </div>
 
@@ -263,7 +345,10 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" id="enablePropertyEditBtn" class="btn btn-primary">Edit</button>
+                    <button type="button" id="savePropertyEditBtn" class="btn btn-success d-none">Save</button>
+                    <button type="button" id="cancelPropertyEditBtn" class="btn btn-outline-secondary d-none">Cancel
+                        Edit</button>
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                 </div>
             </div>
@@ -283,6 +368,7 @@
 
     <script th:src="@{/js/ui-common.js}"></script>
     <script th:src="@{/js/csrf.js}"></script>
+    <script th:src="@{/js/location-cascade.js}"></script>
     <script th:src="@{/js/properties-page.js}"></script>
 </body>
 

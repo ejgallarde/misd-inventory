@@ -69,6 +69,16 @@ public class PropertiesController {
             @RequestParam(value = "documentCategories", required = false) String[] documentCategories,
             Authentication authentication,
             RedirectAttributes redirectAttributes) {
+        String validationError = validatePropertyRegistration(newProperty);
+        if (validationError != null) {
+            redirectAttributes.addFlashAttribute("errorMessage", validationError);
+            return "redirect:/";
+        }
+
+        if (newProperty.getCurrentStatus() == null || newProperty.getCurrentStatus().isBlank()) {
+            newProperty.setCurrentStatus("Active");
+        }
+
         propertyRepo.save(newProperty);
 
         if (documentService.hasFiles(documentFiles) && newProperty.getPropertyID() != null) {
@@ -89,6 +99,32 @@ public class PropertiesController {
 
         redirectAttributes.addFlashAttribute("successMessage", "Property added to registry.");
         return "redirect:/";
+    }
+
+    private String validatePropertyRegistration(RealEstateProperty property) {
+        if (isBlank(property.getPropertyName())) {
+            return "Property name is required.";
+        }
+        if (isBlank(property.getPropertyType())) {
+            return "Property type is required.";
+        }
+        if (isBlank(property.getAddressLine1())) {
+            return "Address Line 1 is required.";
+        }
+        if (isBlank(property.getProvince())) {
+            return "Province is required.";
+        }
+        if (isBlank(property.getCity())) {
+            return "City / Municipality is required.";
+        }
+        if (isBlank(property.getBarangay())) {
+            return "Barangay is required.";
+        }
+        return null;
+    }
+
+    private boolean isBlank(String value) {
+        return value == null || value.trim().isEmpty();
     }
 
     @PostMapping("/assign-custodian")

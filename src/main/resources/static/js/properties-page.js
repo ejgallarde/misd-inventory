@@ -1,5 +1,30 @@
 $(document).ready(function () {
     let currentPropertyReferenceId = null;
+    let currentPropertyData = null;
+    let isPropertyEditMode = false;
+    let propertyEditLocationCascade = null;
+
+    function formatDecimal(value) {
+        if (value === null || value === undefined || value === '') {
+            return 'N/A';
+        }
+        const numberValue = Number(value);
+        if (Number.isNaN(numberValue)) {
+            return value;
+        }
+        return numberValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function formatDate(value) {
+        if (!value) {
+            return 'N/A';
+        }
+        const parsed = new Date(value);
+        if (Number.isNaN(parsed.getTime())) {
+            return value;
+        }
+        return parsed.toLocaleDateString();
+    }
 
     const propertyDocumentConfig = {
         refType: 'PROPERTY',
@@ -25,6 +50,78 @@ $(document).ready(function () {
             emptyText: propertyDocumentConfig.emptyText,
             loadErrorText: propertyDocumentConfig.loadErrorText
         });
+    }
+
+    function setPropertyEditMode(enabled) {
+        isPropertyEditMode = enabled;
+        $('.property-view-only').toggleClass('d-none', enabled);
+        $('.property-edit-only').toggleClass('d-none', !enabled);
+        $('#enablePropertyEditBtn').toggleClass('d-none', enabled);
+        $('#savePropertyEditBtn, #cancelPropertyEditBtn').toggleClass('d-none', !enabled);
+    }
+
+    function fillPropertyEditFields(data) {
+        $('#editPropertyID').val(data.propertyID || '');
+        $('#editPropertyName').val(data.propertyName || '');
+        $('#editPropertyType').val(data.propertyType || '');
+        $('#editPropertyTitle').val(data.titleNumber || '');
+        $('#editPropertyAddressLine1').val(data.addressLine1 || '');
+        $('#editPropertyAddressLine2').val(data.addressLine2 || '');
+        $('#editPropertyZipCode').val(data.zipCode || '');
+        $('#editPropertyAcquisitionDate').val(data.acquisitionDate || '');
+        $('#editPropertyLotAreaSqm').val(data.lotAreaSqm || '');
+        $('#editPropertyFloorAreaSqm').val(data.floorAreaSqm || '');
+        $('#editPropertyAssessedValue').val(data.assessedValue || '');
+        $('#editPropertyTaxStatus').val(data.propertyTaxStatus || '');
+        $('#editPropertyStatus').val(data.currentStatus || '');
+        $('#editPropertyRemarks').val(data.remarks || '');
+    }
+
+    function initPropertyEditLocationCascade() {
+        if (!window.MISDLocationCascade || typeof window.MISDLocationCascade.createController !== 'function') {
+            return;
+        }
+
+        if (!propertyEditLocationCascade) {
+            propertyEditLocationCascade = window.MISDLocationCascade.createController({
+                provinceSelector: '#editPropertyProvince',
+                citySelector: '#editPropertyCity',
+                barangaySelector: '#editPropertyBarangay',
+                zipSelector: '#editPropertyZipCode'
+            });
+        }
+
+        if (propertyEditLocationCascade && currentPropertyData) {
+            propertyEditLocationCascade.loadWithSelection({
+                province: currentPropertyData.province,
+                city: currentPropertyData.city,
+                barangay: currentPropertyData.barangay,
+                zipCode: currentPropertyData.zipCode
+            });
+        }
+    }
+
+    function buildPropertyUpdatePayload() {
+        return {
+            propertyID: Number($('#editPropertyID').val()),
+            propertyName: $('#editPropertyName').val(),
+            propertyType: $('#editPropertyType').val(),
+            titleNumber: $('#editPropertyTitle').val(),
+            addressLine1: $('#editPropertyAddressLine1').val(),
+            addressLine2: $('#editPropertyAddressLine2').val(),
+            province: $('#editPropertyProvince').val(),
+            city: $('#editPropertyCity').val(),
+            barangay: $('#editPropertyBarangay').val(),
+            zipCode: $('#editPropertyZipCode').val(),
+            acquisitionDate: $('#editPropertyAcquisitionDate').val() || null,
+            lotAreaSqm: $('#editPropertyLotAreaSqm').val() || null,
+            floorAreaSqm: $('#editPropertyFloorAreaSqm').val() || null,
+            assessedValue: $('#editPropertyAssessedValue').val() || null,
+            propertyTaxStatus: $('#editPropertyTaxStatus').val(),
+            currentStatus: $('#editPropertyStatus').val(),
+            remarks: $('#editPropertyRemarks').val(),
+            custodianID: currentPropertyData?.custodianID || null
+        };
     }
 
     MISDCommon.initPageUI({
@@ -67,12 +164,26 @@ $(document).ready(function () {
         }
 
         $.get('/properties/' + propertyId, function (data) {
+            currentPropertyData = data;
             $('#propertyDetailName').text(data.propertyName || 'N/A');
             $('#propertyDetailType').text(data.propertyType || 'N/A');
             $('#propertyDetailTitle').text(data.titleNumber || 'N/A');
-            $('#propertyDetailRegion').text(data.region || 'N/A');
+            $('#propertyDetailAddressLine1').text(data.addressLine1 || 'N/A');
+            $('#propertyDetailAddressLine2').text(data.addressLine2 || 'N/A');
+            $('#propertyDetailProvince').text(data.province || 'N/A');
+            $('#propertyDetailCity').text(data.city || 'N/A');
+            $('#propertyDetailBarangay').text(data.barangay || 'N/A');
+            $('#propertyDetailZipCode').text(data.zipCode || 'N/A');
+            $('#propertyDetailAcquisitionDate').text(formatDate(data.acquisitionDate));
+            $('#propertyDetailLotArea').text(formatDecimal(data.lotAreaSqm));
+            $('#propertyDetailFloorArea').text(formatDecimal(data.floorAreaSqm));
+            $('#propertyDetailAssessedValue').text(formatDecimal(data.assessedValue));
             $('#propertyDetailTaxStatus').text(data.propertyTaxStatus || 'N/A');
             $('#propertyDetailStatus').text(data.currentStatus || 'N/A');
+            $('#propertyDetailRemarks').text(data.remarks || 'N/A');
+
+            fillPropertyEditFields(data);
+            setPropertyEditMode(false);
 
             currentPropertyReferenceId = data.propertyID != null ? String(data.propertyID) : null;
             loadPropertyDocuments(currentPropertyReferenceId);
@@ -80,6 +191,49 @@ $(document).ready(function () {
             bootstrap.Modal.getOrCreateInstance(document.getElementById('propertyDetailModal')).show();
         }).fail(function () {
             alert('Unable to load property details.');
+        });
+    });
+
+    $('#enablePropertyEditBtn').on('click', function () {
+        setPropertyEditMode(true);
+        initPropertyEditLocationCascade();
+    });
+
+    $('#cancelPropertyEditBtn').on('click', function () {
+        if (!currentPropertyData) {
+            setPropertyEditMode(false);
+            return;
+        }
+        fillPropertyEditFields(currentPropertyData);
+        if (propertyEditLocationCascade) {
+            propertyEditLocationCascade.loadWithSelection({
+                province: currentPropertyData.province,
+                city: currentPropertyData.city,
+                barangay: currentPropertyData.barangay,
+                zipCode: currentPropertyData.zipCode
+            });
+        }
+        setPropertyEditMode(false);
+    });
+
+    $('#savePropertyEditBtn').on('click', function () {
+        const payload = buildPropertyUpdatePayload();
+        if (!payload.propertyID) {
+            alert('No property selected.');
+            return;
+        }
+
+        $.ajax({
+            url: '/properties/update',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(payload),
+            success: function () {
+                location.reload();
+            },
+            error: function () {
+                alert('Failed to save property changes.');
+            }
         });
     });
 
@@ -164,6 +318,8 @@ $(document).ready(function () {
 
     $('#propertyDetailModal').on('hidden.bs.modal', function () {
         currentPropertyReferenceId = null;
+        currentPropertyData = null;
+        setPropertyEditMode(false);
         MISDCommon.resetDocumentDetailUI({
             bodySelector: propertyDocumentConfig.bodySelector,
             emptySelector: propertyDocumentConfig.emptySelector,

@@ -43,6 +43,9 @@ public class MainDashboardController {
         @Value("#{'${dropdown.vehicle-types}'.split(',')}")
         private List<String> vehicleTypes;
 
+        @Value("#{'${dropdown.vehicle-years}'.split(',')}")
+        private List<String> vehicleYears;
+
         @Value("#{'${dropdown.fuel-types}'.split(',')}")
         private List<String> fuelTypes;
 
@@ -122,6 +125,7 @@ public class MainDashboardController {
                 model.addAttribute("vehicleTypes", vehicleTypes.stream()
                                 .sorted(String.CASE_INSENSITIVE_ORDER)
                                 .toList());
+                model.addAttribute("vehicleYears", vehicleYears);
                 model.addAttribute("fuelTypes", fuelTypes.stream()
                                 .sorted(String.CASE_INSENSITIVE_ORDER)
                                 .toList());

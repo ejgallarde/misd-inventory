@@ -6,6 +6,7 @@ import ph.gov.phlpost.inventory.misddashboard.service.DocumentService;
 import ph.gov.phlpost.inventory.misddashboard.service.FleetService;
 import ph.gov.phlpost.inventory.misddashboard.service.RegistryService;
 
+import java.time.Year;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -62,6 +63,19 @@ public class FleetController {
             @RequestParam(value = "documentCategories", required = false) String[] documentCategories,
             Authentication authentication,
             RedirectAttributes redirectAttributes) {
+        // Registration does not set assignment; this is handled by lifecycle actions.
+        newVehicle.setAssignedDriverID(null);
+
+        String validationError = validateVehicleRegistration(newVehicle);
+        if (validationError != null) {
+            redirectAttributes.addFlashAttribute("errorMessage", validationError);
+            return "redirect:/";
+        }
+
+        if (newVehicle.getCurrentStatus() == null || newVehicle.getCurrentStatus().isBlank()) {
+            newVehicle.setCurrentStatus("Active");
+        }
+
         fleetRepo.save(newVehicle);
 
         if (documentService.hasFiles(documentFiles) && newVehicle.getVehicleID() != null) {
@@ -83,6 +97,42 @@ public class FleetController {
         redirectAttributes.addFlashAttribute("successMessage",
                 "Success! Vehicle " + newVehicle.getPlateNumber() + " registered.");
         return "redirect:/";
+    }
+
+    private String validateVehicleRegistration(FleetVehicle vehicle) {
+        if (isBlank(vehicle.getPlateNumber())) {
+            return "Plate number is required.";
+        }
+        if (isBlank(vehicle.getVehicleType())) {
+            return "Vehicle type is required.";
+        }
+        if (isBlank(vehicle.getMake())) {
+            return "Make is required.";
+        }
+        if (isBlank(vehicle.getModel())) {
+            return "Model is required.";
+        }
+        if (vehicle.getManufactureYear() == null) {
+            return "Manufacture year is required.";
+        }
+        int currentYear = Year.now().getValue();
+        if (vehicle.getManufactureYear() < 1980 || vehicle.getManufactureYear() > currentYear + 1) {
+            return "Manufacture year is out of allowed range.";
+        }
+        if (isBlank(vehicle.getFuelType())) {
+            return "Fuel type is required.";
+        }
+        if (isBlank(vehicle.getEngineNumber())) {
+            return "Engine number is required.";
+        }
+        if (isBlank(vehicle.getChassisNumberVIN())) {
+            return "Chassis number / VIN is required.";
+        }
+        return null;
+    }
+
+    private boolean isBlank(String value) {
+        return value == null || value.trim().isEmpty();
     }
 
     @PostMapping("/assign")

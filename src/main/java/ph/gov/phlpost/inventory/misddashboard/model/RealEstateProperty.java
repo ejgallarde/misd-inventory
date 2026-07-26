@@ -22,11 +22,23 @@ public class RealEstateProperty {
     @Column(name = "TitleNumber", unique = true)
     private String titleNumber;
 
-    @Column(name = "FullAddress", nullable = false)
-    private String fullAddress;
+    @Column(name = "AddressLine1")
+    private String addressLine1;
 
-    @Column(name = "Region")
-    private String region;
+    @Column(name = "AddressLine2")
+    private String addressLine2;
+
+    @Column(name = "Province")
+    private String province;
+
+    @Column(name = "City")
+    private String city;
+
+    @Column(name = "Barangay")
+    private String barangay;
+
+    @Column(name = "ZipCode")
+    private String zipCode;
 
     @Column(name = "LotAreaSqm")
     private BigDecimal lotAreaSqm;
@@ -84,20 +96,52 @@ public class RealEstateProperty {
         this.titleNumber = titleNumber;
     }
 
-    public String getFullAddress() {
-        return fullAddress;
+    public String getAddressLine1() {
+        return addressLine1;
     }
 
-    public void setFullAddress(String fullAddress) {
-        this.fullAddress = fullAddress;
+    public void setAddressLine1(String addressLine1) {
+        this.addressLine1 = addressLine1;
     }
 
-    public String getRegion() {
-        return region;
+    public String getAddressLine2() {
+        return addressLine2;
     }
 
-    public void setRegion(String region) {
-        this.region = region;
+    public void setAddressLine2(String addressLine2) {
+        this.addressLine2 = addressLine2;
+    }
+
+    public String getProvince() {
+        return province;
+    }
+
+    public void setProvince(String province) {
+        this.province = province;
+    }
+
+    public String getCity() {
+        return city;
+    }
+
+    public void setCity(String city) {
+        this.city = city;
+    }
+
+    public String getBarangay() {
+        return barangay;
+    }
+
+    public void setBarangay(String barangay) {
+        this.barangay = barangay;
+    }
+
+    public String getZipCode() {
+        return zipCode;
+    }
+
+    public void setZipCode(String zipCode) {
+        this.zipCode = zipCode;
     }
 
     public BigDecimal getLotAreaSqm() {

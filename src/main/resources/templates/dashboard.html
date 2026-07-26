@@ -248,6 +248,7 @@
 
                 <!-- Tab Specific Actions -->
                 <div class="d-flex justify-content-end mb-3 gap-2">
+                    <a href="/admin/locations" class="btn btn-outline-primary shadow-sm">Manage PSGC Data</a>
                     <button class="btn btn-success shadow-sm" type="button" data-bs-toggle="offcanvas"
                         data-bs-target="#addPropertyOffcanvas">+ Add Property</button>
                 </div>
@@ -309,7 +310,9 @@
                                     <tr th:each="prop : ${pendingProperties}">
                                         <td class="fw-bold" th:text="${prop.propertyName}"></td>
                                         <td th:text="${prop.titleNumber}"></td>
-                                        <td th:text="${prop.fullAddress}"></td>
+                                        <td
+                                            th:text="${(prop.addressLine1 != null ? prop.addressLine1 : '') + (prop.city != null and !#strings.isEmpty(prop.city) ? ', ' + prop.city : '') + (prop.province != null and !#strings.isEmpty(prop.province) ? ', ' + prop.province : '')}">
+                                        </td>
                                         <td
                                             th:text="'PHP ' + ${#numbers.formatDecimal(prop.assessedValue, 1, 'COMMA', 2, 'POINT')}">
                                         </td>
@@ -475,6 +478,7 @@
                     <div class="col-6">
                         <label class="form-label fw-bold">Vehicle Type</label>
                         <select class="form-select" name="vehicleType" required>
+                            <option value="" selected disabled>Select vehicle type</option>
                             <option th:each="vehicleType : ${vehicleTypes}" th:value="${vehicleType}"
                                 th:text="${vehicleType}"></option>
                         </select>
@@ -487,18 +491,28 @@
                             class="form-control" name="model" placeholder="e.g. Hiace" required></div>
                 </div>
                 <div class="row mb-3">
-                    <div class="col-6"><label class="form-label fw-bold">Year</label><input type="number"
-                            class="form-control" name="manufactureYear" required></div>
+                    <div class="col-6"><label class="form-label fw-bold">Year</label><select class="form-select"
+                            name="manufactureYear" required>
+                            <option value="" selected disabled>Select year</option>
+                            <option th:each="year : ${vehicleYears}" th:value="${year}" th:text="${year}"></option>
+                        </select></div>
                     <div class="col-6"><label class="form-label fw-bold">Fuel Type</label><select class="form-select"
-                            name="fuelType">
+                            name="fuelType" required>
+                            <option value="" selected disabled>Select fuel type</option>
                             <option th:each="fuelType : ${fuelTypes}" th:value="${fuelType}"
                                 th:text="${fuelType == 'Gas' ? 'Gasoline' : fuelType}"></option>
                         </select></div>
                 </div>
                 <div class="mb-3"><label class="form-label fw-bold">Engine Number</label><input type="text"
-                        class="form-control" name="engineNumber"></div>
+                        class="form-control" name="engineNumber" required></div>
                 <div class="mb-3"><label class="form-label fw-bold">Chassis Number / VIN</label><input type="text"
-                        class="form-control" name="chassisNumberVIN"></div>
+                        class="form-control" name="chassisNumberVIN" required></div>
+                <div class="mb-3"><label class="form-label fw-bold">Body Number</label><input type="text"
+                        class="form-control" name="bodyNumber"></div>
+                <div class="mb-3"><label class="form-label fw-bold">Cost</label><input type="text" class="form-control"
+                        name="cost" placeholder="e.g. 1500000.00"></div>
+                <div class="mb-3"><label class="form-label fw-bold">Remarks</label><textarea class="form-control"
+                        name="remarks" rows="2" placeholder="e.g. Initial registration details"></textarea></div>
                 <div class="row mb-4">
                     <div class="col-6"><label class="form-label fw-bold">Reg. Expiry</label><input type="date"
                             class="form-control" name="registrationExpiry" required></div>
@@ -551,13 +565,39 @@
                     <div class="col-6"><label class="form-label fw-bold">Title No.</label><input type="text"
                             class="form-control" name="titleNumber"></div>
                 </div>
-                <div class="mb-3"><label class="form-label fw-bold">Full Address</label><input type="text"
-                        class="form-control" name="fullAddress" required></div>
+                <div class="mb-3"><label class="form-label fw-bold">Address Line 1</label><input type="text"
+                        class="form-control" name="addressLine1" required></div>
+                <div class="mb-3"><label class="form-label fw-bold">Address Line 2</label><input type="text"
+                        class="form-control" name="addressLine2"></div>
                 <div class="row mb-3">
-                    <div class="col-6"><label class="form-label fw-bold">Region</label><input type="text"
-                            class="form-control" name="region" placeholder="e.g. NCR"></div>
+                    <div class="col-6">
+                        <label class="form-label fw-bold">Province</label>
+                        <select class="form-select" id="propertyProvince" name="province" required>
+                            <option value="" selected disabled>Select province</option>
+                        </select>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label fw-bold">City / Municipality</label>
+                        <select class="form-select" id="propertyCity" name="city" required disabled>
+                            <option value="" selected disabled>Select city/municipality</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-6">
+                        <label class="form-label fw-bold">Barangay</label>
+                        <select class="form-select" id="propertyBarangay" name="barangay" required disabled>
+                            <option value="" selected disabled>Select barangay</option>
+                        </select>
+                    </div>
+                    <div class="col-6"><label class="form-label fw-bold">Zip Code</label><input type="text"
+                            class="form-control" id="propertyZipCode" name="zipCode" maxlength="10"></div>
+                </div>
+                <div class="row mb-3">
                     <div class="col-6"><label class="form-label fw-bold">Acquisition Date</label><input type="date"
                             class="form-control" name="acquisitionDate"></div>
+                    <div class="col-6"><label class="form-label fw-bold">Current Status</label><input type="text"
+                            class="form-control" name="currentStatus" placeholder="Active"></div>
                 </div>
                 <div class="row mb-3">
                     <div class="col-6"><label class="form-label fw-bold">Lot Area (sqm)</label><input type="number"
@@ -610,6 +650,7 @@
 
     <script th:src="@{/js/ui-common.js}"></script>
     <script th:src="@{/js/csrf.js}"></script>
+    <script th:src="@{/js/location-cascade.js}"></script>
     <script th:src="@{/js/dashboard-page.js}"></script>
 </body>
 
