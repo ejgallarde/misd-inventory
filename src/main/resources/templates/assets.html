@@ -103,8 +103,9 @@
                                         th:title="${asset.deploymentStatus == 'In Stock / Available' ? 'Ready for deployment.' : ((asset.deploymentStatus == 'Deployed' or asset.deploymentStatus == 'Deployed / Assigned') ? 'Currently assigned to a user.' : (asset.deploymentStatus == 'On Loan' ? 'Temporarily loaned and awaiting return.' : (asset.deploymentStatus == 'In Transit' ? 'Moving between locations and pending receipt.' : (asset.deploymentStatus == 'Missing / Unaccounted' ? 'Cannot be physically accounted for.' : 'Deployment status.'))))}"
                                         data-bs-toggle="tooltip" data-bs-placement="top"
                                         th:text="${'Deployment: ' + (asset.deploymentStatus == 'Deployed / Assigned' ? 'Deployed' : asset.deploymentStatus)}"></span>
-                                    <span class="badge bg-secondary"
+                                    <span
                                         th:if="${asset.maintenanceHealthStatus != null and !#strings.isEmpty(asset.maintenanceHealthStatus)}"
+                                        th:class="${asset.maintenanceHealthStatus == 'Operational' ? 'badge bg-success' : ((asset.maintenanceHealthStatus == 'Degraded') ? 'badge bg-warning text-dark' : ((asset.maintenanceHealthStatus == 'Under Repair' or asset.maintenanceHealthStatus == 'Awaiting Parts') ? 'badge bg-secondary' : ((asset.maintenanceHealthStatus == 'Beyond Economic Repair (BER)') ? 'badge bg-danger' : 'badge bg-dark')))}"
                                         th:text="${'Health: ' + asset.maintenanceHealthStatus}"></span>
                                     <span class="badge bg-dark"
                                         th:if="${asset.lifecycleStatus != null and !#strings.isEmpty(asset.lifecycleStatus)}"

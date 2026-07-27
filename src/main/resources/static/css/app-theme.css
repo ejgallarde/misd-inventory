@@ -388,3 +388,29 @@ body[data-theme="dark"] .form-control.is-invalid,
 body[data-theme="dark"] .form-select.is-invalid {
     color: #ff8b98 !important;
 }
+
+/* ── Login page background image ─────────────────────────────────────────── */
+.login-content {
+    position: relative;
+    flex: 1 0 auto;
+}
+
+.login-content::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: url('/images/login-bg.jpg') center / cover no-repeat;
+    opacity: 0.10;
+    z-index: 0;
+    pointer-events: none;
+}
+
+/* Dark theme: slightly lower opacity so it doesn't compete with dark surface */
+body[data-theme="dark"] .login-content::before {
+    opacity: 0.07;
+}
+
+.login-content > * {
+    position: relative;
+    z-index: 1;
+}

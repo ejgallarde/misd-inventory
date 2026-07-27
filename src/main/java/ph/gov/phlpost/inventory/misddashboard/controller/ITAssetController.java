@@ -299,6 +299,7 @@ public class ITAssetController {
     @PostMapping("/assets/update")
     public ResponseEntity<String> updateITAsset(@RequestBody Asset updatedAsset) {
         updatedAsset.setDeploymentStatus(normalizeDeploymentStatus(updatedAsset.getDeploymentStatus()));
+        applyStatusTransitions(updatedAsset);
         assetRepo.save(updatedAsset);
         return ResponseEntity.ok("Asset updated successfully");
     }
@@ -336,6 +337,35 @@ public class ITAssetController {
             return "Deployed";
         }
         return deploymentStatus;
+    }
+
+    private void applyStatusTransitions(Asset asset) {
+        String deployment = normalizeBlank(asset.getDeploymentStatus());
+        String maintenance = normalizeBlank(asset.getMaintenanceHealthStatus());
+        String lifecycle = normalizeBlank(asset.getLifecycleStatus());
+
+        // BER always implies end of life.
+        if ("Beyond Economic Repair (BER)".equals(maintenance)) {
+            lifecycle = "End of Life (EOL)";
+            asset.setLifecycleStatus(lifecycle);
+        }
+
+        // End states should not remain assigned/deployed.
+        if ("Decommissioned / Retired".equals(lifecycle)
+                || "Disposed".equals(lifecycle)
+                || "Sold".equals(lifecycle)) {
+            asset.setCurrentOwnerID(null);
+            if (deployment.isBlank() || "Deployed".equals(deployment) || "On Loan".equals(deployment)) {
+                asset.setDeploymentStatus("In Stock / Available");
+                deployment = "In Stock / Available";
+            }
+        }
+
+        // Active assignment/repair states promote lifecycle out of pre-deployment.
+        if (("Deployed".equals(deployment) || "On Loan".equals(deployment) || "Under Repair".equals(maintenance))
+                && (lifecycle.isBlank() || "Procured / Pre-Deployment".equals(lifecycle))) {
+            asset.setLifecycleStatus("Active");
+        }
     }
 
     private String buildFullName(Personnel personnel) {
