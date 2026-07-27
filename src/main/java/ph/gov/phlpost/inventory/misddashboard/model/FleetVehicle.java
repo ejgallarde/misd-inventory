@@ -60,6 +60,9 @@ public class FleetVehicle {
     @Column(name = "Cost")
     private String cost;
 
+    @Column(name = "AcquisitionYear")
+    private Integer acquisitionYear;
+
     @Column(name = "Remarks", columnDefinition = "TEXT")
     private String remarks;
 
@@ -205,6 +208,14 @@ public class FleetVehicle {
 
     public void setCost(String cost) {
         this.cost = cost;
+    }
+
+    public Integer getAcquisitionYear() {
+        return acquisitionYear;
+    }
+
+    public void setAcquisitionYear(Integer acquisitionYear) {
+        this.acquisitionYear = acquisitionYear;
     }
 
     public FleetVehicle() {

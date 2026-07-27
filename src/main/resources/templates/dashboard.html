@@ -655,10 +655,10 @@
                             placeholder="e.g. Hiace" required></div>
                 </div>
                 <div class="row mb-3">
-                    <div class="col-6"><label class="form-label fw-bold">Year <span class="required-indicator"
+                    <div class="col-6"><label class="form-label fw-bold">Year Model <span class="required-indicator"
                                 aria-hidden="true">*</span></label><select class="form-select" name="manufactureYear"
                             required>
-                            <option value="" selected disabled>Select year</option>
+                            <option value="" selected disabled>Select year model</option>
                             <option th:each="year : ${vehicleYears}" th:value="${year}" th:text="${year}"></option>
                         </select></div>
                     <div class="col-6"><label class="form-label fw-bold">Fuel Type <span class="required-indicator"
@@ -705,8 +705,15 @@
                         </option>
                     </select>
                 </div>
-                <div class="mb-3"><label class="form-label fw-bold">Cost</label><input type="text" class="form-control"
-                        name="cost" placeholder="e.g. 1500000.00"></div>
+                <div class="row mb-3">
+                    <div class="col-6"><label class="form-label fw-bold">Acquisition Year</label><select
+                            class="form-select" name="acquisitionYear">
+                            <option value="" selected disabled>Select year</option>
+                            <option th:each="year : ${vehicleYears}" th:value="${year}" th:text="${year}"></option>
+                        </select></div>
+                    <div class="col-6"><label class="form-label fw-bold">Acquisition Cost</label><input type="text"
+                            class="form-control" name="cost" placeholder="e.g. 1500000.00"></div>
+                </div>
                 <div class="mb-3"><label class="form-label fw-bold">Remarks</label><textarea class="form-control"
                         name="remarks" rows="2" placeholder="e.g. Initial registration details"></textarea></div>
                 <div class="row mb-4">

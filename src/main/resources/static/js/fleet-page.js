@@ -60,6 +60,41 @@ $(document).ready(function () {
         $('#enableFleetEditBtn').toggleClass('d-none', enabled);
         $('#saveFleetEditBtn, #cancelFleetEditBtn').toggleClass('d-none', !enabled);
         $('.fleet-field').prop('disabled', !enabled);
+        applyLockonceVisibility(enabled, currentFleetData);
+    }
+
+    const LOCKONCE_FIELDS = [
+        'plateNumber', 'make', 'model', 'manufactureYear', 'bodyNumber',
+        'fuelType', 'engineNumber', 'chassisNumberVIN', 'cost', 'acquisitionYear'
+    ];
+
+    function applyLockonceVisibility(editMode, data) {
+        if (!editMode || !data) {
+            $('[data-lockonce-view]').removeClass('d-none');
+            $('[data-lockonce-input]').addClass('d-none').prop('disabled', true);
+            return;
+        }
+        LOCKONCE_FIELDS.forEach(function (field) {
+            const val = data[field];
+            const isBlank = val === null || val === undefined || String(val).trim() === '';
+            $('[data-lockonce-view="' + field + '"]').toggleClass('d-none', isBlank);
+            const $input = $('[data-lockonce-input="' + field + '"]');
+            $input.toggleClass('d-none', !isBlank).prop('disabled', !isBlank);
+        });
+    }
+
+    function computeCurrentValuation(costStr, acquisitionYear) {
+        if (!costStr || !acquisitionYear) return null;
+        const cost = parseFloat(String(costStr).replace(/[^0-9.]/g, ''));
+        const acqYear = parseInt(acquisitionYear, 10);
+        if (isNaN(cost) || cost <= 0 || isNaN(acqYear) || acqYear <= 0) return null;
+        const currentYear = new Date().getFullYear();
+        const yearsUsed = Math.max(0, currentYear - acqYear);
+        // COA Circular 2003-007 / GAM: Transportation Equipment
+        // Useful life: 10 yrs, Residual value: 10%, Method: Straight-line
+        // Annual depreciation rate = (1 - 0.10) / 10 = 9%
+        const depFactor = Math.min(0.09 * yearsUsed, 0.90);
+        return cost * (1 - depFactor);
     }
 
     function showInlineSuccessToast(message) {
@@ -98,6 +133,18 @@ $(document).ready(function () {
 
     function fillFleetEditFields(data) {
         $('#editFleetVehicleID').val(data.vehicleID || '');
+        // Lock-once inputs — pre-populated; visibility controlled by applyLockonceVisibility
+        $('#editFleetPlateNumber').val(data.plateNumber || '');
+        $('#editFleetMake').val(data.make || '');
+        $('#editFleetModel').val(data.model || '');
+        $('#editFleetManufactureYear').val(data.manufactureYear || '');
+        $('#editFleetAcquisitionYear').val(data.acquisitionYear || '');
+        $('#editFleetBodyNumber').val(data.bodyNumber || '');
+        $('#editFleetFuelType').val(data.fuelType || '');
+        $('#editFleetEngineNumber').val(data.engineNumber || '');
+        $('#editFleetChassisVin').val(data.chassisNumberVIN || '');
+        $('#editFleetCost').val(data.cost || '');
+        // Always-editable fields
         $('#editFleetRegistrationExpiry').val(formatDateInput(data.registrationExpiry));
         $('#editFleetInsuranceExpiry').val(formatDateInput(data.insuranceExpiry));
         $('#editFleetAdminLegalStatus').val(data.adminLegaltionalStatus || '');
@@ -108,8 +155,22 @@ $(document).ready(function () {
 
     function buildFleetUpdatePayload() {
         const vehicleID = Number($('#editFleetVehicleID').val());
+        const mfgYear = $('#editFleetManufactureYear').val();
+        const acqYear = $('#editFleetAcquisitionYear').val();
         return {
             vehicleID: Number.isNaN(vehicleID) ? null : vehicleID,
+            // Lock-once fields (backend ignores if already set in DB)
+            plateNumber: $('#editFleetPlateNumber').val() || null,
+            make: $('#editFleetMake').val() || null,
+            model: $('#editFleetModel').val() || null,
+            manufactureYear: mfgYear ? Number(mfgYear) : null,
+            acquisitionYear: acqYear ? Number(acqYear) : null,
+            bodyNumber: $('#editFleetBodyNumber').val() || null,
+            fuelType: $('#editFleetFuelType').val() || null,
+            engineNumber: $('#editFleetEngineNumber').val() || null,
+            chassisNumberVIN: $('#editFleetChassisVin').val() || null,
+            cost: $('#editFleetCost').val() || null,
+            // Always-editable fields
             registrationExpiry: $('#editFleetRegistrationExpiry').val() || null,
             insuranceExpiry: $('#editFleetInsuranceExpiry').val() || null,
             adminLegaltionalStatus: $('#editFleetAdminLegalStatus').val() || null,
@@ -174,6 +235,7 @@ $(document).ready(function () {
             $('#fleetDetailMake').text(data.make || 'N/A');
             $('#fleetDetailModel').text(data.model || 'N/A');
             $('#fleetDetailYear').text(data.manufactureYear || 'N/A');
+            $('#fleetDetailAcquisitionYear').text(data.acquisitionYear || 'N/A');
             $('#fleetDetailBodyNumber').text(data.bodyNumber || 'N/A');
             $('#fleetDetailFuelType').text(data.fuelType || 'N/A');
             $('#fleetDetailEngineNumber').text(data.engineNumber || 'N/A');
@@ -182,6 +244,27 @@ $(document).ready(function () {
             $('#fleetDetailRegExpiry').text(formatDate(data.registrationExpiry));
             $('#fleetDetailInsuranceExpiry').text(formatDate(data.insuranceExpiry));
             $('#fleetDetailCost').text(data.cost || 'N/A');
+
+            const valuation = computeCurrentValuation(data.cost, data.acquisitionYear);
+            const $valuationElement = $('#fleetDetailCurrentValuation');
+            if (valuation !== null) {
+                const formatted = new Intl.NumberFormat('en-PH', {
+                    style: 'currency', currency: 'PHP', minimumFractionDigits: 2
+                }).format(valuation);
+                const yearsUsed = Math.max(0, new Date().getFullYear() - parseInt(data.acquisitionYear, 10));
+                const note = yearsUsed >= 10 ? ' (fully depreciated — residual value only)' : '';
+                $valuationElement.text(formatted + note);
+                // Apply red styling if fully depreciated
+                if (data.isFullyDepreciated) {
+                    $valuationElement.removeClass('text-primary').addClass('text-danger fw-bold');
+                } else {
+                    $valuationElement.removeClass('text-danger fw-bold').addClass('text-primary');
+                }
+            } else {
+                $valuationElement.text('N/A — original cost and acquisition year required');
+                $valuationElement.removeClass('text-danger fw-bold').addClass('text-primary');
+            }
+
             $('#fleetDetailAdminLegalStatus').text(data.adminLegaltionalStatus || 'N/A');
             $('#fleetDetailOperationalStatus').text(data.operationalStatus || data.currentStatus || 'N/A');
             $('#fleetDetailMaintenanceStatus').text(data.maintenanceStatus || 'N/A');

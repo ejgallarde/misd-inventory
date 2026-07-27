@@ -6,7 +6,6 @@ import ph.gov.phlpost.inventory.misddashboard.service.DocumentService;
 import ph.gov.phlpost.inventory.misddashboard.service.FleetService;
 import ph.gov.phlpost.inventory.misddashboard.service.RegistryService;
 
-import java.time.LocalDate;
 import java.time.Year;
 import java.util.List;
 import java.util.Map;
@@ -47,6 +46,12 @@ public class FleetController {
     @Value("#{'${dropdown.fleet-maintenance-statuses}'.split(',')}")
     private List<String> fleetMaintenanceStatuses;
 
+    @Value("#{'${dropdown.vehicle-years}'.split(',')}")
+    private List<String> fleetVehicleYears;
+
+    @Value("#{'${dropdown.fuel-types}'.split(',')}")
+    private List<String> fleetFuelTypes;
+
     public FleetController(FleetVehicleRepository fleetRepo, FleetService fleetService,
             RegistryService registryService,
             DocumentService documentService) {
@@ -68,6 +73,8 @@ public class FleetController {
         model.addAttribute("fleetAdminLegalStatuses", fleetAdminLegalStatuses);
         model.addAttribute("fleetOperationalStatuses", fleetOperationalStatuses);
         model.addAttribute("fleetMaintenanceStatuses", fleetMaintenanceStatuses);
+        model.addAttribute("fleetVehicleYears", fleetVehicleYears);
+        model.addAttribute("fleetFuelTypes", fleetFuelTypes);
         return "fleet";
     }
 
@@ -201,10 +208,28 @@ public class FleetController {
     public ResponseEntity<Map<String, Object>> getVehicleDetails(@PathVariable Integer id) {
         return fleetRepo.findById(id)
                 .map(vehicle -> {
+                    // Update vehicle status if needed (deprecation, registration expiry)
+                    fleetService.updateVehicleStatusIfNeeded(vehicle);
+
                     String assignedDriverId = vehicle.getAssignedDriverID();
                     String assignedDriverName = assignedDriverId == null || assignedDriverId.isBlank()
                             ? "Unassigned"
                             : registryService.getEmployeeNameMap().getOrDefault(assignedDriverId, assignedDriverId);
+
+                    // Check if fully depreciated for frontend styling
+                    boolean isFullyDepreciated = false;
+                    if (vehicle.getCost() != null && vehicle.getAcquisitionYear() != null) {
+                        try {
+                            double cost = Double.parseDouble(vehicle.getCost().replaceAll("[^0-9.]", ""));
+                            int acqYear = vehicle.getAcquisitionYear();
+                            if (cost > 0 && acqYear > 0) {
+                                int yearsUsed = java.time.Year.now().getValue() - acqYear;
+                                isFullyDepreciated = yearsUsed >= 10;
+                            }
+                        } catch (NumberFormatException e) {
+                            // Ignore
+                        }
+                    }
 
                     Map<String, Object> response = Map.ofEntries(
                             Map.entry("vehicleID", vehicle.getVehicleID()),
@@ -233,6 +258,9 @@ public class FleetController {
                             Map.entry("maintenanceStatus",
                                     vehicle.getMaintenanceStatus() == null ? "" : vehicle.getMaintenanceStatus()),
                             Map.entry("cost", vehicle.getCost() == null ? "" : vehicle.getCost()),
+                            Map.entry("acquisitionYear",
+                                    vehicle.getAcquisitionYear() == null ? "" : vehicle.getAcquisitionYear()),
+                            Map.entry("isFullyDepreciated", isFullyDepreciated),
                             Map.entry("remarks", vehicle.getRemarks() == null ? "" : vehicle.getRemarks()));
                     return ResponseEntity.ok(response);
                 })
@@ -246,21 +274,24 @@ public class FleetController {
             return ResponseEntity.notFound().build();
         }
 
-        LocalDate registrationExpiry = updatedVehicle.getRegistrationExpiry();
-        LocalDate insuranceExpiry = updatedVehicle.getInsuranceExpiry();
-        String adminLegalStatus = updatedVehicle.getAdminLegaltionalStatus();
-        String operationalStatus = updatedVehicle.getOperationalStatus();
-        String maintenanceStatus = updatedVehicle.getMaintenanceStatus();
-        String remarks = updatedVehicle.getRemarks();
-
         fleetService.updateVehicleDetails(
                 vehicleId,
-                registrationExpiry,
-                insuranceExpiry,
-                adminLegalStatus,
-                operationalStatus,
-                maintenanceStatus,
-                remarks);
+                updatedVehicle.getRegistrationExpiry(),
+                updatedVehicle.getInsuranceExpiry(),
+                updatedVehicle.getAdminLegaltionalStatus(),
+                updatedVehicle.getOperationalStatus(),
+                updatedVehicle.getMaintenanceStatus(),
+                updatedVehicle.getRemarks(),
+                updatedVehicle.getPlateNumber(),
+                updatedVehicle.getMake(),
+                updatedVehicle.getModel(),
+                updatedVehicle.getManufactureYear(),
+                updatedVehicle.getAcquisitionYear(),
+                updatedVehicle.getBodyNumber(),
+                updatedVehicle.getFuelType(),
+                updatedVehicle.getEngineNumber(),
+                updatedVehicle.getChassisNumberVIN(),
+                updatedVehicle.getCost());
         return ResponseEntity.ok("Fleet vehicle details updated successfully");
     }
 }

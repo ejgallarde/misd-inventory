@@ -288,7 +288,10 @@
                 <div class="row g-3">
                     <div class="col-md-6">
                         <label class="form-label fw-bold text-muted small text-uppercase">Plate Number</label>
-                        <div id="fleetDetailPlate" class="form-control-plaintext"></div>
+                        <div id="fleetDetailPlate" class="form-control-plaintext" data-lockonce-view="plateNumber">
+                        </div>
+                        <input type="text" id="editFleetPlateNumber" data-lockonce-input="plateNumber"
+                            class="form-control fleet-lockonce-input d-none" disabled placeholder="Enter plate number">
                     </div>
                     <div class="col-md-6">
                         <label class="form-label fw-bold text-muted small text-uppercase">Vehicle Type</label>
@@ -296,31 +299,67 @@
                     </div>
                     <div class="col-md-6">
                         <label class="form-label fw-bold text-muted small text-uppercase">Make</label>
-                        <div id="fleetDetailMake" class="form-control-plaintext"></div>
+                        <div id="fleetDetailMake" class="form-control-plaintext" data-lockonce-view="make"></div>
+                        <input type="text" id="editFleetMake" data-lockonce-input="make"
+                            class="form-control fleet-lockonce-input d-none" disabled placeholder="e.g. Toyota">
                     </div>
                     <div class="col-md-6">
                         <label class="form-label fw-bold text-muted small text-uppercase">Model</label>
-                        <div id="fleetDetailModel" class="form-control-plaintext"></div>
+                        <div id="fleetDetailModel" class="form-control-plaintext" data-lockonce-view="model"></div>
+                        <input type="text" id="editFleetModel" data-lockonce-input="model"
+                            class="form-control fleet-lockonce-input d-none" disabled placeholder="e.g. Hi-Lux">
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label fw-bold text-muted small text-uppercase">Manufacture Year</label>
-                        <div id="fleetDetailYear" class="form-control-plaintext"></div>
+                        <label class="form-label fw-bold text-muted small text-uppercase">Year Model</label>
+                        <div id="fleetDetailYear" class="form-control-plaintext" data-lockonce-view="manufactureYear">
+                        </div>
+                        <select id="editFleetManufactureYear" data-lockonce-input="manufactureYear"
+                            class="form-select fleet-lockonce-input d-none" disabled>
+                            <option value="" disabled selected>Select year model</option>
+                            <option th:each="yr : ${fleetVehicleYears}" th:value="${yr}" th:text="${yr}"></option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-muted small text-uppercase">Year of Acquisition</label>
+                        <div id="fleetDetailAcquisitionYear" class="form-control-plaintext"
+                            data-lockonce-view="acquisitionYear"></div>
+                        <select id="editFleetAcquisitionYear" data-lockonce-input="acquisitionYear"
+                            class="form-select fleet-lockonce-input d-none" disabled>
+                            <option value="" disabled selected>Select acquisition year</option>
+                            <option th:each="yr : ${fleetVehicleYears}" th:value="${yr}" th:text="${yr}"></option>
+                        </select>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label fw-bold text-muted small text-uppercase">Body Number</label>
-                        <div id="fleetDetailBodyNumber" class="form-control-plaintext"></div>
+                        <div id="fleetDetailBodyNumber" class="form-control-plaintext" data-lockonce-view="bodyNumber">
+                        </div>
+                        <input type="text" id="editFleetBodyNumber" data-lockonce-input="bodyNumber"
+                            class="form-control fleet-lockonce-input d-none" disabled placeholder="Enter body number">
                     </div>
                     <div class="col-md-6">
                         <label class="form-label fw-bold text-muted small text-uppercase">Fuel Type</label>
-                        <div id="fleetDetailFuelType" class="form-control-plaintext"></div>
+                        <div id="fleetDetailFuelType" class="form-control-plaintext" data-lockonce-view="fuelType">
+                        </div>
+                        <select id="editFleetFuelType" data-lockonce-input="fuelType"
+                            class="form-select fleet-lockonce-input d-none" disabled>
+                            <option value="" disabled selected>Select fuel type</option>
+                            <option th:each="ft : ${fleetFuelTypes}" th:value="${ft}" th:text="${ft}"></option>
+                        </select>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label fw-bold text-muted small text-uppercase">Engine Number</label>
-                        <div id="fleetDetailEngineNumber" class="form-control-plaintext"></div>
+                        <div id="fleetDetailEngineNumber" class="form-control-plaintext"
+                            data-lockonce-view="engineNumber"></div>
+                        <input type="text" id="editFleetEngineNumber" data-lockonce-input="engineNumber"
+                            class="form-control fleet-lockonce-input d-none" disabled placeholder="Enter engine number">
                     </div>
                     <div class="col-md-6">
                         <label class="form-label fw-bold text-muted small text-uppercase">Chassis Number / VIN</label>
-                        <div id="fleetDetailChassisVin" class="form-control-plaintext"></div>
+                        <div id="fleetDetailChassisVin" class="form-control-plaintext"
+                            data-lockonce-view="chassisNumberVIN"></div>
+                        <input type="text" id="editFleetChassisVin" data-lockonce-input="chassisNumberVIN"
+                            class="form-control fleet-lockonce-input d-none" disabled
+                            placeholder="Enter chassis number / VIN">
                     </div>
                     <div class="col-md-6">
                         <label class="form-label fw-bold text-muted small text-uppercase">Assigned Driver</label>
@@ -340,8 +379,18 @@
                             class="form-control fleet-field fleet-detail-edit-only d-none" disabled>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label fw-bold text-muted small text-uppercase">Cost</label>
-                        <div id="fleetDetailCost" class="form-control-plaintext"></div>
+                        <label class="form-label fw-bold text-muted small text-uppercase">Acquisition Cost</label>
+                        <div id="fleetDetailCost" class="form-control-plaintext" data-lockonce-view="cost"></div>
+                        <input type="text" id="editFleetCost" data-lockonce-input="cost"
+                            class="form-control fleet-lockonce-input d-none" disabled placeholder="e.g. 850000.00">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-muted small text-uppercase">Current Valuation
+                            <span class="text-muted fw-normal text-lowercase ms-1" style="font-size: 0.75em;"
+                                title="Straight-line depreciation per COA Circular 2003-007 (GAM): 10-year useful life, 10% residual value, 9% annual depreciation rate."
+                                data-bs-toggle="tooltip" data-bs-placement="top">(GAM, straight-line)</span>
+                        </label>
+                        <div id="fleetDetailCurrentValuation" class="form-control-plaintext fw-bold text-primary"></div>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label fw-bold text-muted small text-uppercase">Administrative &amp;
