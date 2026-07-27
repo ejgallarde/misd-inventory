@@ -27,6 +27,28 @@ $(document).ready(function () {
         return parsed.toISOString().split('T')[0];
     }
 
+    function formatCurrency(value) {
+        if (!value || value === 'N/A') {
+            return 'N/A';
+        }
+        try {
+            const numValue = typeof value === 'string'
+                ? parseFloat(value.replace(/[^0-9.]/g, ''))
+                : parseFloat(value);
+            if (Number.isNaN(numValue)) {
+                return 'N/A';
+            }
+            return new Intl.NumberFormat('en-PH', {
+                style: 'currency',
+                currency: 'PHP',
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(numValue);
+        } catch (e) {
+            return value || 'N/A';
+        }
+    }
+
     const fleetDocumentConfig = {
         refType: 'VEHICLE',
         bodySelector: '#fleetDocumentsTableBody',
@@ -241,9 +263,10 @@ $(document).ready(function () {
             $('#fleetDetailEngineNumber').text(data.engineNumber || 'N/A');
             $('#fleetDetailChassisVin').text(data.chassisNumberVIN || 'N/A');
             $('#fleetDetailDriver').text(data.assignedDriverName || 'Unassigned');
+            $('#fleetDetailDriverManager').text(data.assignedDriverManagerName || 'N/A');
             $('#fleetDetailRegExpiry').text(formatDate(data.registrationExpiry));
             $('#fleetDetailInsuranceExpiry').text(formatDate(data.insuranceExpiry));
-            $('#fleetDetailCost').text(data.cost || 'N/A');
+            $('#fleetDetailCost').text(formatCurrency(data.cost));
 
             const valuation = computeCurrentValuation(data.cost, data.acquisitionYear);
             const $valuationElement = $('#fleetDetailCurrentValuation');

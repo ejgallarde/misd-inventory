@@ -62,6 +62,21 @@ public class RegistryService {
                         p -> p.getDivision() != null ? p.getDivision() : "Unassigned"));
     }
 
+    public String getManagerNameByEmployeeId(String employeeId) {
+        if (employeeId == null || employeeId.isBlank()) {
+            return "No Manager";
+        }
+        return personnelRepository.findById(employeeId)
+                .map(employee -> {
+                    String managerID = employee.getManagerID();
+                    if (managerID == null || managerID.isBlank()) {
+                        return "No Manager";
+                    }
+                    return getEmployeeNameMap().getOrDefault(managerID, "Unknown Manager");
+                })
+                .orElse("No Manager");
+    }
+
     private String normalize(String value) {
         return value == null ? "" : value.trim().toLowerCase();
     }

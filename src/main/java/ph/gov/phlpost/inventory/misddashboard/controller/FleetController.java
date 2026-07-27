@@ -206,65 +206,71 @@ public class FleetController {
 
     @GetMapping("/{id}")
     public ResponseEntity<Map<String, Object>> getVehicleDetails(@PathVariable Integer id) {
-        return fleetRepo.findById(id)
-                .map(vehicle -> {
-                    // Update vehicle status if needed (deprecation, registration expiry)
-                    fleetService.updateVehicleStatusIfNeeded(vehicle);
+        try {
+            // Review vehicle status (deprecation, registration expiry) and update if
+            // needed,
+            // then return the updated vehicle
+            FleetVehicle vehicle = fleetService.reviewAndUpdateVehicleStatus(id);
 
-                    String assignedDriverId = vehicle.getAssignedDriverID();
-                    String assignedDriverName = assignedDriverId == null || assignedDriverId.isBlank()
-                            ? "Unassigned"
-                            : registryService.getEmployeeNameMap().getOrDefault(assignedDriverId, assignedDriverId);
+            String assignedDriverId = vehicle.getAssignedDriverID();
+            String assignedDriverName = assignedDriverId == null || assignedDriverId.isBlank()
+                    ? "Unassigned"
+                    : registryService.getEmployeeNameMap().getOrDefault(assignedDriverId, assignedDriverId);
+            String assignedDriverManagerName = assignedDriverId == null || assignedDriverId.isBlank()
+                    ? "N/A"
+                    : registryService.getManagerNameByEmployeeId(assignedDriverId);
 
-                    // Check if fully depreciated for frontend styling
-                    boolean isFullyDepreciated = false;
-                    if (vehicle.getCost() != null && vehicle.getAcquisitionYear() != null) {
-                        try {
-                            double cost = Double.parseDouble(vehicle.getCost().replaceAll("[^0-9.]", ""));
-                            int acqYear = vehicle.getAcquisitionYear();
-                            if (cost > 0 && acqYear > 0) {
-                                int yearsUsed = java.time.Year.now().getValue() - acqYear;
-                                isFullyDepreciated = yearsUsed >= 10;
-                            }
-                        } catch (NumberFormatException e) {
-                            // Ignore
-                        }
+            // Check if fully depreciated for frontend styling
+            boolean isFullyDepreciated = false;
+            if (vehicle.getCost() != null && vehicle.getAcquisitionYear() != null) {
+                try {
+                    double cost = Double.parseDouble(vehicle.getCost().replaceAll("[^0-9.]", ""));
+                    int acqYear = vehicle.getAcquisitionYear();
+                    if (cost > 0 && acqYear > 0) {
+                        int yearsUsed = java.time.Year.now().getValue() - acqYear;
+                        isFullyDepreciated = yearsUsed >= 10;
                     }
+                } catch (NumberFormatException e) {
+                    // Ignore
+                }
+            }
 
-                    Map<String, Object> response = Map.ofEntries(
-                            Map.entry("vehicleID", vehicle.getVehicleID()),
-                            Map.entry("plateNumber", vehicle.getPlateNumber() == null ? "" : vehicle.getPlateNumber()),
-                            Map.entry("bodyNumber", vehicle.getBodyNumber() == null ? "" : vehicle.getBodyNumber()),
-                            Map.entry("vehicleType", vehicle.getVehicleType() == null ? "" : vehicle.getVehicleType()),
-                            Map.entry("make", vehicle.getMake() == null ? "" : vehicle.getMake()),
-                            Map.entry("model", vehicle.getModel() == null ? "" : vehicle.getModel()),
-                            Map.entry("manufactureYear",
-                                    vehicle.getManufactureYear() == null ? "" : vehicle.getManufactureYear()),
-                            Map.entry("engineNumber",
-                                    vehicle.getEngineNumber() == null ? "" : vehicle.getEngineNumber()),
-                            Map.entry("chassisNumberVIN",
-                                    vehicle.getChassisNumberVIN() == null ? "" : vehicle.getChassisNumberVIN()),
-                            Map.entry("fuelType", vehicle.getFuelType() == null ? "" : vehicle.getFuelType()),
-                            Map.entry("registrationExpiry",
-                                    vehicle.getRegistrationExpiry() == null ? "" : vehicle.getRegistrationExpiry()),
-                            Map.entry("insuranceExpiry",
-                                    vehicle.getInsuranceExpiry() == null ? "" : vehicle.getInsuranceExpiry()),
-                            Map.entry("assignedDriverID", assignedDriverId == null ? "" : assignedDriverId),
-                            Map.entry("assignedDriverName", assignedDriverName),
-                            Map.entry("adminLegaltionalStatus", vehicle.getAdminLegaltionalStatus() == null ? ""
-                                    : vehicle.getAdminLegaltionalStatus()),
-                            Map.entry("operationalStatus",
-                                    vehicle.getOperationalStatus() == null ? "" : vehicle.getOperationalStatus()),
-                            Map.entry("maintenanceStatus",
-                                    vehicle.getMaintenanceStatus() == null ? "" : vehicle.getMaintenanceStatus()),
-                            Map.entry("cost", vehicle.getCost() == null ? "" : vehicle.getCost()),
-                            Map.entry("acquisitionYear",
-                                    vehicle.getAcquisitionYear() == null ? "" : vehicle.getAcquisitionYear()),
-                            Map.entry("isFullyDepreciated", isFullyDepreciated),
-                            Map.entry("remarks", vehicle.getRemarks() == null ? "" : vehicle.getRemarks()));
-                    return ResponseEntity.ok(response);
-                })
-                .orElse(ResponseEntity.notFound().build());
+            Map<String, Object> response = Map.ofEntries(
+                    Map.entry("vehicleID", vehicle.getVehicleID()),
+                    Map.entry("plateNumber", vehicle.getPlateNumber() == null ? "" : vehicle.getPlateNumber()),
+                    Map.entry("bodyNumber", vehicle.getBodyNumber() == null ? "" : vehicle.getBodyNumber()),
+                    Map.entry("vehicleType", vehicle.getVehicleType() == null ? "" : vehicle.getVehicleType()),
+                    Map.entry("make", vehicle.getMake() == null ? "" : vehicle.getMake()),
+                    Map.entry("model", vehicle.getModel() == null ? "" : vehicle.getModel()),
+                    Map.entry("manufactureYear",
+                            vehicle.getManufactureYear() == null ? "" : vehicle.getManufactureYear()),
+                    Map.entry("engineNumber",
+                            vehicle.getEngineNumber() == null ? "" : vehicle.getEngineNumber()),
+                    Map.entry("chassisNumberVIN",
+                            vehicle.getChassisNumberVIN() == null ? "" : vehicle.getChassisNumberVIN()),
+                    Map.entry("fuelType", vehicle.getFuelType() == null ? "" : vehicle.getFuelType()),
+                    Map.entry("registrationExpiry",
+                            vehicle.getRegistrationExpiry() == null ? "" : vehicle.getRegistrationExpiry()),
+                    Map.entry("insuranceExpiry",
+                            vehicle.getInsuranceExpiry() == null ? "" : vehicle.getInsuranceExpiry()),
+                    Map.entry("assignedDriverID", assignedDriverId == null ? "" : assignedDriverId),
+                    Map.entry("assignedDriverName", assignedDriverName),
+                    Map.entry("assignedDriverManagerName", assignedDriverManagerName),
+                    Map.entry("adminLegaltionalStatus", vehicle.getAdminLegaltionalStatus() == null ? ""
+                            : vehicle.getAdminLegaltionalStatus()),
+                    Map.entry("operationalStatus",
+                            vehicle.getOperationalStatus() == null ? "" : vehicle.getOperationalStatus()),
+                    Map.entry("maintenanceStatus",
+                            vehicle.getMaintenanceStatus() == null ? "" : vehicle.getMaintenanceStatus()),
+                    Map.entry("cost", vehicle.getCost() == null ? "" : vehicle.getCost()),
+                    Map.entry("acquisitionYear",
+                            vehicle.getAcquisitionYear() == null ? "" : vehicle.getAcquisitionYear()),
+                    Map.entry("isFullyDepreciated", isFullyDepreciated),
+                    Map.entry("remarks", vehicle.getRemarks() == null ? "" : vehicle.getRemarks()));
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @PostMapping("/update")

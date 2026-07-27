@@ -129,6 +129,47 @@ public class FleetService {
     }
 
     @Transactional
+    public FleetVehicle reviewAndUpdateVehicleStatus(Integer vehicleId) {
+        FleetVehicle vehicle = fleetRepo.findById(vehicleId)
+                .orElseThrow(() -> new IllegalArgumentException("Vehicle not found."));
+
+        boolean updated = false;
+
+        // Check if fully depreciated; if so, update maintenance status
+        if (vehicle.getCost() != null && vehicle.getAcquisitionYear() != null) {
+            double cost = parseDouble(vehicle.getCost());
+            int acqYear = vehicle.getAcquisitionYear();
+            if (cost > 0 && acqYear > 0) {
+                int yearsUsed = java.time.Year.now().getValue() - acqYear;
+                if (yearsUsed >= 10) {
+                    if (!isBlank(vehicle.getMaintenanceStatus()) &&
+                            !vehicle.getMaintenanceStatus().equals("Beyond Economic Repair (BER)")) {
+                        vehicle.setMaintenanceStatus("Beyond Economic Repair (BER)");
+                        updated = true;
+                    }
+                }
+            }
+        }
+
+        // Check if registration is expired; if so, update admin/legal status
+        if (vehicle.getRegistrationExpiry() != null) {
+            if (vehicle.getRegistrationExpiry().isBefore(LocalDate.now())) {
+                if (!isBlank(vehicle.getAdminLegaltionalStatus()) &&
+                        !vehicle.getAdminLegaltionalStatus().equals("Registration Expired")) {
+                    vehicle.setAdminLegaltionalStatus("Registration Expired");
+                    updated = true;
+                }
+            }
+        }
+
+        if (updated) {
+            fleetRepo.save(vehicle);
+        }
+
+        return vehicle;
+    }
+
+    @Transactional
     public void updateVehicleStatusIfNeeded(FleetVehicle vehicle) {
         boolean updated = false;
 

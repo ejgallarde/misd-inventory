@@ -2,6 +2,28 @@ $(document).ready(function () {
     const clearAssetFiltersBtn = document.getElementById('clearAssetFiltersBtn');
     const tableStateKey = 'assetsTableState';
 
+    function formatCurrency(value) {
+        if (!value || value === 'N/A') {
+            return 'N/A';
+        }
+        try {
+            const numValue = typeof value === 'string'
+                ? parseFloat(value.replace(/[^0-9.]/g, ''))
+                : parseFloat(value);
+            if (Number.isNaN(numValue)) {
+                return 'N/A';
+            }
+            return new Intl.NumberFormat('en-PH', {
+                style: 'currency',
+                currency: 'PHP',
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(numValue);
+        } catch (e) {
+            return value || 'N/A';
+        }
+    }
+
     MISDCommon.initPageUI({
         themeToggleId: 'themeToggleBtn',
         successToastId: 'successToast',

@@ -13,6 +13,28 @@ $(document).ready(function () {
         return numberValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
 
+    function formatCurrency(value) {
+        if (!value || value === 'N/A') {
+            return 'N/A';
+        }
+        try {
+            const numValue = typeof value === 'string'
+                ? parseFloat(value.replace(/[^0-9.]/g, ''))
+                : parseFloat(value);
+            if (Number.isNaN(numValue)) {
+                return 'N/A';
+            }
+            return new Intl.NumberFormat('en-PH', {
+                style: 'currency',
+                currency: 'PHP',
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(numValue);
+        } catch (e) {
+            return value || 'N/A';
+        }
+    }
+
     function formatDate(value) {
         if (!value) {
             return 'N/A';
@@ -207,7 +229,7 @@ $(document).ready(function () {
             $('#propertyDetailLotArea').text(formatDecimal(data.lotAreaSqm));
             $('#propertyDetailFloorArea').text(formatDecimal(data.floorAreaSqm));
             $('#propertyDetailPropertyDetails').text(data.propertyDetails || 'N/A');
-            $('#propertyDetailAssessedValue').text(formatDecimal(data.assessedValue));
+            $('#propertyDetailAssessedValue').text(formatCurrency(data.assessedValue));
             $('#propertyDetailTaxStatus').text(data.propertyTaxStatus || 'N/A');
             $('#propertyDetailLegalTitlingStatus').html(statusBadgeHtml(data.legalTitlingStatus, 'neutral'));
             $('#propertyDetailOperationalStatus').html(statusBadgeHtml(data.operationalStatus, 'operational'));
