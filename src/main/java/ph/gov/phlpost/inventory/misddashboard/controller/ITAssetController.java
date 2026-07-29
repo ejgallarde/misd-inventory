@@ -13,6 +13,7 @@ import ph.gov.phlpost.inventory.misddashboard.service.RegistryService;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -116,7 +117,7 @@ public class ITAssetController {
         String datePrefix = "PPC-" + today.format(formatter) + "-";
 
         // 2. Loop through the quantity and save each asset
-        String firstCreatedAssetTag = null;
+        List<String> createdAssetTags = new ArrayList<>();
 
         for (int i = 0; i < quantity; i++) {
             Asset newAsset = new Asset();
@@ -128,7 +129,7 @@ public class ITAssetController {
             newAsset.setRemarks(baseAsset.getRemarks());
 
             // Apply Business Rules for initial receipt
-            newAsset.setDeploymentStatus("In Stock / Available");
+            newAsset.setDeploymentStatus("In Storage");
             newAsset.setMaintenanceHealthStatus("Operational");
             newAsset.setLifecycleStatus("Procured / Pre-Deployment");
             newAsset.setCurrentOwnerID(null);
@@ -149,27 +150,27 @@ public class ITAssetController {
             }
 
             assetRepo.save(newAsset);
-
-            if (firstCreatedAssetTag == null) {
-                firstCreatedAssetTag = newAsset.getAssetTag();
-            }
+            createdAssetTags.add(newAsset.getAssetTag());
         }
 
-        if (documentService.hasFiles(documentFiles) && firstCreatedAssetTag != null) {
+        // 3. Attach documents to ALL created assets
+        if (documentService.hasFiles(documentFiles) && !createdAssetTags.isEmpty()) {
             String uploadedBy = authentication != null ? authentication.getName() : "SystemUser";
             try {
-                documentService.uploadAndSaveDocuments(
-                        documentFiles,
-                        "IT_EQUIPMENT",
-                        firstCreatedAssetTag,
-                        documentCategories,
-                        uploadedBy);
+                for (String assetTag : createdAssetTags) {
+                    documentService.uploadAndSaveDocuments(
+                            documentFiles,
+                            "IT_EQUIPMENT",
+                            assetTag,
+                            documentCategories,
+                            uploadedBy);
+                }
 
                 if (quantity > 1) {
                     redirectAttributes.addFlashAttribute("successMessage",
                             "Successfully received " + quantity
-                                    + " asset(s) into storage. Document linked to first asset tag "
-                                    + firstCreatedAssetTag + ".");
+                                    + " asset(s) into storage. Documents attached to all asset tags: "
+                                    + String.join(", ", createdAssetTags) + ".");
                     return "redirect:/";
                 }
             } catch (Exception e) {
@@ -356,8 +357,8 @@ public class ITAssetController {
                 || "Sold".equals(lifecycle)) {
             asset.setCurrentOwnerID(null);
             if (deployment.isBlank() || "Deployed".equals(deployment) || "On Loan".equals(deployment)) {
-                asset.setDeploymentStatus("In Stock / Available");
-                deployment = "In Stock / Available";
+                asset.setDeploymentStatus("In Storage");
+                deployment = "In Storage";
             }
         }
 

@@ -37,7 +37,7 @@ public class ITAssetService {
         Asset asset = assetRepo.findById(assetTag).orElseThrow(() -> new IllegalArgumentException("Asset not found."));
         String prevOwner = asset.getCurrentOwnerID();
         asset.setCurrentOwnerID(null);
-        asset.setDeploymentStatus("In Stock / Available");
+        asset.setDeploymentStatus("In Storage");
         if (asset.getLifecycleStatus() == null || asset.getLifecycleStatus().isBlank()) {
             asset.setLifecycleStatus("Active");
         }
@@ -50,6 +50,7 @@ public class ITAssetService {
         Asset asset = assetRepo.findById(assetTag).orElseThrow(() -> new IllegalArgumentException("Asset not found."));
 
         if ("In Warranty Repair".equals(status)) {
+            asset.setDeploymentStatus("With Service Center");
             asset.setMaintenanceHealthStatus("Under Repair");
             if (asset.getLifecycleStatus() == null || asset.getLifecycleStatus().isBlank()
                     || "Procured / Pre-Deployment".equals(asset.getLifecycleStatus())) {
@@ -60,7 +61,8 @@ public class ITAssetService {
             asset.setLifecycleStatus("End of Life (EOL)");
         } else if ("Retired".equals(status)) {
             asset.setCurrentOwnerID(null);
-            asset.setDeploymentStatus("In Stock / Available");
+            asset.setDeploymentStatus("Unavailable");
+            asset.setMaintenanceHealthStatus("Not Applicable");
             asset.setLifecycleStatus("Decommissioned / Retired");
         }
 
