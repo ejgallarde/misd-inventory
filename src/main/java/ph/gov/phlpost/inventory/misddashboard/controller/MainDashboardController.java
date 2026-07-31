@@ -112,7 +112,6 @@ public class MainDashboardController {
                 // IT Assets
                 model.addAttribute("totalAssets", dashboardRepo.countTotalAssets());
                 model.addAttribute("deployedAssets", dashboardRepo.countDeployedAssets());
-                model.addAttribute("maintenanceCount", dashboardRepo.countMaintenanceAssets());
                 model.addAttribute("problematicAssets", dashboardRepo.findProblematicAssets());
                 model.addAttribute("problematicAssetsCount", dashboardRepo.countProblematicAssets());
                 model.addAttribute("deploymentIssueCount", dashboardRepo.countDeploymentIssues());

@@ -77,7 +77,9 @@ public class ITAssetController {
     }
 
     @GetMapping("/assets")
-    public String viewAllAssets(Model model) {
+    public String viewAllAssets(Model model,
+            @RequestParam(required = false) String filter,
+            @RequestParam(required = false) String openAsset) {
         model.addAttribute("allAssets", assetRepo.findAll());
         model.addAttribute("employeeMap", registryService.getEmployeeNameMap());
         model.addAttribute("catalogMap", registryService.getCatalogMap());
@@ -91,6 +93,8 @@ public class ITAssetController {
         model.addAttribute("assetDeploymentStatusOptions", assetDeploymentStatusOptions);
         model.addAttribute("assetMaintenanceHealthStatusOptions", assetMaintenanceHealthStatusOptions);
         model.addAttribute("assetLifecycleStatusOptions", assetLifecycleStatusOptions);
+        model.addAttribute("filter", filter);
+        model.addAttribute("openAsset", openAsset);
         return "assets";
     }
 
@@ -299,7 +303,6 @@ public class ITAssetController {
 
     @PostMapping("/assets/update")
     public ResponseEntity<String> updateITAsset(@RequestBody Asset updatedAsset) {
-        updatedAsset.setDeploymentStatus(normalizeDeploymentStatus(updatedAsset.getDeploymentStatus()));
         applyStatusTransitions(updatedAsset);
         assetRepo.save(updatedAsset);
         return ResponseEntity.ok("Asset updated successfully");
@@ -317,7 +320,7 @@ public class ITAssetController {
                 asset.getPurchaseDate(),
                 asset.getPurchasePrice(),
                 asset.getCurrentOwnerID(),
-                normalizeDeploymentStatus(asset.getDeploymentStatus()),
+                asset.getDeploymentStatus(),
                 asset.getMaintenanceHealthStatus(),
                 asset.getLifecycleStatus(),
                 asset.getRemarks(),
@@ -331,13 +334,6 @@ public class ITAssetController {
                 personnel == null ? null : normalizeBlank(personnel.getDivision()),
                 resolveManagerId(personnel),
                 resolveManagerFullName(personnel));
-    }
-
-    private String normalizeDeploymentStatus(String deploymentStatus) {
-        if ("Deployed / Assigned".equals(deploymentStatus)) {
-            return "Deployed";
-        }
-        return deploymentStatus;
     }
 
     private void applyStatusTransitions(Asset asset) {

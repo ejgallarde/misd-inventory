@@ -53,6 +53,8 @@
                 Filters</button>
         </div>
         <div class="card shadow-sm mb-4">
+            <!-- Page config: carries server-side filter/openAsset params for assets.js -->
+            <div id="assetPageConfig" th:data-filter="${filter}" th:data-open-asset="${openAsset}" class="d-none"></div>
             <div class="card-body">
                 <table id="assetsTable" class="table table-striped table-hover w-100 align-middle">
                     <thead class="table-dark">
@@ -447,10 +449,6 @@
                         </select>
                         <ul id="assetDetailDocumentPreview"
                             class="list-group list-group-flush border rounded mt-2 small"></ul>
-                        <div class="d-grid d-md-flex justify-content-md-end mt-2">
-                            <button type="button" id="uploadAssetDocumentsBtn" class="btn btn-sm btn-primary">Upload
-                                Selected</button>
-                        </div>
                     </div>
                 </div>
 

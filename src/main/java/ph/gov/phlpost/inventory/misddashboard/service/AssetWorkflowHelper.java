@@ -24,7 +24,7 @@ public class AssetWorkflowHelper {
             return "badge bg-dark";
         return switch (status) {
             case "In Storage" -> "badge bg-secondary";
-            case "Deployed", "Deployed / Assigned" -> "badge bg-success";
+            case "Deployed" -> "badge bg-success";
             case "On Loan", "In Transit" -> "badge bg-warning text-dark";
             case "Unavailable", "Missing / Unaccounted" -> "badge bg-danger";
             case "With Service Center" -> "badge bg-info";
@@ -61,9 +61,7 @@ public class AssetWorkflowHelper {
             return "Deployment status.";
         return switch (status) {
             case "In Storage" -> "Stored and ready for deployment.";
-            case "Deployed",
-                    "Deployed / Assigned" ->
-                "Currently assigned to a user.";
+            case "Deployed" -> "Currently assigned to a user.";
             case "On Loan" -> "Temporarily loaned and awaiting return.";
             case "In Transit" -> "Moving between locations and pending receipt.";
             case "Missing / Unaccounted" -> "Cannot be physically accounted for.";
@@ -105,12 +103,11 @@ public class AssetWorkflowHelper {
     // Display label
     // -----------------------------------------------------------------------
 
-    /** Normalises "Deployed / Assigned" to "Deployed" for display. */
+    /** Returns the display label for a deployment status. */
     public String deploymentLabel(String status) {
         if (status == null)
             return "";
-        String display = "Deployed / Assigned".equals(status) ? "Deployed" : status;
-        return "Deployment: " + display;
+        return "Deployment: " + status;
     }
 
     // -----------------------------------------------------------------------
@@ -134,7 +131,6 @@ public class AssetWorkflowHelper {
     /** "Re-assign User" — asset is already out with someone. */
     public boolean canReassign(String deploymentStatus) {
         return "Deployed".equals(deploymentStatus)
-                || "Deployed / Assigned".equals(deploymentStatus)
                 || "On Loan".equals(deploymentStatus);
     }
 
@@ -143,7 +139,6 @@ public class AssetWorkflowHelper {
      */
     public boolean canReturn(String deploymentStatus) {
         return "Deployed".equals(deploymentStatus)
-                || "Deployed / Assigned".equals(deploymentStatus)
                 || "On Loan".equals(deploymentStatus)
                 || "With Service Center".equals(deploymentStatus);
     }

@@ -68,11 +68,45 @@ $(document).ready(function () {
         });
     });
 
-    MISDCommon.restoreDataTableStateFromSessionAndUrl(assetsTable, {
-        stateKey: tableStateKey,
-        restoreOrder: true,
-        warningMessage: 'Unable to restore saved asset table state.'
-    });
+    // Pre-set filter from URL param (e.g. /assets?filter=deployed).
+    // When a preset filter is active, session state is NOT restored to avoid overriding it.
+    function applyPresetFilter(filter) {
+        const STATUS_COL = 7;
+        const FILTERS = {
+            'deployed': ['Deployment: Deployed', false],
+            'deployment-issues': ['Deployment: (Missing / Unaccounted|On Loan|In Transit)', true],
+            'maintenance-issues': ['Health: (Degraded|Under Repair|Awaiting Parts|Beyond Economic Repair)', true],
+            'lifecycle-issues': ['Lifecycle: (End of Life|Decommissioned|Disposed|Sold)', true],
+            'problematic': [
+                'Deployment: (Missing / Unaccounted|On Loan|In Transit)' +
+                '|Health: (Degraded|Under Repair|Awaiting Parts|Beyond Economic Repair)' +
+                '|Lifecycle: (End of Life|Decommissioned|Disposed|Sold)',
+                true
+            ]
+        };
+        const config = FILTERS[filter];
+        if (config) {
+            assetsTable.column(STATUS_COL).search(config[0], config[1], false).draw();
+        }
+    }
+
+    const pageConfig = document.getElementById('assetPageConfig');
+    const urlFilter = pageConfig ? (pageConfig.dataset.filter || '') : '';
+    const urlOpenAsset = pageConfig ? (pageConfig.dataset.openAsset || '') : '';
+
+    if (urlFilter) {
+        applyPresetFilter(urlFilter);
+    } else {
+        MISDCommon.restoreDataTableStateFromSessionAndUrl(assetsTable, {
+            stateKey: tableStateKey,
+            restoreOrder: true,
+            warningMessage: 'Unable to restore saved asset table state.'
+        });
+    }
+
+    if (urlOpenAsset) {
+        loadAssetDetails(urlOpenAsset);
+    }
 
     // --- SLIDEOUT & EDIT LOGIC ---
 
@@ -236,8 +270,22 @@ $(document).ready(function () {
         }
     });
 
-    // Save the updated data
+    // Save the updated data — also uploads any staged documents as part of the same action.
     $('#saveEditBtn').on('click', function () {
+        // Pre-validate document selection before saving anything.
+        const uploadSelection = MISDCommon.getDocumentUploadSelection({
+            fileInputSelector: assetDocumentConfig.fileInputSelector,
+            previewSelector: assetDocumentConfig.previewListSelector
+        });
+        const hasFiles = uploadSelection.files && uploadSelection.files.length > 0;
+
+        if (hasFiles && !uploadSelection.isValid) {
+            if (uploadSelection.message) {
+                alert(uploadSelection.message);
+            }
+            return; // Block save until document categories are filled in.
+        }
+
         // Temporarily unlock ALL fields. jQuery's .serializeArray() ignores disabled inputs,
         // so we must enable them right before saving to ensure AssetTag and SerialNumber are sent to the server.
         $('.it-field').prop('disabled', false);
@@ -259,7 +307,29 @@ $(document).ready(function () {
             contentType: 'application/json',
             data: JSON.stringify(jsonPayload),
             success: function () {
-                location.reload(); // Refresh the table to reflect changes
+                if (hasFiles) {
+                    const docFormData = MISDCommon.buildDocumentUploadFormData({
+                        refType: assetDocumentConfig.refType,
+                        refId: currentActiveAssetTag,
+                        files: uploadSelection.files,
+                        categorySelects: uploadSelection.categorySelects
+                    });
+                    $.ajax({
+                        url: '/documents/add',
+                        type: 'POST',
+                        data: docFormData,
+                        processData: false,
+                        contentType: false,
+                        success: function () { location.reload(); },
+                        error: function (xhr) {
+                            const message = xhr?.responseJSON?.error || 'Asset saved, but document upload failed.';
+                            alert(message);
+                            location.reload(); // Reload anyway — asset data was saved successfully.
+                        }
+                    });
+                } else {
+                    location.reload();
+                }
             },
             error: function () {
                 alert("Failed to save changes. Please check server logs.");
@@ -315,57 +385,6 @@ $(document).ready(function () {
             assetDocumentConfig.previewListSelector,
             assetDocumentConfig.previewTemplateSelector
         );
-    });
-
-    $('#uploadAssetDocumentsBtn').on('click', function () {
-        if (!currentActiveAssetTag) {
-            alert('No asset selected.');
-            return;
-        }
-
-        const uploadSelection = MISDCommon.getDocumentUploadSelection({
-            fileInputSelector: assetDocumentConfig.fileInputSelector,
-            previewSelector: assetDocumentConfig.previewListSelector
-        });
-
-        if (!uploadSelection.isValid) {
-            if (uploadSelection.message) {
-                alert(uploadSelection.message);
-            }
-            return;
-        }
-
-        const formData = MISDCommon.buildDocumentUploadFormData({
-            refType: assetDocumentConfig.refType,
-            refId: currentActiveAssetTag,
-            files: uploadSelection.files,
-            categorySelects: uploadSelection.categorySelects
-        });
-
-        $.ajax({
-            url: '/documents/add',
-            type: 'POST',
-            data: formData,
-            processData: false,
-            contentType: false,
-            success: function () {
-                MISDCommon.resetDocumentDetailUI({
-                    tableSelector: assetDocumentConfig.tableSelector,
-                    bodySelector: assetDocumentConfig.bodySelector,
-                    emptySelector: assetDocumentConfig.emptySelector,
-                    emptyText: assetDocumentConfig.emptyText,
-                    fileInputSelector: assetDocumentConfig.fileInputSelector,
-                    previewInputSelector: assetDocumentConfig.fileInputSelector,
-                    previewListSelector: assetDocumentConfig.previewListSelector,
-                    previewTemplateSelector: assetDocumentConfig.previewTemplateSelector
-                });
-                loadAssetDocuments(currentActiveAssetTag);
-            },
-            error: function (xhr) {
-                const message = xhr?.responseJSON?.error || 'Failed to upload document(s).';
-                alert(message);
-            }
-        });
     });
 
     MISDCommon.bindClick('.asset-doc-delete', function (button) {

@@ -80,7 +80,7 @@
                         data-bs-target="#addCatalogOffcanvas">+ Add to Catalog</button>
                 </div>
 
-                <div class="row g-3 mb-4" style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));">
+                <div class="row g-3 mb-4" style="display:grid;grid-template-columns:repeat(6,minmax(0,1fr));">
                     <div class="col">
                         <a href="/assets" class="text-decoration-none">
                             <div class="card text-white bg-primary mb-3 shadow-sm hover-effect">
@@ -92,52 +92,54 @@
                         </a>
                     </div>
                     <div class="col">
-                        <div class="card text-white bg-success mb-3 shadow-sm">
-                            <div class="card-body">
-                                <h5 class="card-title">Deployed</h5>
-                                <h2 class="card-text" th:text="${deployedAssets}">0</h2>
+                        <a href="/assets?filter=deployed" class="text-decoration-none">
+                            <div class="card text-white bg-success mb-3 shadow-sm hover-effect">
+                                <div class="card-body">
+                                    <h5 class="card-title">Deployed</h5>
+                                    <h2 class="card-text" th:text="${deployedAssets}">0</h2>
+                                </div>
                             </div>
-                        </div>
+                        </a>
                     </div>
                     <div class="col">
-                        <div class="card text-white bg-warning mb-3 shadow-sm">
-                            <div class="card-body">
-                                <h5 class="card-title">In Maintenance</h5>
-                                <h2 class="card-text" th:text="${maintenanceCount}">0</h2>
+                        <a href="/assets?filter=problematic" class="text-decoration-none">
+                            <div class="card text-white bg-danger mb-3 shadow-sm hover-effect">
+                                <div class="card-body">
+                                    <h5 class="card-title">Total Problematic</h5>
+                                    <h2 class="card-text" th:text="${problematicAssetsCount}">0</h2>
+                                </div>
                             </div>
-                        </div>
+                        </a>
                     </div>
                     <div class="col">
-                        <div class="card text-white bg-danger mb-3 shadow-sm">
-                            <div class="card-body">
-                                <h5 class="card-title">Total Problematic</h5>
-                                <h2 class="card-text" th:text="${problematicAssetsCount}">0</h2>
+                        <a href="/assets?filter=deployment-issues" class="text-decoration-none">
+                            <div class="card text-white bg-danger mb-3 shadow-sm hover-effect">
+                                <div class="card-body">
+                                    <h5 class="card-title">Deployment Issues</h5>
+                                    <h2 class="card-text" th:text="${deploymentIssueCount}">0</h2>
+                                </div>
                             </div>
-                        </div>
+                        </a>
                     </div>
                     <div class="col">
-                        <div class="card text-white bg-danger mb-3 shadow-sm">
-                            <div class="card-body">
-                                <h5 class="card-title">Deployment Issues</h5>
-                                <h2 class="card-text" th:text="${deploymentIssueCount}">0</h2>
+                        <a href="/assets?filter=maintenance-issues" class="text-decoration-none">
+                            <div class="card text-white bg-secondary mb-3 shadow-sm hover-effect">
+                                <div class="card-body">
+                                    <h5 class="card-title">Maintenance Issues</h5>
+                                    <h2 class="card-text" th:text="${maintenanceIssueCount}">0</h2>
+                                </div>
                             </div>
-                        </div>
+                        </a>
                     </div>
                     <div class="col">
-                        <div class="card text-white bg-secondary mb-3 shadow-sm">
-                            <div class="card-body">
-                                <h5 class="card-title">Maintenance Issues</h5>
-                                <h2 class="card-text" th:text="${maintenanceIssueCount}">0</h2>
+                        <a href="/assets?filter=lifecycle-issues" class="text-decoration-none">
+                            <div class="card text-white bg-dark mb-3 shadow-sm hover-effect">
+                                <div class="card-body">
+                                    <h5 class="card-title">Lifecycle Issues</h5>
+                                    <h2 class="card-text" th:text="${lifecycleIssueCount}">0</h2>
+                                </div>
                             </div>
-                        </div>
-                    </div>
-                    <div class="col">
-                        <div class="card text-white bg-dark mb-3 shadow-sm">
-                            <div class="card-body">
-                                <h5 class="card-title">Lifecycle Issues</h5>
-                                <h2 class="card-text" th:text="${lifecycleIssueCount}">0</h2>
-                            </div>
-                        </div>
+                        </a>
                     </div>
                 </div>
 
@@ -165,7 +167,10 @@
                                 </thead>
                                 <tbody>
                                     <tr th:each="asset : ${problematicAssets}">
-                                        <td th:text="${asset.assetTag}"></td>
+                                        <td>
+                                            <a th:href="@{/assets(openAsset=${asset.assetTag})}"
+                                                th:text="${asset.assetTag}" class="text-decoration-none fw-bold"></a>
+                                        </td>
                                         <td th:text="${asset.category}"></td>
                                         <td th:text="${asset.modelName}"></td>
                                         <td th:text="${asset.accountableOwner}"></td>
