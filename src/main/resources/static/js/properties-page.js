@@ -292,7 +292,6 @@ $(document).ready(function () {
     });
 
     $('#propertyDetailDocumentFiles').on('change', function () {
-        MISDCommon.prepareMultiFileSelection(this);
         MISDCommon.renderDocumentPreviewBySelectors(
             propertyDocumentConfig.fileInputSelector,
             propertyDocumentConfig.previewListSelector,

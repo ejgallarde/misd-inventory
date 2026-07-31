@@ -379,7 +379,6 @@ $(document).ready(function () {
     }
 
     $('#assetDetailDocumentFiles').on('change', function () {
-        MISDCommon.prepareMultiFileSelection(this);
         MISDCommon.renderDocumentPreviewBySelectors(
             assetDocumentConfig.fileInputSelector,
             assetDocumentConfig.previewListSelector,

@@ -343,7 +343,6 @@ $(document).ready(function () {
     });
 
     $('#fleetDetailDocumentFiles').on('change', function () {
-        MISDCommon.prepareMultiFileSelection(this);
         MISDCommon.renderDocumentPreviewBySelectors(
             fleetDocumentConfig.fileInputSelector,
             fleetDocumentConfig.previewListSelector,

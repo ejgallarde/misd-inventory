@@ -241,9 +241,14 @@ window.MISDCommon = (function (jqueryGlobal) {
     }
 
     function setInputFiles(input, files) {
-        const dataTransfer = new DataTransfer();
-        files.forEach(file => dataTransfer.items.add(file));
-        input.files = dataTransfer.files;
+        try {
+            const dataTransfer = new DataTransfer();
+            files.forEach(file => dataTransfer.items.add(file));
+            input.files = dataTransfer.files;
+        } catch (error) {
+            // Some browser/OS combinations can fail when rebuilding very large file lists.
+            console.warn('Unable to update input file list via DataTransfer.', error);
+        }
     }
 
     function getFileSignature(file) {
@@ -267,6 +272,20 @@ window.MISDCommon = (function (jqueryGlobal) {
         return uniqueFiles;
     }
 
+    function areFileArraysEquivalent(left, right) {
+        if (left.length !== right.length) {
+            return false;
+        }
+
+        for (let i = 0; i < left.length; i += 1) {
+            if (getFileSignature(left[i]) !== getFileSignature(right[i])) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     function getSelectedFiles(input) {
         if (!input) {
             return [];
@@ -286,6 +305,12 @@ window.MISDCommon = (function (jqueryGlobal) {
         }
 
         const normalizedFiles = dedupeFiles(Array.from(files || []));
+        const existingFiles = selectedFilesByInput.get(input) || [];
+
+        if (areFileArraysEquivalent(existingFiles, normalizedFiles)) {
+            return;
+        }
+
         selectedFilesByInput.set(input, normalizedFiles);
         setInputFiles(input, normalizedFiles);
     }
@@ -356,7 +381,8 @@ window.MISDCommon = (function (jqueryGlobal) {
         return true;
     }
 
-    function renderDocumentPreviewBySelectors(inputSelector, previewSelector, templateSelector) {
+    function renderDocumentPreviewBySelectors(inputSelector, previewSelector, templateSelector, options = {}) {
+        const { mergeSelection = true } = options;
         const input = document.querySelector(inputSelector);
         const previewList = document.querySelector(previewSelector);
         const categoryTemplate = document.querySelector(templateSelector);
@@ -368,7 +394,9 @@ window.MISDCommon = (function (jqueryGlobal) {
         previewList.innerHTML = '';
 
         // Preserve already chosen files when users pick additional files in follow-up selections.
-        prepareMultiFileSelection(input);
+        if (mergeSelection) {
+            prepareMultiFileSelection(input);
+        }
 
         const validationResults = getFileValidationResults(input);
         const files = validationResults.map(result => result.file);
@@ -413,7 +441,7 @@ window.MISDCommon = (function (jqueryGlobal) {
             removeButton.addEventListener('click', function () {
                 const updatedFiles = getSelectedFiles(input).filter((_, fileIndex) => fileIndex !== index);
                 setSelectedFiles(input, updatedFiles);
-                renderDocumentPreviewBySelectors(inputSelector, previewSelector, templateSelector);
+                renderDocumentPreviewBySelectors(inputSelector, previewSelector, templateSelector, { mergeSelection: false });
             });
 
             if (categoryTemplate) {
