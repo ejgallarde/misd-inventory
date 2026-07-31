@@ -25,7 +25,8 @@ public class ITAssetService {
                 || "Procured / Pre-Deployment".equals(asset.getLifecycleStatus())) {
             asset.setLifecycleStatus("Active");
         }
-        if (asset.getMaintenanceHealthStatus() == null || asset.getMaintenanceHealthStatus().isBlank()) {
+        if (asset.getMaintenanceHealthStatus() == null || asset.getMaintenanceHealthStatus().isBlank()
+                || "Under Repair".equals(asset.getMaintenanceHealthStatus())) {
             asset.setMaintenanceHealthStatus("Operational");
         }
         assetRepo.save(asset);

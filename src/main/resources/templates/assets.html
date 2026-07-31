@@ -128,7 +128,7 @@
 
                                         <!-- Deployment Actions -->
                                         <li
-                                            th:if="${asset.deploymentStatus == 'In Storage' or asset.deploymentStatus == 'In Transit'}">
+                                            th:if="${asset.deploymentStatus == 'In Storage' or asset.deploymentStatus == 'In Transit' or asset.deploymentStatus == 'With Service Center'}">
                                             <a class="dropdown-item action-btn" href="#" data-bs-toggle="modal"
                                                 data-bs-target="#assignModal"
                                                 th:data-assettag="${asset.assetTag}">Assign Asset</a>
@@ -140,7 +140,7 @@
                                                 th:data-assettag="${asset.assetTag}">Re-assign User</a>
                                         </li>
                                         <li
-                                            th:if="${asset.deploymentStatus == 'Deployed' or asset.deploymentStatus == 'Deployed / Assigned' or asset.deploymentStatus == 'On Loan'}">
+                                            th:if="${asset.deploymentStatus == 'Deployed' or asset.deploymentStatus == 'Deployed / Assigned' or asset.deploymentStatus == 'On Loan' or asset.deploymentStatus == 'With Service Center'}">
                                             <a class="dropdown-item action-btn" href="#" data-bs-toggle="modal"
                                                 data-bs-target="#returnModal"
                                                 th:data-assettag="${asset.assetTag}">Return to MISD</a>
