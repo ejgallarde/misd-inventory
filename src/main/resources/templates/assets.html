@@ -99,18 +99,20 @@
                                 <div class="d-flex flex-column gap-1 small">
                                     <span
                                         th:if="${asset.deploymentStatus != null and !#strings.isEmpty(asset.deploymentStatus)}"
-                                        th:class="${asset.deploymentStatus == 'Missing / Unaccounted' ? 'badge bg-danger' : ((asset.deploymentStatus == 'Deployed' or asset.deploymentStatus == 'Deployed / Assigned') ? 'badge bg-success' : ((asset.deploymentStatus == 'In Storage') ? 'badge bg-secondary' : ((asset.deploymentStatus == 'On Loan' or asset.deploymentStatus == 'In Transit') ? 'badge bg-warning text-dark' : ((asset.deploymentStatus == 'Unavailable') ? 'badge bg-danger' : ((asset.deploymentStatus == 'With Service Center') ? 'badge bg-info' : 'badge bg-dark')))))}"
-                                        th:title="${asset.deploymentStatus == 'In Storage' ? 'Stored and ready for deployment.' : ((asset.deploymentStatus == 'Deployed' or asset.deploymentStatus == 'Deployed / Assigned') ? 'Currently assigned to a user.' : (asset.deploymentStatus == 'On Loan' ? 'Temporarily loaned and awaiting return.' : (asset.deploymentStatus == 'In Transit' ? 'Moving between locations and pending receipt.' : (asset.deploymentStatus == 'Missing / Unaccounted' ? 'Cannot be physically accounted for.' : (asset.deploymentStatus == 'Unavailable' ? 'Not available for deployment.' : (asset.deploymentStatus == 'With Service Center' ? 'In warranty or service repair.' : 'Deployment status.'))))))}"
+                                        th:class="${@assetHelper.deploymentBadgeClass(asset.deploymentStatus)}"
+                                        th:title="${@assetHelper.deploymentTooltip(asset.deploymentStatus)}"
                                         data-bs-toggle="tooltip" data-bs-placement="top"
-                                        th:text="${'Deployment: ' + (asset.deploymentStatus == 'Deployed / Assigned' ? 'Deployed' : asset.deploymentStatus)}"></span>
+                                        th:text="${@assetHelper.deploymentLabel(asset.deploymentStatus)}"></span>
                                     <span
                                         th:if="${asset.maintenanceHealthStatus != null and !#strings.isEmpty(asset.maintenanceHealthStatus)}"
-                                        th:class="${asset.maintenanceHealthStatus == 'Operational' ? 'badge bg-success' : ((asset.maintenanceHealthStatus == 'Degraded') ? 'badge bg-warning text-dark' : ((asset.maintenanceHealthStatus == 'Under Repair') ? 'badge bg-danger' : ((asset.maintenanceHealthStatus == 'Awaiting Parts') ? 'badge bg-secondary' : ((asset.maintenanceHealthStatus == 'Beyond Economic Repair (BER)') ? 'badge bg-danger' : ((asset.maintenanceHealthStatus == 'Not Applicable') ? 'badge bg-dark' : 'badge bg-dark')))))}"
+                                        th:class="${@assetHelper.healthBadgeClass(asset.maintenanceHealthStatus)}"
+                                        th:title="${@assetHelper.healthTooltip(asset.maintenanceHealthStatus)}"
+                                        data-bs-toggle="tooltip" data-bs-placement="top"
                                         th:text="${'Health: ' + asset.maintenanceHealthStatus}"></span>
                                     <span
-                                        th:class="${asset.lifecycleStatus == 'Active' ? 'badge bg-success' : 'badge bg-dark'}"
                                         th:if="${asset.lifecycleStatus != null and !#strings.isEmpty(asset.lifecycleStatus)}"
-                                        th:title="${asset.lifecycleStatus == 'Procured / Pre-Deployment' ? 'Procured and preparing for use.' : (asset.lifecycleStatus == 'Active' ? 'Currently in active service.' : (asset.lifecycleStatus == 'End of Life (EOL)' ? 'Reached end-of-life and needs disposition planning.' : (asset.lifecycleStatus == 'Decommissioned / Retired' ? 'Removed from active service.' : (asset.lifecycleStatus == 'Disposed' ? 'Disposed from inventory.' : (asset.lifecycleStatus == 'Sold' ? 'Sold and closed out.' : 'Lifecycle status.')))))}"
+                                        th:class="${@assetHelper.lifecycleBadgeClass(asset.lifecycleStatus)}"
+                                        th:title="${@assetHelper.lifecycleTooltip(asset.lifecycleStatus)}"
                                         data-bs-toggle="tooltip" data-bs-placement="top"
                                         th:text="${'Lifecycle: ' + asset.lifecycleStatus}"></span>
                                 </div>
@@ -118,45 +120,36 @@
 
                             <!-- DYNAMIC ACTION DROPDOWN -->
                             <td>
-                                <div class="dropup"
-                                    th:if="${asset.lifecycleStatus != 'Decommissioned / Retired' and asset.lifecycleStatus != 'Disposed' and asset.lifecycleStatus != 'Sold'}">
+                                <div class="dropup" th:if="${@assetHelper.hasActions(asset.lifecycleStatus)}">
                                     <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
-                                        data-bs-toggle="dropdown" aria-expanded="false">
-                                        Actions
-                                    </button>
+                                        data-bs-toggle="dropdown" aria-expanded="false">Actions</button>
                                     <ul class="dropdown-menu shadow-sm">
-
                                         <!-- Deployment Actions -->
-                                        <li
-                                            th:if="${asset.deploymentStatus == 'In Storage' or asset.deploymentStatus == 'In Transit' or asset.deploymentStatus == 'With Service Center'}">
+                                        <li th:if="${@assetHelper.canAssign(asset.deploymentStatus)}">
                                             <a class="dropdown-item action-btn" href="#" data-bs-toggle="modal"
                                                 data-bs-target="#assignModal"
                                                 th:data-assettag="${asset.assetTag}">Assign Asset</a>
                                         </li>
-                                        <li
-                                            th:if="${asset.deploymentStatus == 'Deployed' or asset.deploymentStatus == 'Deployed / Assigned' or asset.deploymentStatus == 'On Loan'}">
+                                        <li th:if="${@assetHelper.canReassign(asset.deploymentStatus)}">
                                             <a class="dropdown-item action-btn" href="#" data-bs-toggle="modal"
                                                 data-bs-target="#assignModal"
                                                 th:data-assettag="${asset.assetTag}">Re-assign User</a>
                                         </li>
-                                        <li
-                                            th:if="${asset.deploymentStatus == 'Deployed' or asset.deploymentStatus == 'Deployed / Assigned' or asset.deploymentStatus == 'On Loan' or asset.deploymentStatus == 'With Service Center'}">
+                                        <li th:if="${@assetHelper.canReturn(asset.deploymentStatus)}">
                                             <a class="dropdown-item action-btn" href="#" data-bs-toggle="modal"
                                                 data-bs-target="#returnModal"
                                                 th:data-assettag="${asset.assetTag}">Return to MISD</a>
                                         </li>
-
                                         <!-- Lifecycle Actions -->
                                         <li>
                                             <hr class="dropdown-divider">
                                         </li>
-
-                                        <li th:if="${asset.maintenanceHealthStatus != 'Under Repair'}">
+                                        <li th:if="${@assetHelper.canReturnForWarranty(asset.maintenanceHealthStatus)}">
                                             <a class="dropdown-item text-info action-btn fw-bold" href="#"
                                                 data-bs-toggle="modal" data-bs-target="#warrantyModal"
                                                 th:data-assettag="${asset.assetTag}">Return for Warranty</a>
                                         </li>
-                                        <li th:if="${asset.maintenanceHealthStatus != 'Beyond Economic Repair (BER)'}">
+                                        <li th:if="${@assetHelper.canMarkUnserviceable(asset.maintenanceHealthStatus)}">
                                             <a class="dropdown-item text-warning action-btn fw-bold" href="#"
                                                 data-bs-toggle="modal" data-bs-target="#unserviceableModal"
                                                 th:data-assettag="${asset.assetTag}">Mark Unserviceable</a>
@@ -168,10 +161,8 @@
                                         </li>
                                     </ul>
                                 </div>
-                                <span
-                                    th:if="${asset.lifecycleStatus == 'Decommissioned / Retired' or asset.lifecycleStatus == 'Disposed' or asset.lifecycleStatus == 'Sold'}"
-                                    class="text-muted small">No
-                                    Actions</span>
+                                <span th:if="${!@assetHelper.hasActions(asset.lifecycleStatus)}"
+                                    class="text-muted small">No Actions</span>
                             </td>
                         </tr>
                     </tbody>

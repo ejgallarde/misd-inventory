@@ -174,20 +174,20 @@
                                             <div class="d-flex flex-column gap-1 small">
                                                 <span
                                                     th:if="${asset.deploymentStatus != null and !#strings.isEmpty(asset.deploymentStatus)}"
-                                                    th:class="${asset.deploymentStatus == 'Missing / Unaccounted' ? 'badge bg-danger' : ((asset.deploymentStatus == 'Deployed' or asset.deploymentStatus == 'Deployed / Assigned') ? 'badge bg-success' : ((asset.deploymentStatus == 'In Storage') ? 'badge bg-secondary' : ((asset.deploymentStatus == 'On Loan' or asset.deploymentStatus == 'In Transit') ? 'badge bg-warning text-dark' : ((asset.deploymentStatus == 'Unavailable') ? 'badge bg-danger' : ((asset.deploymentStatus == 'With Service Center') ? 'badge bg-info' : 'badge bg-dark')))))}"
-                                                    th:title="${asset.deploymentStatus == 'In Storage' ? 'Stored and ready for deployment.' : ((asset.deploymentStatus == 'Deployed' or asset.deploymentStatus == 'Deployed / Assigned') ? 'Currently assigned to a user.' : (asset.deploymentStatus == 'On Loan' ? 'Temporarily loaned and awaiting return.' : (asset.deploymentStatus == 'In Transit' ? 'Moving between locations and pending receipt.' : (asset.deploymentStatus == 'Missing / Unaccounted' ? 'Cannot be physically accounted for.' : (asset.deploymentStatus == 'Unavailable' ? 'Not available for deployment.' : (asset.deploymentStatus == 'With Service Center' ? 'In warranty or service repair.' : 'Deployment status.'))))))}"
+                                                    th:class="${@assetHelper.deploymentBadgeClass(asset.deploymentStatus)}"
+                                                    th:title="${@assetHelper.deploymentTooltip(asset.deploymentStatus)}"
                                                     data-bs-toggle="tooltip" data-bs-placement="top"
-                                                    th:text="${'Deployment: ' + (asset.deploymentStatus == 'Deployed / Assigned' ? 'Deployed' : asset.deploymentStatus)}"></span>
+                                                    th:text="${@assetHelper.deploymentLabel(asset.deploymentStatus)}"></span>
                                                 <span
                                                     th:if="${asset.maintenanceHealthStatus != null and !#strings.isEmpty(asset.maintenanceHealthStatus)}"
-                                                    th:class="${asset.maintenanceHealthStatus == 'Operational' ? 'badge bg-success' : ((asset.maintenanceHealthStatus == 'Degraded') ? 'badge bg-warning text-dark' : ((asset.maintenanceHealthStatus == 'Under Repair') ? 'badge bg-danger' : ((asset.maintenanceHealthStatus == 'Awaiting Parts') ? 'badge bg-secondary' : ((asset.maintenanceHealthStatus == 'Beyond Economic Repair (BER)') ? 'badge bg-danger' : ((asset.maintenanceHealthStatus == 'Not Applicable') ? 'badge bg-dark' : 'badge bg-dark')))))}"
-                                                    th:title="${asset.maintenanceHealthStatus == 'Operational' ? 'Fully working.' : (asset.maintenanceHealthStatus == 'Degraded' ? 'Working with reduced performance.' : (asset.maintenanceHealthStatus == 'Under Repair' ? 'Under repair by technician/vendor.' : (asset.maintenanceHealthStatus == 'Awaiting Parts' ? 'Repair pending parts availability.' : (asset.maintenanceHealthStatus == 'Beyond Economic Repair (BER)' ? 'Repair cost exceeds asset value.' : (asset.maintenanceHealthStatus == 'Not Applicable' ? 'Status not applicable to this asset.' : 'Maintenance health status.')))))}"
+                                                    th:class="${@assetHelper.healthBadgeClass(asset.maintenanceHealthStatus)}"
+                                                    th:title="${@assetHelper.healthTooltip(asset.maintenanceHealthStatus)}"
                                                     data-bs-toggle="tooltip" data-bs-placement="top"
                                                     th:text="${'Health: ' + asset.maintenanceHealthStatus}"></span>
                                                 <span
                                                     th:if="${asset.lifecycleStatus != null and !#strings.isEmpty(asset.lifecycleStatus)}"
-                                                    th:class="${asset.lifecycleStatus == 'Active' ? 'badge bg-success' : 'badge bg-dark'}"
-                                                    th:title="${asset.lifecycleStatus == 'Procured / Pre-Deployment' ? 'Procured and preparing for use.' : (asset.lifecycleStatus == 'Active' ? 'Currently in active service.' : (asset.lifecycleStatus == 'End of Life (EOL)' ? 'Reached end-of-life and needs disposition planning.' : (asset.lifecycleStatus == 'Decommissioned / Retired' ? 'Removed from active service.' : (asset.lifecycleStatus == 'Disposed' ? 'Disposed from inventory.' : (asset.lifecycleStatus == 'Sold' ? 'Sold and closed out.' : 'Lifecycle status.')))))}"
+                                                    th:class="${@assetHelper.lifecycleBadgeClass(asset.lifecycleStatus)}"
+                                                    th:title="${@assetHelper.lifecycleTooltip(asset.lifecycleStatus)}"
                                                     data-bs-toggle="tooltip" data-bs-placement="top"
                                                     th:text="${'Lifecycle: ' + asset.lifecycleStatus}"></span>
                                             </div>
