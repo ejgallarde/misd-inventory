@@ -264,7 +264,7 @@ $(document).ready(function () {
     }
 
     function renderCatalogSummary(data) {
-        const specHtml = renderSpecifications(data.catalogSpecifications);
+        const specHtml = MISDCommon.renderCatalogSpecifications(data.catalogSpecifications);
 
         return `
             <div class="d-grid gap-2">
@@ -313,7 +313,8 @@ $(document).ready(function () {
     }
 
     // Trigger slideout on Asset Tag click
-    MISDCommon.bindClick('.asset-detail-link', function (link) {
+    MISDCommon.bindClick('.asset-detail-link', function (link, event) {
+        event.preventDefault();
         currentActiveAssetTag = link.data('assettag');
         loadAssetDetails(currentActiveAssetTag);
     });

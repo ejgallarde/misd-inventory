@@ -18,14 +18,21 @@
             </tr>
         </thead>
         <tbody>
-            <tr th:each="asset : ${assets}">
+            <tr th:each="asset : ${assets}" class="asset-table-row" th:data-assettag="${asset.assetTag}">
                 <td>
                     <a href="#" class="text-decoration-none fw-bold asset-detail-link"
                         th:data-assettag="${asset.assetTag}" th:text="${asset.assetTag}"></a>
                 </td>
-                <td th:text="${catalogMap[asset.catalogID] != null ? catalogMap[asset.catalogID].category : 'Unknown'}">
+                <td>
+                    <span class="asset-category-info" tabindex="0"
+                        th:data-catalog-manufacturer="${catalogMap[asset.catalogID] != null ? catalogMap[asset.catalogID].manufacturer : 'Unknown'}"
+                        th:data-catalog-model="${catalogMap[asset.catalogID] != null ? catalogMap[asset.catalogID].modelName : 'Unknown'}"
+                        th:data-catalog-specifications="${catalogMap[asset.catalogID] != null ? catalogMap[asset.catalogID].specifications : ''}"
+                        th:aria-label="${'View catalog details for ' + (catalogMap[asset.catalogID] != null ? catalogMap[asset.catalogID].category : 'Unknown')}"
+                        th:text="${catalogMap[asset.catalogID] != null ? catalogMap[asset.catalogID].category : 'Unknown'}">
+                    </span>
                 </td>
-                <td
+                <td th:classappend="${asset.currentOwnerID != null and employeeMap[asset.currentOwnerID] != null ? 'fw-bold' : ''}"
                     th:text="${asset.currentOwnerID != null and employeeMap[asset.currentOwnerID] != null ? employeeMap[asset.currentOwnerID] : 'MISD Storage'}">
                 </td>
                 <td
@@ -55,12 +62,11 @@
                             th:text="${'Health: ' + asset.maintenanceHealthStatus}"></span>
                         <span th:if="${asset.lifecycleStatus != null and !#strings.isEmpty(asset.lifecycleStatus)}"
                             th:class="${@assetHelper.lifecycleBadgeClass(asset.lifecycleStatus)}"
-                            th:title="${@assetHelper.lifecycleTooltip(asset.lifecycleStatus)}"
-                            data-bs-toggle="tooltip" data-bs-placement="top"
-                            th:text="${'Lifecycle: ' + asset.lifecycleStatus}"></span>
+                            th:title="${@assetHelper.lifecycleTooltip(asset.lifecycleStatus)}" data-bs-toggle="tooltip"
+                            data-bs-placement="top" th:text="${'Lifecycle: ' + asset.lifecycleStatus}"></span>
                     </div>
                 </td>
-                <td>
+                <td class="asset-actions-cell">
                     <div th:if="${workflowActions}" class="dropup">
                         <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
                             data-bs-toggle="dropdown" aria-expanded="false">Actions</button>
@@ -76,16 +82,18 @@
                                         data-bs-target="#assignModal" th:data-assettag="${asset.assetTag}">Re-assign
                                         User</a></li>
                             </th:block>
-                            <li><a class="dropdown-item action-btn asset-history-action" href="#"
-                                    data-bs-toggle="modal" data-bs-target="#assetHistoryModal"
-                                    th:data-assettag="${asset.assetTag}">View Asset History</a></li>
+                            <li><a class="dropdown-item action-btn asset-history-action" href="#" data-bs-toggle="modal"
+                                    data-bs-target="#assetHistoryModal" th:data-assettag="${asset.assetTag}">View Asset
+                                    History</a></li>
                             <th:block
                                 th:if="${@assetHelper.hasActions(asset.lifecycleStatus) and !@assetHelper.isUnserviceable(asset.maintenanceHealthStatus)}">
                                 <li th:if="${@assetHelper.canReturn(asset.deploymentStatus)}"><a
                                         class="dropdown-item action-btn" href="#" data-bs-toggle="modal"
                                         data-bs-target="#returnModal" th:data-assettag="${asset.assetTag}">Return to
                                         MISD</a></li>
-                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
                                 <li th:if="${@assetHelper.canReturnForWarranty(asset.maintenanceHealthStatus)}"><a
                                         class="dropdown-item text-info action-btn fw-bold" href="#"
                                         data-bs-toggle="modal" data-bs-target="#warrantyModal"
@@ -106,9 +114,9 @@
                                         th:data-assettag="${asset.assetTag}">Mark Unserviceable</a></li>
                             </th:block>
                             <li th:if="${@assetHelper.hasActions(asset.lifecycleStatus)}"><a
-                                    class="dropdown-item text-danger action-btn fw-bold" href="#"
-                                    data-bs-toggle="modal" data-bs-target="#retireModal"
-                                    th:data-assettag="${asset.assetTag}">Dispose / Retire</a></li>
+                                    class="dropdown-item text-danger action-btn fw-bold" href="#" data-bs-toggle="modal"
+                                    data-bs-target="#retireModal" th:data-assettag="${asset.assetTag}">Dispose /
+                                    Retire</a></li>
                         </ul>
                     </div>
                     <button th:unless="${workflowActions}" type="button"

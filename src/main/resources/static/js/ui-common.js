@@ -1,6 +1,7 @@
 window.MISDCommon = (function (jqueryGlobal) {
     const $ = jqueryGlobal || null;
     const selectedFilesByInput = new WeakMap();
+    let assetTableInteractionsInitialized = false;
 
     function applyTheme(theme, toggleButton, storageKey = 'misd-theme') {
         document.body.setAttribute('data-theme', theme);
@@ -65,6 +66,83 @@ window.MISDCommon = (function (jqueryGlobal) {
         if (initializeSelect2Modals) {
             initSelect2Modals(select2ModalSelector, select2DropdownSelector);
         }
+
+        initAssetTableInteractions();
+    }
+
+    function formatCatalogSpecificationValue(value) {
+        if (value == null || value === '') {
+            return 'N/A';
+        }
+        if (Array.isArray(value)) {
+            return value.map(item => item == null ? '' : String(item)).filter(Boolean).join(', ') || 'N/A';
+        }
+        return typeof value === 'object' ? JSON.stringify(value) : String(value);
+    }
+
+    function renderCatalogSpecifications(specifications) {
+        if (!specifications) {
+            return '<div class="text-muted">N/A</div>';
+        }
+
+        let parsed = specifications;
+        if (typeof specifications === 'string') {
+            try {
+                parsed = JSON.parse(specifications);
+            } catch (error) {
+                return `<div class="mt-2 small">${escapeHtml(specifications)}</div>`;
+            }
+        }
+
+        if (!parsed || Array.isArray(parsed) || typeof parsed !== 'object') {
+            return `<div class="mt-2 small">${escapeHtml(formatCatalogSpecificationValue(parsed))}</div>`;
+        }
+
+        const rows = Object.entries(parsed).map(([key, value]) =>
+            `<li class="d-flex justify-content-between gap-2 py-1 border-bottom">
+                <span class="fw-semibold">${escapeHtml(key)}</span>
+                <span class="text-end">${escapeHtml(formatCatalogSpecificationValue(value))}</span>
+            </li>`).join('');
+        return rows ? `<ul class="list-unstyled mb-0 mt-2">${rows}</ul>` : '<div class="text-muted">N/A</div>';
+    }
+
+    function initAssetTableInteractions() {
+        if (!$ || assetTableInteractionsInitialized) {
+            return;
+        }
+        assetTableInteractionsInitialized = true;
+
+        $(document).on('click', '.asset-table-row', function (event) {
+            if ($(event.target).closest('a, button, input, select, textarea, [data-bs-toggle], .asset-category-info, .asset-actions-cell').length) {
+                return;
+            }
+            if (window.getSelection && window.getSelection().toString()) {
+                return;
+            }
+            $(this).find('.asset-detail-link').first().trigger('click');
+        });
+
+        if (typeof bootstrap === 'undefined') {
+            return;
+        }
+
+        document.querySelectorAll('.asset-category-info').forEach(function (element) {
+            bootstrap.Popover.getOrCreateInstance(element, {
+                container: 'body',
+                customClass: 'catalog-details-popover',
+                html: true,
+                placement: 'auto',
+                trigger: 'hover focus',
+                title: 'Catalog Details',
+                content: function () {
+                    return `<div class="d-grid gap-2 small">
+                        <div><span class="text-muted fw-semibold">Manufacturer:</span> ${escapeHtml(element.dataset.catalogManufacturer || 'Unknown')}</div>
+                        <div><span class="text-muted fw-semibold">Model Name:</span> ${escapeHtml(element.dataset.catalogModel || 'Unknown')}</div>
+                        <div><span class="text-muted fw-semibold">Specifications:</span>${renderCatalogSpecifications(element.dataset.catalogSpecifications)}</div>
+                    </div>`;
+                }
+            });
+        });
     }
 
     function initSelect2Modals(modalSelector = '.modal', dropdownSelector = '.select2-dropdown') {
@@ -1092,6 +1170,7 @@ window.MISDCommon = (function (jqueryGlobal) {
         getDocumentUploadSelection: getDocumentUploadSelection,
         buildDocumentUploadFormData: buildDocumentUploadFormData,
         resetDocumentDetailUI: resetDocumentDetailUI,
-        appendDataTableStateToFormAction: appendDataTableStateToFormAction
+        appendDataTableStateToFormAction: appendDataTableStateToFormAction,
+        renderCatalogSpecifications: renderCatalogSpecifications
     };
 })(window.jQuery);

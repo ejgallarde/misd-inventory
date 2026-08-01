@@ -23,48 +23,12 @@
         return MISDCommon.escapeHtml(value == null || value === '' ? 'N/A' : String(value));
     }
 
-    function formatSpecificationValue(value) {
-        if (value == null || value === '') {
-            return 'N/A';
-        }
-        if (Array.isArray(value)) {
-            return value.map(item => item == null ? '' : String(item)).filter(Boolean).join(', ') || 'N/A';
-        }
-        return typeof value === 'object' ? JSON.stringify(value) : String(value);
-    }
-
-    function renderSpecifications(specifications) {
-        if (!specifications) {
-            return '<div class="text-muted">N/A</div>';
-        }
-
-        let parsed = specifications;
-        if (typeof specifications === 'string') {
-            try {
-                parsed = JSON.parse(specifications);
-            } catch (error) {
-                return `<div class="mt-2 small">${MISDCommon.escapeHtml(specifications)}</div>`;
-            }
-        }
-
-        if (!parsed || Array.isArray(parsed) || typeof parsed !== 'object') {
-            return `<div class="mt-2 small">${MISDCommon.escapeHtml(formatSpecificationValue(parsed))}</div>`;
-        }
-
-        const rows = Object.entries(parsed).map(([key, value]) =>
-            `<li class="d-flex justify-content-between gap-2 py-1 border-bottom">
-                <span class="fw-semibold">${MISDCommon.escapeHtml(key)}</span>
-                <span class="text-end">${MISDCommon.escapeHtml(formatSpecificationValue(value))}</span>
-            </li>`).join('');
-        return rows ? `<ul class="list-unstyled mb-0 mt-2">${rows}</ul>` : '<div class="text-muted">N/A</div>';
-    }
-
     function renderCatalogSummary(data) {
         return `<div class="d-grid gap-2">
             <div><span class="text-muted fw-semibold">Category:</span> ${escapeValue(data.catalogCategory)}</div>
             <div><span class="text-muted fw-semibold">Manufacturer:</span> ${escapeValue(data.catalogManufacturer)}</div>
             <div><span class="text-muted fw-semibold">Model Name:</span> ${escapeValue(data.catalogModelName)}</div>
-            <div><span class="text-muted fw-semibold">Specifications:</span>${renderSpecifications(data.catalogSpecifications)}</div>
+            <div><span class="text-muted fw-semibold">Specifications:</span>${MISDCommon.renderCatalogSpecifications(data.catalogSpecifications)}</div>
         </div>`;
     }
 

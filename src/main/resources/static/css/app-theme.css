@@ -215,6 +215,26 @@ body[data-theme="dark"] .navbar-dark .dropdown-toggle {
     transform: scale(1.02);
 }
 
+.asset-table-row {
+    cursor: pointer;
+}
+
+.asset-table-row .dropdown-menu,
+.asset-table-row button,
+.asset-table-row a {
+    cursor: auto;
+}
+
+.asset-category-info {
+    cursor: help;
+    text-decoration: underline dotted;
+    text-underline-offset: 0.2rem;
+}
+
+.catalog-details-popover {
+    --bs-popover-max-width: 420px;
+}
+
 .app-footer {
     border-top: 1px solid var(--app-border);
     background-color: var(--app-surface);
