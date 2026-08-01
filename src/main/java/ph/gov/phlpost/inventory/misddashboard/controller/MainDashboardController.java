@@ -124,11 +124,12 @@ public class MainDashboardController {
 
                 // IT Assets
                 model.addAttribute("totalAssets", dashboardRepo.countTotalAssets());
+                model.addAttribute("currentInventoryAssets", dashboardRepo.countCurrentInventoryAssets());
                 model.addAttribute("deployedAssets", dashboardRepo.countDeployedAssets());
                 model.addAttribute("problematicAssets", assetRepo.findProblematicAssets());
                 model.addAttribute("problematicAssetsCount", dashboardRepo.countProblematicAssets());
                 model.addAttribute("deploymentIssueCount", dashboardRepo.countDeploymentIssues());
-                model.addAttribute("maintenanceIssueCount", dashboardRepo.countMaintenanceIssues());
+                model.addAttribute("underMaintenanceAssets", dashboardRepo.countUnderMaintenanceAssets());
                 model.addAttribute("decommissionedRetiredAssets", dashboardRepo.countDecommissionedRetiredAssets());
                 model.addAttribute("catalogItems", catalogRepo.findAll());
 

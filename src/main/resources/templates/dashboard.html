@@ -80,68 +80,66 @@
                         data-bs-target="#addCatalogOffcanvas">+ Add to Catalog</button>
                 </div>
 
-                <div class="row g-3 mb-4" style="display:grid;grid-template-columns:repeat(6,minmax(0,1fr));">
-                    <div class="col">
-                        <a href="/assets" class="text-decoration-none">
-                            <div class="card text-white bg-primary mb-3 shadow-sm hover-effect">
-                                <div class="card-body">
-                                    <h5 class="card-title">Total IT Assets</h5>
-                                    <h2 class="card-text" th:text="${totalAssets}">0</h2>
-                                </div>
-                            </div>
-                        </a>
+                <section class="asset-portfolio mb-4" aria-labelledby="assetPortfolioTitle">
+                    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-end gap-2 mb-3">
+                        <div>
+                            <h3 class="h5 fw-bold mb-1" id="assetPortfolioTitle">IT Asset Portfolio</h3>
+                            <p class="text-muted small mb-0">Inventory composition and operational attention areas</p>
+                        </div>
+                        <span class="asset-portfolio-legend">Select a metric to view matching assets</span>
                     </div>
-                    <div class="col">
-                        <a href="/assets?filter=deployed" class="text-decoration-none">
-                            <div class="card text-white bg-success mb-3 shadow-sm hover-effect">
-                                <div class="card-body">
-                                    <h5 class="card-title">Deployed</h5>
-                                    <h2 class="card-text" th:text="${deployedAssets}">0</h2>
-                                </div>
-                            </div>
-                        </a>
+
+                    <div class="asset-portfolio-flow">
+                        <div class="asset-portfolio-stage asset-portfolio-stage-total">
+                            <div class="asset-stage-label">All assets</div>
+                            <a href="/assets" class="asset-metric asset-metric-total">
+                                <span class="asset-metric-label">Total IT Assets</span>
+                                <strong class="asset-metric-value" th:text="${totalAssets}">0</strong>
+                                <span class="asset-metric-context">Complete registry</span>
+                            </a>
+                        </div>
+
+                        <div class="asset-portfolio-stage asset-portfolio-stage-lifecycle">
+                            <div class="asset-stage-label">Lifecycle</div>
+                            <a href="/assets?filter=current-inventory" class="asset-metric asset-metric-current">
+                                <span class="asset-metric-label">Current Inventory</span>
+                                <strong class="asset-metric-value" th:text="${currentInventoryAssets}">0</strong>
+                                <span class="asset-metric-context">Not decommissioned</span>
+                            </a>
+                            <a href="/assets?filter=decommissioned-retired"
+                                class="asset-metric asset-metric-decommissioned">
+                                <span class="asset-metric-label">Decommissioned</span>
+                                <strong class="asset-metric-value" th:text="${decommissionedRetiredAssets}">0</strong>
+                                <span class="asset-metric-context">Retired from service</span>
+                            </a>
+                        </div>
+
+                        <div class="asset-portfolio-stage asset-portfolio-stage-operations">
+                            <div class="asset-stage-label">Operational views</div>
+                            <a href="/assets?filter=deployed" class="asset-metric asset-metric-deployed">
+                                <span class="asset-metric-label">Deployed</span>
+                                <strong class="asset-metric-value" th:text="${deployedAssets}">0</strong>
+                                <span class="asset-metric-context">Assigned and in use</span>
+                            </a>
+                            <a href="/assets?filter=under-maintenance" class="asset-metric asset-metric-maintenance">
+                                <span class="asset-metric-label">Under Maintenance</span>
+                                <strong class="asset-metric-value" th:text="${underMaintenanceAssets}">0</strong>
+                                <span class="asset-metric-context">Vendor or MISD repair</span>
+                            </a>
+                            <a href="/assets?filter=problematic" class="asset-metric asset-metric-problematic">
+                                <span class="asset-metric-label">Total Problematic</span>
+                                <strong class="asset-metric-value" th:text="${problematicAssetsCount}">0</strong>
+                                <span class="asset-metric-context">Marked unserviceable</span>
+                            </a>
+                            <a href="/assets?filter=deployment-issues"
+                                class="asset-metric asset-metric-deployment-issue">
+                                <span class="asset-metric-label">Deployment Issues</span>
+                                <strong class="asset-metric-value" th:text="${deploymentIssueCount}">0</strong>
+                                <span class="asset-metric-context">Missing or unaccounted</span>
+                            </a>
+                        </div>
                     </div>
-                    <div class="col">
-                        <a href="/assets?filter=problematic" class="text-decoration-none">
-                            <div class="card text-white bg-danger mb-3 shadow-sm hover-effect">
-                                <div class="card-body">
-                                    <h5 class="card-title">Total Problematic</h5>
-                                    <h2 class="card-text" th:text="${problematicAssetsCount}">0</h2>
-                                </div>
-                            </div>
-                        </a>
-                    </div>
-                    <div class="col">
-                        <a href="/assets?filter=deployment-issues" class="text-decoration-none">
-                            <div class="card text-white bg-danger mb-3 shadow-sm hover-effect">
-                                <div class="card-body">
-                                    <h5 class="card-title">Deployment Issues</h5>
-                                    <h2 class="card-text" th:text="${deploymentIssueCount}">0</h2>
-                                </div>
-                            </div>
-                        </a>
-                    </div>
-                    <div class="col">
-                        <a href="/assets?filter=maintenance-issues" class="text-decoration-none">
-                            <div class="card text-white bg-secondary mb-3 shadow-sm hover-effect">
-                                <div class="card-body">
-                                    <h5 class="card-title">Maintenance Issues</h5>
-                                    <h2 class="card-text" th:text="${maintenanceIssueCount}">0</h2>
-                                </div>
-                            </div>
-                        </a>
-                    </div>
-                    <div class="col">
-                        <a href="/assets?filter=decommissioned-retired" class="text-decoration-none">
-                            <div class="card text-white bg-dark mb-3 shadow-sm hover-effect">
-                                <div class="card-body">
-                                    <h5 class="card-title">Decommissioned</h5>
-                                    <h2 class="card-text" th:text="${decommissionedRetiredAssets}">0</h2>
-                                </div>
-                            </div>
-                        </a>
-                    </div>
-                </div>
+                </section>
 
                 <div class="card shadow-sm mb-5">
                     <a data-bs-toggle="collapse" href="#collapseIT" role="button" aria-expanded="true"

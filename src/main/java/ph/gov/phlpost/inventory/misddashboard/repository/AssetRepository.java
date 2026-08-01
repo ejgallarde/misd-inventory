@@ -12,11 +12,9 @@ public interface AssetRepository extends JpaRepository<Asset, String> {
     // Add this inside your AssetRepository interface
     Optional<Asset> findTopByAssetTagStartingWithOrderByAssetTagDesc(String prefix);
 
-    @Query(value = "SELECT asset.* FROM Assets asset " +
-            "WHERE asset.DeploymentStatus = 'Missing / Unaccounted' " +
-            "OR asset.MaintenanceHealthStatus IN ('Degraded', 'Under Repair', 'Beyond Economic Repair (BER)') " +
-            "OR asset.LifecycleStatus IN ('End of Life (EOL)', 'Decommissioned / Retired', 'Disposed', 'Sold') " +
-            "OR (asset.PurchaseDate IS NOT NULL AND TIMESTAMPDIFF(YEAR, asset.PurchaseDate, CURDATE()) >= 10) " +
+        @Query(value = "SELECT asset.* FROM Assets asset " +
+            "WHERE asset.MaintenanceHealthStatus = 'Beyond Economic Repair (BER)' " +
+            "AND COALESCE(asset.LifecycleStatus, '') <> 'Decommissioned / Retired' " +
             "ORDER BY asset.AssetTag ASC", nativeQuery = true)
     List<Asset> findProblematicAssets();
 }

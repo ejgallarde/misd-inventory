@@ -160,13 +160,19 @@ $(document).ready(function () {
         const STATUS_COL = 7;
         const FILTERS = {
             'deployed': ['Deployment: Deployed', false],
+            'current-inventory': ['^(?!.*Lifecycle: Decommissioned / Retired).+$', true],
             'deployment-issues': ['Deployment: Missing / Unaccounted', false],
-            'maintenance-issues': ['Health: (Degraded|Under Repair|Beyond Economic Repair)', true],
+            'under-maintenance': [
+                'Deployment: (With Service Center|With MISD Technician).*Health: Under Repair',
+                true
+            ],
+            'maintenance-issues': [
+                'Deployment: (With Service Center|With MISD Technician).*Health: Under Repair',
+                true
+            ],
             'decommissioned-retired': ['Lifecycle: Decommissioned / Retired', false],
             'problematic': [
-                'Deployment: Missing / Unaccounted' +
-                '|Health: (Degraded|Under Repair|Beyond Economic Repair)' +
-                '|Lifecycle: (End of Life|Decommissioned|Disposed|Sold)',
+                '^(?!.*Lifecycle: Decommissioned / Retired).*Health: Beyond Economic Repair \(BER\).*$',
                 true
             ]
         };
