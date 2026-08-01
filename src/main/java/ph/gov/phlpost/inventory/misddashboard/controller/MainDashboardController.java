@@ -180,10 +180,12 @@ public class MainDashboardController {
         @ResponseBody
         public Map<String, Object> searchPersonnel(
                         @RequestParam(value = "q", required = false, defaultValue = "") String q,
+                        @RequestParam(value = "jobTitle", required = false) String jobTitle,
                         @PageableDefault(size = 15) Pageable pageable) {
-                Page<Personnel> results = personnelRepo
-                                .findByLastNameContainingIgnoreCaseOrFirstNameContainingIgnoreCase(q, q,
-                                                pageable);
+                Page<Personnel> results = jobTitle == null || jobTitle.isBlank()
+                                ? personnelRepo.findByLastNameContainingIgnoreCaseOrFirstNameContainingIgnoreCase(
+                                                q, q, pageable)
+                                : personnelRepo.searchByJobTitle(jobTitle.trim(), q, pageable);
                 List<Map<String, String>> items = results.getContent().stream().map(p -> {
                         Map<String, String> map = new HashMap<>();
                         map.put("id", p.getEmployeeID());

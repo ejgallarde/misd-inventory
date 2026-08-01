@@ -151,6 +151,18 @@
                                                 data-bs-toggle="modal" data-bs-target="#warrantyModal"
                                                 th:data-assettag="${asset.assetTag}">Return for Warranty</a>
                                         </li>
+                                        <li
+                                            th:if="${@assetHelper.canSendForMisdMaintenance(asset.maintenanceHealthStatus)}">
+                                            <a class="dropdown-item text-primary action-btn fw-bold" href="#"
+                                                data-bs-toggle="modal" data-bs-target="#misdMaintenanceModal"
+                                                th:data-assettag="${asset.assetTag}">For MISD Maintenance</a>
+                                        </li>
+                                        <li
+                                            th:if="${@assetHelper.canMarkRepaired(asset.deploymentStatus, asset.maintenanceHealthStatus)}">
+                                            <a class="dropdown-item text-success action-btn fw-bold" href="#"
+                                                data-bs-toggle="modal" data-bs-target="#repairedModal"
+                                                th:data-assettag="${asset.assetTag}">Mark Asset as Repaired</a>
+                                        </li>
                                         <li th:if="${@assetHelper.canMarkUnserviceable(asset.maintenanceHealthStatus)}">
                                             <a class="dropdown-item text-warning action-btn fw-bold" href="#"
                                                 data-bs-toggle="modal" data-bs-target="#unserviceableModal"
@@ -259,6 +271,73 @@
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                         <button type="submit" class="btn btn-info">Send to Warranty</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- MISD MAINTENANCE MODAL -->
+    <div class="modal fade" id="misdMaintenanceModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-light">
+                    <h5 class="modal-title text-primary">For MISD Maintenance</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form th:action="@{/assets/misd-maintenance}" method="post">
+                    <div class="modal-body">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                        <p>Assigning <strong id="misdMaintenanceAssetTagDisplay"></strong> to an MISD technician.</p>
+                        <input type="hidden" name="assetTag">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Computer Maintenance Technologist <span
+                                    class="required-indicator" aria-hidden="true">*</span></label>
+                            <select class="form-select select2-dropdown" name="technicianID" required
+                                th:attr="data-personnel-job-title=${maintenanceTechnicianJobTitle}"
+                                style="width: 100%;">
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Maintenance Notes <span class="required-indicator"
+                                    aria-hidden="true">*</span></label>
+                            <textarea class="form-control" name="conditionNotes" rows="3"
+                                placeholder="Describe the issue and requested maintenance." required></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Send to MISD Maintenance</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- REPAIRED MODAL -->
+    <div class="modal fade" id="repairedModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-light">
+                    <h5 class="modal-title text-success">Mark Asset as Repaired</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form th:action="@{/assets/repaired}" method="post">
+                    <div class="modal-body">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                        <p>Returning <strong id="repairedAssetTagDisplay"></strong> to MISD Storage as operational.</p>
+                        <input type="hidden" name="assetTag">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Repair Completion Notes <span class="required-indicator"
+                                    aria-hidden="true">*</span></label>
+                            <textarea class="form-control" name="conditionNotes" rows="3"
+                                placeholder="Summarize the repair completed and verification performed."
+                                required></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-success">Mark as Repaired</button>
                     </div>
                 </form>
             </div>

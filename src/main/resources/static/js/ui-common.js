@@ -80,29 +80,38 @@ window.MISDCommon = (function (jqueryGlobal) {
                 return;
             }
 
-            $dropdowns.select2({
-                theme: 'bootstrap-5',
-                dropdownParent: $modal,
-                placeholder: 'Type a name to search...',
-                minimumInputLength: 2,
-                ajax: {
-                    url: '/api/personnel/search',
-                    dataType: 'json',
-                    delay: 250,
-                    data: function (params) {
-                        return {
-                            q: params.term || '',
-                            page: (params.page || 1) - 1
-                        };
-                    },
-                    processResults: function (data) {
-                        return {
-                            results: data.results,
-                            pagination: { more: data.pagination.more }
-                        };
-                    },
-                    cache: true
-                }
+            $dropdowns.each(function () {
+                const $dropdown = $(this);
+                const jobTitle = $dropdown.attr('data-personnel-job-title');
+
+                $dropdown.select2({
+                    theme: 'bootstrap-5',
+                    dropdownParent: $modal,
+                    placeholder: jobTitle ? 'Select a technician...' : 'Type a name to search...',
+                    minimumInputLength: jobTitle ? 0 : 2,
+                    ajax: {
+                        url: '/api/personnel/search',
+                        dataType: 'json',
+                        delay: 250,
+                        data: function (params) {
+                            const requestData = {
+                                q: params.term || '',
+                                page: (params.page || 1) - 1
+                            };
+                            if (jobTitle) {
+                                requestData.jobTitle = jobTitle;
+                            }
+                            return requestData;
+                        },
+                        processResults: function (data) {
+                            return {
+                                results: data.results,
+                                pagination: { more: data.pagination.more }
+                            };
+                        },
+                        cache: true
+                    }
+                });
             });
         });
 

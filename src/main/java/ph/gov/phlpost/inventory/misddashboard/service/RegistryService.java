@@ -3,6 +3,7 @@ package ph.gov.phlpost.inventory.misddashboard.service;
 import ph.gov.phlpost.inventory.misddashboard.model.EquipmentCatalog;
 import ph.gov.phlpost.inventory.misddashboard.repository.EquipmentCatalogRepository;
 import ph.gov.phlpost.inventory.misddashboard.repository.PersonnelRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
@@ -16,19 +17,25 @@ public class RegistryService {
 
     private final PersonnelRepository personnelRepository;
     private final EquipmentCatalogRepository catalogRepository;
+    private final String supplierOwnerId;
 
-    public RegistryService(PersonnelRepository personnelRepository, EquipmentCatalogRepository catalogRepository) {
+    public RegistryService(PersonnelRepository personnelRepository, EquipmentCatalogRepository catalogRepository,
+            @Value("${asset.workflow.supplier-owner-id:SUPPLIER}") String supplierOwnerId) {
         this.personnelRepository = personnelRepository;
         this.catalogRepository = catalogRepository;
+        this.supplierOwnerId = supplierOwnerId;
     }
 
     // Caches the employee list for 1 hour (or until app restart)
     @Cacheable("employeeMap")
     public Map<String, String> getEmployeeNameMap() {
-        return personnelRepository.findAll().stream()
-                // Changed Personnel::getEmployeeID to p -> p.getEmployeeID()
+        Map<String, String> employeeNames = personnelRepository.findAll().stream()
                 .collect(Collectors.toMap(p -> p.getEmployeeID(),
-                        p -> p.getLastName() + ", " + p.getFirstName()));
+                        p -> p.getLastName() + ", " + p.getFirstName(),
+                        (existing, replacement) -> existing,
+                        LinkedHashMap::new));
+        employeeNames.put(supplierOwnerId, "Supplier");
+        return employeeNames;
     }
 
     // Caches the catalog items
@@ -48,18 +55,26 @@ public class RegistryService {
 
     @Cacheable("departmentMap")
     public Map<String, String> getDepartmentMap() {
-        return personnelRepository.findAll().stream()
+        Map<String, String> departments = personnelRepository.findAll().stream()
                 .collect(Collectors.toMap(
-                        p -> p.getEmployeeID(), // Fixed: Changed from Personnel::getEmployeeID
-                        p -> p.getDepartment() != null ? p.getDepartment() : "Unassigned"));
+                        p -> p.getEmployeeID(),
+                        p -> p.getDepartment() != null ? p.getDepartment() : "Unassigned",
+                        (existing, replacement) -> existing,
+                        LinkedHashMap::new));
+        departments.put(supplierOwnerId, "External Supplier");
+        return departments;
     }
 
     @Cacheable("divisionMap")
     public Map<String, String> getDivisionMap() {
-        return personnelRepository.findAll().stream()
+        Map<String, String> divisions = personnelRepository.findAll().stream()
                 .collect(Collectors.toMap(
                         p -> p.getEmployeeID(),
-                        p -> p.getDivision() != null ? p.getDivision() : "Unassigned"));
+                        p -> p.getDivision() != null ? p.getDivision() : "Unassigned",
+                        (existing, replacement) -> existing,
+                        LinkedHashMap::new));
+        divisions.put(supplierOwnerId, "Warranty Service");
+        return divisions;
     }
 
     public String getManagerNameByEmployeeId(String employeeId) {

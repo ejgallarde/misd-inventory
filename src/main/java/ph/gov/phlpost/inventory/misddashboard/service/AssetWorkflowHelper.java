@@ -27,7 +27,7 @@ public class AssetWorkflowHelper {
             case "Deployed" -> "badge bg-success";
             case "On Loan", "In Transit" -> "badge bg-warning text-dark";
             case "Unavailable", "Missing / Unaccounted" -> "badge bg-danger";
-            case "With Service Center" -> "badge bg-info";
+            case "With Service Center", "With MISD Technician" -> "badge bg-info";
             default -> "badge bg-dark";
         };
     }
@@ -67,6 +67,7 @@ public class AssetWorkflowHelper {
             case "Missing / Unaccounted" -> "Cannot be physically accounted for.";
             case "Unavailable" -> "Not available for deployment.";
             case "With Service Center" -> "In warranty or service repair.";
+            case "With MISD Technician" -> "Assigned to an MISD technician for repair.";
             default -> "Deployment status.";
         };
     }
@@ -121,11 +122,10 @@ public class AssetWorkflowHelper {
                 && !"Sold".equals(lifecycleStatus);
     }
 
-    /** "Assign Asset" — asset is sitting in storage / transit / service centre. */
+    /** "Assign Asset" — asset is available for deployment. */
     public boolean canAssign(String deploymentStatus) {
         return "In Storage".equals(deploymentStatus)
-                || "In Transit".equals(deploymentStatus)
-                || "With Service Center".equals(deploymentStatus);
+                || "In Transit".equals(deploymentStatus);
     }
 
     /** "Re-assign User" — asset is already out with someone. */
@@ -135,17 +135,26 @@ public class AssetWorkflowHelper {
     }
 
     /**
-     * "Return to MISD" — asset is deployed or in service and needs to come back.
+     * "Return to MISD" — asset is deployed or on loan and needs to come back.
      */
     public boolean canReturn(String deploymentStatus) {
         return "Deployed".equals(deploymentStatus)
-                || "On Loan".equals(deploymentStatus)
-                || "With Service Center".equals(deploymentStatus);
+                || "On Loan".equals(deploymentStatus);
     }
 
     /** "Return for Warranty" — only when not already under repair. */
     public boolean canReturnForWarranty(String maintenanceHealthStatus) {
         return !"Under Repair".equals(maintenanceHealthStatus);
+    }
+
+    public boolean canSendForMisdMaintenance(String maintenanceHealthStatus) {
+        return !"Under Repair".equals(maintenanceHealthStatus);
+    }
+
+    public boolean canMarkRepaired(String deploymentStatus, String maintenanceHealthStatus) {
+        return "Under Repair".equals(maintenanceHealthStatus)
+                && ("With Service Center".equals(deploymentStatus)
+                        || "With MISD Technician".equals(deploymentStatus));
     }
 
     /** "Mark Unserviceable" — only when not already BER. */

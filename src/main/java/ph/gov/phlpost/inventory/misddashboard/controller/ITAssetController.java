@@ -52,6 +52,9 @@ public class ITAssetController {
     @Value("#{'${document.upload.categories}'.split(',')}")
     private List<String> documentUploadCategories;
 
+    @Value("${asset.workflow.maintenance-technician-job-title:Computer Maintenance Technologist}")
+    private String maintenanceTechnicianJobTitle;
+
     @Value("#{'${dropdown.asset-deployment-statuses}'.split(',')}")
     private List<String> assetDeploymentStatusOptions;
 
@@ -90,6 +93,7 @@ public class ITAssetController {
         model.addAttribute("documentUploadCategories", documentUploadCategories.stream()
                 .sorted(String.CASE_INSENSITIVE_ORDER)
                 .toList());
+        model.addAttribute("maintenanceTechnicianJobTitle", maintenanceTechnicianJobTitle);
         model.addAttribute("assetDeploymentStatusOptions", assetDeploymentStatusOptions);
         model.addAttribute("assetMaintenanceHealthStatusOptions", assetMaintenanceHealthStatusOptions);
         model.addAttribute("assetLifecycleStatusOptions", assetLifecycleStatusOptions);
@@ -256,8 +260,34 @@ public class ITAssetController {
             @RequestParam(value = "search", required = false) String search,
             @RequestParam(value = "page", required = false) Integer page, RedirectAttributes redirectAttributes) {
         try {
-            assetService.updateLifecycle(assetTag, "In Warranty Repair", "Sent for Warranty Repair", conditionNotes);
+            assetService.sendForWarranty(assetTag, conditionNotes);
             redirectAttributes.addFlashAttribute("successMessage", "Asset flagged for warranty.");
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
+        return "redirect:" + buildAssetsRedirectUrl(search, page);
+    }
+
+    @PostMapping("/assets/misd-maintenance")
+    public String sendForMisdMaintenance(@RequestParam String assetTag, @RequestParam String technicianID,
+            @RequestParam String conditionNotes, @RequestParam(value = "search", required = false) String search,
+            @RequestParam(value = "page", required = false) Integer page, RedirectAttributes redirectAttributes) {
+        try {
+            assetService.sendForMisdMaintenance(assetTag, technicianID, conditionNotes);
+            redirectAttributes.addFlashAttribute("successMessage", "Asset sent for MISD maintenance.");
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
+        return "redirect:" + buildAssetsRedirectUrl(search, page);
+    }
+
+    @PostMapping("/assets/repaired")
+    public String markAssetRepaired(@RequestParam String assetTag, @RequestParam String conditionNotes,
+            @RequestParam(value = "search", required = false) String search,
+            @RequestParam(value = "page", required = false) Integer page, RedirectAttributes redirectAttributes) {
+        try {
+            assetService.markRepaired(assetTag, conditionNotes);
+            redirectAttributes.addFlashAttribute("successMessage", "Asset marked as repaired and returned to storage.");
         } catch (IllegalArgumentException e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }
@@ -310,8 +340,8 @@ public class ITAssetController {
 
     private AssetDetailResponse toAssetDetailResponse(Asset asset) {
         EquipmentCatalog catalog = registryService.getCatalogMap().get(asset.getCatalogID());
-        Personnel personnel = asset.getCurrentOwnerID() == null ? null
-                : personnelRepo.findById(asset.getCurrentOwnerID()).orElse(null);
+        String ownerId = asset.getCurrentOwnerID();
+        Personnel personnel = ownerId == null ? null : personnelRepo.findById(ownerId).orElse(null);
 
         return new AssetDetailResponse(
                 asset.getAssetTag(),
@@ -328,10 +358,10 @@ public class ITAssetController {
                 catalog == null ? null : catalog.getManufacturer(),
                 catalog == null ? null : catalog.getModelName(),
                 formatSpecifications(catalog == null ? null : catalog.getSpecifications()),
-                personnel == null ? null : personnel.getEmployeeID(),
-                personnel == null ? null : buildFullName(personnel),
-                personnel == null ? null : normalizeBlank(personnel.getDepartment()),
-                personnel == null ? null : normalizeBlank(personnel.getDivision()),
+                ownerId,
+                ownerId == null ? null : registryService.getEmployeeNameMap().get(ownerId),
+                ownerId == null ? null : registryService.getDepartmentMap().get(ownerId),
+                ownerId == null ? null : registryService.getDivisionMap().get(ownerId),
                 resolveManagerId(personnel),
                 resolveManagerFullName(personnel));
     }

@@ -25,6 +25,9 @@ public class Personnel {
     @Column(name = "Division")
     private String division;
 
+    @Column(name = "JobTitle")
+    private String jobTitle;
+
     @Column(name = "ManagerID")
     private String managerID;
 
@@ -36,20 +39,48 @@ public class Personnel {
         return employeeID;
     }
 
+    public void setEmployeeID(String employeeID) {
+        this.employeeID = employeeID;
+    }
+
     public String getFirstName() {
         return firstName;
+    }
+
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
     }
 
     public String getLastName() {
         return lastName;
     }
 
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
+    }
+
     public String getDepartment() {
         return department;
     }
 
+    public void setDepartment(String department) {
+        this.department = department;
+    }
+
     public String getDivision() {
         return division;
+    }
+
+    public void setDivision(String division) {
+        this.division = division;
+    }
+
+    public String getJobTitle() {
+        return jobTitle;
+    }
+
+    public void setJobTitle(String jobTitle) {
+        this.jobTitle = jobTitle;
     }
 
     public String getManagerID() {

@@ -454,6 +454,14 @@ $(document).ready(function () {
             MISDCommon.populateModalFields(modal, {
                 '#warrantyAssetTagDisplay': assetTag
             });
+        } else if (modal.attr('id') === 'misdMaintenanceModal') {
+            MISDCommon.populateModalFields(modal, {
+                '#misdMaintenanceAssetTagDisplay': assetTag
+            });
+        } else if (modal.attr('id') === 'repairedModal') {
+            MISDCommon.populateModalFields(modal, {
+                '#repairedAssetTagDisplay': assetTag
+            });
         } else if (modal.attr('id') === 'unserviceableModal') {
             MISDCommon.populateModalFields(modal, {
                 '#unserviceableAssetTagDisplay': assetTag

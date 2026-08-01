@@ -22,6 +22,8 @@ Purpose: Track controller endpoint ownership and internal callers (template form
 | POST | /assets/return | ITAssetController | Form submit | templates/assets.html (Return modal) | Active |
 | POST | /assets/unserviceable | ITAssetController | Form submit | templates/assets.html (Unserviceable modal) | Active |
 | POST | /assets/warranty | ITAssetController | Form submit | templates/assets.html (Warranty modal) | Active |
+| POST | /assets/misd-maintenance | ITAssetController | Form submit | templates/assets.html (MISD Maintenance modal) | Active |
+| POST | /assets/repaired | ITAssetController | Form submit | templates/assets.html (Mark Asset as Repaired modal) | Active |
 | POST | /assets/retire | ITAssetController | Form submit | templates/assets.html (Retire modal) | Active |
 | GET | /assets/{id} | ITAssetController | JS AJAX | static/js/assets.js (loadAssetDetails) | Active |
 | POST | /assets/update | ITAssetController | JS AJAX | static/js/assets.js (save edit) | Active |
