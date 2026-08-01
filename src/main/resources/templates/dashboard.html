@@ -84,60 +84,55 @@
                     <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-end gap-2 mb-3">
                         <div>
                             <h3 class="h5 fw-bold mb-1" id="assetPortfolioTitle">IT Asset Portfolio</h3>
-                            <p class="text-muted small mb-0">Inventory composition and operational attention areas</p>
+                            <p class="text-muted small mb-0">Select a card to view matching assets</p>
                         </div>
-                        <span class="asset-portfolio-legend">Select a metric to view matching assets</span>
                     </div>
 
                     <div class="asset-portfolio-flow">
                         <div class="asset-portfolio-stage asset-portfolio-stage-total">
-                            <div class="asset-stage-label">All assets</div>
                             <a href="/assets" class="asset-metric asset-metric-total">
                                 <span class="asset-metric-label">Total IT Assets</span>
                                 <strong class="asset-metric-value" th:text="${totalAssets}">0</strong>
-                                <span class="asset-metric-context">Complete registry, including retired assets</span>
+                                <span class="asset-metric-context">Complete registry of current and decommissioned
+                                    assets</span>
                             </a>
                         </div>
 
                         <div class="asset-portfolio-stage asset-portfolio-stage-lifecycle">
-                            <div class="asset-stage-label">Lifecycle</div>
-                            <a href="/assets?filter=current-inventory" class="asset-metric asset-metric-current">
-                                <span class="asset-metric-label">Current Inventory</span>
-                                <strong class="asset-metric-value" th:text="${currentInventoryAssets}">0</strong>
-                                <span class="asset-metric-context">Actively in use, regardless of status</span>
-                            </a>
+                            <div class="asset-current-inventory-branch">
+                                <a href="/assets?filter=current-inventory" class="asset-metric asset-metric-current">
+                                    <span class="asset-metric-label">Current Inventory</span>
+                                    <strong class="asset-metric-value" th:text="${currentInventoryAssets}">0</strong>
+                                    <span class="asset-metric-context">Actively in use, regardless of status</span>
+                                </a>
+
+                                <div class="asset-portfolio-stage asset-portfolio-stage-operations">
+                                    <div class="asset-stage-label">Operational views within current inventory</div>
+                                    <div class="asset-operational-cards">
+                                        <a href="/assets?filter=deployed" class="asset-metric asset-metric-deployed">
+                                            <span class="asset-metric-label">Deployed</span>
+                                            <strong class="asset-metric-value" th:text="${deployedAssets}">0</strong>
+                                            <span class="asset-metric-context">Assigned and in use, including ageing and
+                                                fully depreciated assets</span>
+                                        </a>
+                                        <a href="/assets?filter=under-maintenance"
+                                            class="asset-metric asset-metric-maintenance">
+                                            <span class="asset-metric-label">Under Maintenance</span>
+                                            <strong class="asset-metric-value"
+                                                th:text="${underMaintenanceAssets}">0</strong>
+                                            <span class="asset-metric-context">With Vendor or MISD Technician</span>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
                             <a href="/assets?filter=decommissioned-retired"
                                 class="asset-metric asset-metric-decommissioned">
                                 <span class="asset-metric-label">Decommissioned</span>
                                 <strong class="asset-metric-value" th:text="${decommissionedRetiredAssets}">0</strong>
-                                <span class="asset-metric-context">Retired from service</span>
+                                <span class="asset-metric-context">Retired from service, disposed, or sold</span>
                             </a>
                         </div>
 
-                        <div class="asset-portfolio-stage asset-portfolio-stage-operations">
-                            <div class="asset-stage-label">Operational views</div>
-                            <a href="/assets?filter=deployed" class="asset-metric asset-metric-deployed">
-                                <span class="asset-metric-label">Deployed</span>
-                                <strong class="asset-metric-value" th:text="${deployedAssets}">0</strong>
-                                <span class="asset-metric-context">Assigned and in use</span>
-                            </a>
-                            <a href="/assets?filter=under-maintenance" class="asset-metric asset-metric-maintenance">
-                                <span class="asset-metric-label">Under Maintenance</span>
-                                <strong class="asset-metric-value" th:text="${underMaintenanceAssets}">0</strong>
-                                <span class="asset-metric-context">With Vendor or MISD Technician</span>
-                            </a>
-                            <a href="/assets?filter=problematic" class="asset-metric asset-metric-problematic">
-                                <span class="asset-metric-label">Problematic Assets</span>
-                                <strong class="asset-metric-value" th:text="${problematicAssetsCount}">0</strong>
-                                <span class="asset-metric-context">Unserviceable, requires attention</span>
-                            </a>
-                            <a href="/assets?filter=deployment-issues"
-                                class="asset-metric asset-metric-deployment-issue">
-                                <span class="asset-metric-label">Deployment Issues</span>
-                                <strong class="asset-metric-value" th:text="${deploymentIssueCount}">0</strong>
-                                <span class="asset-metric-context">Missing or unaccounted</span>
-                            </a>
-                        </div>
                     </div>
                 </section>
 
@@ -146,7 +141,7 @@
                         class="text-decoration-none">
                         <div
                             class="card-header bg-white border-bottom-0 pt-3 pb-3 d-flex justify-content-between align-items-center">
-                            <h5 class="card-title text-danger fw-bold mb-0">Action Required: Problematic IT Assets</h5>
+                            <h5 class="card-title text-danger fw-bold mb-0">IT Assets That Require Attention</h5>
                             <span class="text-muted">&#9660;</span>
                         </div>
                     </a>

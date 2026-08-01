@@ -253,7 +253,7 @@ body[data-theme="dark"] .navbar-dark .dropdown-toggle {
 
 .asset-portfolio-flow {
     display: grid;
-    grid-template-columns: minmax(180px, 0.8fr) minmax(220px, 1fr) minmax(420px, 2fr);
+    grid-template-columns: minmax(180px, 0.6fr) minmax(540px, 2fr);
     gap: 2.5rem;
     align-items: stretch;
 }
@@ -266,25 +266,33 @@ body[data-theme="dark"] .navbar-dark .dropdown-toggle {
 }
 
 .asset-portfolio-stage-lifecycle {
-    grid-template-rows: auto repeat(2, minmax(92px, auto));
+    grid-template-columns: minmax(0, 2fr) minmax(190px, 0.8fr);
+    grid-template-rows: 1fr;
+    align-items: stretch;
+}
+
+.asset-current-inventory-branch {
+    display: grid;
+    grid-template-rows: auto 1fr;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    border: 1px solid color-mix(in srgb, #198754 45%, var(--app-border));
+    border-radius: 8px;
+    background: color-mix(in srgb, #198754 5%, var(--app-surface));
 }
 
 .asset-portfolio-stage-operations {
+    align-content: start;
+    padding: 0.75rem;
+    border: 1px dashed color-mix(in srgb, #198754 45%, var(--app-border));
+    border-radius: 6px;
+    background: var(--app-surface);
+}
+
+.asset-operational-cards {
+    display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    grid-template-rows: auto repeat(2, minmax(92px, auto));
-}
-
-.asset-portfolio-stage-operations .asset-stage-label {
-    grid-column: 1 / -1;
-}
-
-.asset-portfolio-stage:not(:first-child)::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    right: calc(100% + 0.5rem);
-    width: 1.5rem;
-    border-top: 2px solid var(--app-border);
+    gap: 0.75rem;
 }
 
 .asset-metric {
@@ -329,9 +337,15 @@ body[data-theme="dark"] .navbar-dark .dropdown-toggle {
     font-size: 0.75rem;
 }
 
+.asset-metric-total,
+.asset-metric-decommissioned {
+    min-height: 92px;
+    height: 92px;
+    align-self: center;
+}
+
 .asset-metric-total {
     --metric-accent: #0f6cbd;
-    min-height: 196px;
 }
 
 .asset-metric-current,
@@ -354,21 +368,10 @@ body[data-theme="dark"] .navbar-dark .dropdown-toggle {
 
 @media (max-width: 991.98px) {
     .asset-portfolio-flow {
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: 1fr;
         gap: 1rem;
     }
 
-    .asset-portfolio-stage-total {
-        grid-column: 1 / -1;
-    }
-
-    .asset-metric-total {
-        min-height: 92px;
-    }
-
-    .asset-portfolio-stage::before {
-        display: none;
-    }
 }
 
 @media (max-width: 767.98px) {
@@ -377,14 +380,11 @@ body[data-theme="dark"] .navbar-dark .dropdown-toggle {
     }
 
     .asset-portfolio-flow,
-    .asset-portfolio-stage-operations {
+    .asset-portfolio-stage-lifecycle,
+    .asset-operational-cards {
         grid-template-columns: 1fr;
     }
 
-    .asset-portfolio-stage-total,
-    .asset-portfolio-stage-operations .asset-stage-label {
-        grid-column: auto;
-    }
 }
 
 .app-footer {
