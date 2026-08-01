@@ -214,8 +214,7 @@ $(document).ready(function () {
     }
 
     $('.js-document-upload-input').each(function () {
-        const receiveInput = isReceiveAssetUploadInput(this);
-        renderDocumentPreview(this, { mergeSelection: false, enableRemove: !receiveInput });
+        renderDocumentPreview(this, { mergeSelection: false, enableRemove: true });
         $(this).on('change', function () {
             const input = this;
             const receiveChange = isReceiveAssetUploadInput(input);
@@ -227,7 +226,7 @@ $(document).ready(function () {
             window.requestAnimationFrame(function () {
                 renderDocumentPreview(input, {
                     mergeSelection: !receiveChange,
-                    enableRemove: !receiveChange
+                    enableRemove: true
                 });
             });
         });
@@ -278,9 +277,8 @@ $(document).ready(function () {
         }
 
         $(this).find('.js-document-upload-input').each(function () {
-            const receiveInput = isReceiveAssetUploadInput(this);
             MISDCommon.clearSelectedFiles(this);
-            renderDocumentPreview(this, { mergeSelection: false, enableRemove: !receiveInput });
+            renderDocumentPreview(this, { mergeSelection: false, enableRemove: true });
         });
     });
 
@@ -291,7 +289,7 @@ $(document).ready(function () {
         }
 
         MISDCommon.clearSelectedFiles(receiveInput);
-        renderDocumentPreview(receiveInput, { mergeSelection: false, enableRemove: false });
+        renderDocumentPreview(receiveInput, { mergeSelection: false, enableRemove: true });
     });
 
     $('#receiveAssetOffcanvas').on('hidden.bs.offcanvas', function () {

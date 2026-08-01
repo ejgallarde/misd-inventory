@@ -411,11 +411,10 @@ window.MISDCommon = (function (jqueryGlobal) {
 
         const { maxFiles } = getUploadConstraints(input);
         const selectedFiles = getSelectedFiles(input);
-        if (selectedFiles.length > maxFiles) {
-            const trimmedFiles = selectedFiles.slice(0, maxFiles);
-            setSelectedFiles(input, trimmedFiles);
+        const exceedsMaxFiles = selectedFiles.length > maxFiles;
+        if (exceedsMaxFiles) {
             showUploadError(input,
-                `You selected ${selectedFiles.length} files. Maximum allowed is ${maxFiles}. Only the first ${maxFiles} files were kept.`);
+                `You selected ${selectedFiles.length} files. Remove files until no more than ${maxFiles} remain.`);
         }
 
         const validationResults = getFileValidationResults(input);
@@ -425,7 +424,7 @@ window.MISDCommon = (function (jqueryGlobal) {
 
         if (tooLarge.length) {
             showUploadError(input, `File size exceeds ${maxSizeMb}MB: ${tooLarge.join(', ')}`);
-        } else {
+        } else if (!exceedsMaxFiles) {
             clearUploadError(input);
         }
 
@@ -449,7 +448,7 @@ window.MISDCommon = (function (jqueryGlobal) {
                         <div class="small text-muted">${formatBytes(file.size)}</div>
                     </div>
                     <div class="d-flex flex-column align-items-end gap-2">
-                        ${enableRemove ? `<button type="button" class="btn btn-sm btn-outline-danger" aria-label="Remove ${escapeHtml(file.name)}">X</button>` : ''}
+                        ${enableRemove ? `<button type="button" class="btn btn-sm btn-outline-danger" title="Remove file" aria-label="Remove ${escapeHtml(file.name)}">&times;</button>` : ''}
                         <span class="badge ${result.typeAllowed && result.sizeAllowed ? 'bg-success' : 'bg-danger'}">
                             ${result.typeAllowed && result.sizeAllowed ? 'Ready' : (!result.typeAllowed ? 'Invalid type' : 'Too large')}
                         </span>
@@ -470,13 +469,15 @@ window.MISDCommon = (function (jqueryGlobal) {
             if (categoryTemplate) {
                 const label = document.createElement('label');
                 label.className = 'form-label fw-semibold mb-0 small';
-                label.textContent = 'Document category';
+                label.innerHTML = 'Document category <span class="required-indicator" aria-hidden="true">*</span>';
 
                 const select = document.createElement('select');
+                select.id = `${input.id || 'documentFiles'}Category${index}`;
                 select.className = 'form-select form-select-sm';
                 select.name = 'documentCategories';
                 select.required = true;
                 select.innerHTML = categoryTemplate.innerHTML;
+                label.htmlFor = select.id;
 
                 item.appendChild(label);
                 item.appendChild(select);
