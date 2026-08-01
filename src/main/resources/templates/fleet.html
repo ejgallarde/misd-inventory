@@ -9,6 +9,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
     <link href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css"
         rel="stylesheet" />
@@ -115,8 +116,7 @@
 
                             <!-- DYNAMIC ACTION DROPDOWN -->
                             <td>
-                                <div class="dropdown"
-                                    th:if="${v.adminLegaltionalStatus != 'Decommissioned' and v.adminLegaltionalStatus != 'Disposed' and v.adminLegaltionalStatus != 'Sold'}">
+                                <div class="dropdown">
                                     <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
                                         data-bs-toggle="dropdown" aria-expanded="false">
                                         Actions
@@ -134,6 +134,12 @@
                                                 data-bs-target="#assignModal" th:data-id="${v.vehicleID}"
                                                 th:data-plate="${v.plateNumber}">Re-assign Driver</a>
                                         </li>
+                                        <li>
+                                            <a class="dropdown-item fleet-history-action" href="#"
+                                                data-bs-toggle="modal" data-bs-target="#fleetHistoryModal"
+                                                th:data-vehicle-id="${v.vehicleID}"
+                                                th:data-plate="${v.plateNumber}">View Vehicle History</a>
+                                        </li>
                                         <li
                                             th:if="${v.operationalStatus == 'Dispatched/In Transit' or v.operationalStatus == 'Reserved'}">
                                             <a class="dropdown-item text-warning action-btn" href="#"
@@ -141,10 +147,12 @@
                                                 th:data-id="${v.vehicleID}" th:data-plate="${v.plateNumber}">Return to
                                                 Motorpool</a>
                                         </li>
-                                        <li>
+                                        <li
+                                            th:if="${v.adminLegaltionalStatus != 'Decommissioned' and v.adminLegaltionalStatus != 'Disposed' and v.adminLegaltionalStatus != 'Sold'}">
                                             <hr class="dropdown-divider">
                                         </li>
-                                        <li>
+                                        <li
+                                            th:if="${v.adminLegaltionalStatus != 'Decommissioned' and v.adminLegaltionalStatus != 'Disposed' and v.adminLegaltionalStatus != 'Sold'}">
                                             <a class="dropdown-item text-danger action-btn" href="#"
                                                 data-bs-toggle="modal" data-bs-target="#retireModal"
                                                 th:data-id="${v.vehicleID}" th:data-plate="${v.plateNumber}">Retire
@@ -152,9 +160,6 @@
                                         </li>
                                     </ul>
                                 </div>
-                                <span
-                                    th:if="${v.adminLegaltionalStatus == 'Decommissioned' or v.adminLegaltionalStatus == 'Disposed' or v.adminLegaltionalStatus == 'Sold'}"
-                                    class="text-muted small">No Actions</span>
                             </td>
                         </tr>
                     </tbody>
@@ -260,6 +265,8 @@
             </div>
         </div>
     </div>
+
+    <div th:replace="~{fragments/fleet-history :: fleetHistoryModal}"></div>
 
     <!-- Core Scripts -->
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>

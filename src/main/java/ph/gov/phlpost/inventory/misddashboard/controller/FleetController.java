@@ -2,6 +2,7 @@ package ph.gov.phlpost.inventory.misddashboard.controller;
 
 import ph.gov.phlpost.inventory.misddashboard.model.FleetVehicle;
 import ph.gov.phlpost.inventory.misddashboard.repository.FleetVehicleRepository;
+import ph.gov.phlpost.inventory.misddashboard.service.AssetHistoryService;
 import ph.gov.phlpost.inventory.misddashboard.service.DocumentService;
 import ph.gov.phlpost.inventory.misddashboard.service.FleetService;
 import ph.gov.phlpost.inventory.misddashboard.service.RegistryService;
@@ -27,6 +28,7 @@ public class FleetController {
     private final FleetService fleetService;
     private final RegistryService registryService;
     private final DocumentService documentService;
+    private final AssetHistoryService assetHistoryService;
 
     @Value("${document.upload.max-size-mb:15}")
     private int documentUploadMaxSizeMb;
@@ -54,11 +56,13 @@ public class FleetController {
 
     public FleetController(FleetVehicleRepository fleetRepo, FleetService fleetService,
             RegistryService registryService,
-            DocumentService documentService) {
+            DocumentService documentService,
+            AssetHistoryService assetHistoryService) {
         this.fleetRepo = fleetRepo;
         this.fleetService = fleetService;
         this.registryService = registryService;
         this.documentService = documentService;
+        this.assetHistoryService = assetHistoryService;
     }
 
     @GetMapping
@@ -203,6 +207,20 @@ public class FleetController {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }
         return "redirect:/fleet";
+    }
+
+    @GetMapping("/{id}/history")
+    @ResponseBody
+    public ResponseEntity<List<AssetHistoryService.AssetHistoryEntry>> getVehicleHistory(@PathVariable Integer id) {
+        return fleetRepo.findById(id)
+                .map(FleetVehicle::getPlateNumber)
+                .map(String::trim)
+                .filter(plateNumber -> !plateNumber.isEmpty())
+                .map(assetHistoryService::getHistory)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> fleetRepo.existsById(id)
+                        ? ResponseEntity.ok(List.of())
+                        : ResponseEntity.notFound().build());
     }
 
     @GetMapping("/{id}")

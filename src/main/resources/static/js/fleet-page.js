@@ -276,6 +276,108 @@ $(document).ready(function () {
             order: [[0, 'asc']]
         }));
 
+        const fleetHistoryTable = $('#fleetHistoryTable').DataTable({
+            data: [],
+            columns: [
+                {
+                    data: 'transactionDate',
+                    render: function (value, type) {
+                        if (type === 'sort' || type === 'type') return value || '';
+                        return value ? new Intl.DateTimeFormat('en-PH', {
+                            dateStyle: 'medium',
+                            timeStyle: 'medium'
+                        }).format(new Date(value)) : 'N/A';
+                    }
+                },
+                { data: 'logType', render: $.fn.dataTable.render.text() },
+                { data: 'actionType', render: $.fn.dataTable.render.text() },
+                { data: 'recordedBy', render: $.fn.dataTable.render.text() },
+                { data: 'notes', defaultContent: '', render: $.fn.dataTable.render.text() }
+            ],
+            order: [[0, 'desc']],
+            pageLength: 10,
+            lengthMenu: [[10, 25, 50, -1], [10, 25, 50, 'All']],
+            buttons: [{
+                extend: 'excel',
+                className: 'd-none',
+                title: function () {
+                    return `Vehicle History - ${$('#fleetHistoryPlateNumber').text()}`;
+                },
+                filename: function () {
+                    return `Vehicle_History_${$('#fleetHistoryVehicleId').text()}`;
+                }
+            }],
+            dom: "<'d-none'B>" +
+                "<'row mb-3'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6'f>>" +
+                "<'row'<'col-sm-12'tr>>" +
+                "<'row pt-2'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
+            language: {
+                emptyTable: 'No history has been recorded for this vehicle.'
+            }
+        });
+
+        function loadFleetHistory(vehicleId, plateNumber) {
+            $('#fleetHistoryVehicleId').text(vehicleId);
+            $('#fleetHistoryPlateNumber').text(plateNumber || 'N/A');
+            $('#fleetHistoryError').addClass('d-none').text('');
+            fleetHistoryTable.clear().draw();
+
+            $.get(`/fleet/${encodeURIComponent(vehicleId)}/history`, function (history) {
+                fleetHistoryTable.rows.add(history).draw();
+                fleetHistoryTable.columns.adjust();
+            }).fail(function () {
+                $('#fleetHistoryError').removeClass('d-none').text('Unable to load vehicle history.');
+            });
+        }
+
+        function printFleetHistory() {
+            const vehicleId = $('#fleetHistoryVehicleId').text();
+            const plateNumber = $('#fleetHistoryPlateNumber').text();
+            const rows = fleetHistoryTable.rows({ search: 'applied' }).data().toArray();
+            const rowMarkup = rows.map(function (entry) {
+                const transactionDate = entry.transactionDate
+                    ? new Intl.DateTimeFormat('en-PH', { dateStyle: 'medium', timeStyle: 'medium' })
+                        .format(new Date(entry.transactionDate))
+                    : 'N/A';
+                return `<tr><td>${MISDCommon.escapeHtml(transactionDate)}</td>` +
+                    `<td>${MISDCommon.escapeHtml(entry.logType || '')}</td>` +
+                    `<td>${MISDCommon.escapeHtml(entry.actionType || '')}</td>` +
+                    `<td>${MISDCommon.escapeHtml(entry.recordedBy || '')}</td>` +
+                    `<td>${MISDCommon.escapeHtml(entry.notes || '')}</td></tr>`;
+            }).join('');
+            const printWindow = window.open('', '_blank', 'width=1100,height=700');
+            if (!printWindow) {
+                alert('Allow popups to print vehicle history.');
+                return;
+            }
+            printWindow.document.write('<!doctype html><html><head>' +
+                `<title>Vehicle History - ${MISDCommon.escapeHtml(plateNumber)}</title>` +
+                '<style>body{font-family:Arial,sans-serif;margin:24px}table{border-collapse:collapse;width:100%}' +
+                'th,td{border:1px solid #bbb;padding:8px;text-align:left;vertical-align:top}th{background:#eee}</style>' +
+                `</head><body><h1>Vehicle History</h1><p>Vehicle ID: ${MISDCommon.escapeHtml(vehicleId)} | ` +
+                `Plate No.: ${MISDCommon.escapeHtml(plateNumber)}</p>` +
+                '<table><thead><tr><th>Date and Time</th><th>Log Type</th><th>Action</th>' +
+                `<th>Recorded By / Employee</th><th>Notes</th></tr></thead><tbody>${rowMarkup}</tbody></table>` +
+                '</body></html>');
+            printWindow.document.close();
+            printWindow.focus();
+            printWindow.print();
+        }
+
+        MISDCommon.bindClick('.fleet-history-action', function (link) {
+            loadFleetHistory(link.data('vehicle-id'), link.data('plate'));
+        });
+
+        $('#fleetHistoryModal').on('shown.bs.modal', function () {
+            fleetHistoryTable.columns.adjust();
+        });
+
+        $('#printFleetHistoryBtn').on('click', printFleetHistory);
+
+        $('#exportFleetHistoryBtn').on('click', function () {
+            fleetHistoryTable.button(0).trigger();
+        });
+
         MISDCommon.attachDataTableClearButton({
             filterContainerSelector: '#fleetTable_filter',
             buttonId: 'clearFleetFiltersBtn',

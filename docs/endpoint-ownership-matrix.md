@@ -1,6 +1,6 @@
 # Endpoint Ownership Matrix
 
-Last updated: 2026-07-26
+Last updated: 2026-08-01
 Purpose: Track controller endpoint ownership and internal callers (template forms, links, and JS AJAX) before any future cleanup.
 
 ## Scope
@@ -34,6 +34,7 @@ Purpose: Track controller endpoint ownership and internal callers (template form
 | POST | /fleet/return | FleetController | Form submit | templates/fleet.html (Return modal) | Active |
 | POST | /fleet/retire | FleetController | Form submit | templates/fleet.html (Retire modal) | Active |
 | GET | /fleet/{id} | FleetController | Shared Fleet detail AJAX | fleet.html and dashboard.html via static/js/fleet-page.js | Active |
+| GET | /fleet/{id}/history | FleetController | JS AJAX | static/js/fleet-page.js (View Vehicle History modal) | Active |
 | POST | /fleet/update | FleetController | Shared Fleet detail AJAX | fleet.html and dashboard.html via static/js/fleet-page.js | Active |
 | GET | /properties | PropertiesController | Link | templates/dashboard.html (Properties card href) | Active |
 | POST | /properties/add | PropertiesController | Form submit | templates/dashboard.html (Add Property form) | Active |
