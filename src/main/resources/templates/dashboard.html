@@ -95,7 +95,7 @@
                             <a href="/assets" class="asset-metric asset-metric-total">
                                 <span class="asset-metric-label">Total IT Assets</span>
                                 <strong class="asset-metric-value" th:text="${totalAssets}">0</strong>
-                                <span class="asset-metric-context">Complete registry</span>
+                                <span class="asset-metric-context">Complete registry, including retired assets</span>
                             </a>
                         </div>
 
@@ -104,7 +104,7 @@
                             <a href="/assets?filter=current-inventory" class="asset-metric asset-metric-current">
                                 <span class="asset-metric-label">Current Inventory</span>
                                 <strong class="asset-metric-value" th:text="${currentInventoryAssets}">0</strong>
-                                <span class="asset-metric-context">Not decommissioned</span>
+                                <span class="asset-metric-context">Actively in use, regardless of status</span>
                             </a>
                             <a href="/assets?filter=decommissioned-retired"
                                 class="asset-metric asset-metric-decommissioned">
@@ -124,12 +124,12 @@
                             <a href="/assets?filter=under-maintenance" class="asset-metric asset-metric-maintenance">
                                 <span class="asset-metric-label">Under Maintenance</span>
                                 <strong class="asset-metric-value" th:text="${underMaintenanceAssets}">0</strong>
-                                <span class="asset-metric-context">Vendor or MISD repair</span>
+                                <span class="asset-metric-context">With Vendor or MISD Technician</span>
                             </a>
                             <a href="/assets?filter=problematic" class="asset-metric asset-metric-problematic">
-                                <span class="asset-metric-label">Total Problematic</span>
+                                <span class="asset-metric-label">Problematic Assets</span>
                                 <strong class="asset-metric-value" th:text="${problematicAssetsCount}">0</strong>
-                                <span class="asset-metric-context">Marked unserviceable</span>
+                                <span class="asset-metric-context">Unserviceable, requires attention</span>
                             </a>
                             <a href="/assets?filter=deployment-issues"
                                 class="asset-metric asset-metric-deployment-issue">

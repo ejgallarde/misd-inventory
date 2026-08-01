@@ -12,7 +12,7 @@ public interface AssetRepository extends JpaRepository<Asset, String> {
     // Add this inside your AssetRepository interface
     Optional<Asset> findTopByAssetTagStartingWithOrderByAssetTagDesc(String prefix);
 
-        @Query(value = "SELECT asset.* FROM Assets asset " +
+    @Query(value = "SELECT asset.* FROM Assets asset " +
             "WHERE asset.MaintenanceHealthStatus = 'Beyond Economic Repair (BER)' " +
             "AND COALESCE(asset.LifecycleStatus, '') <> 'Decommissioned / Retired' " +
             "ORDER BY asset.AssetTag ASC", nativeQuery = true)
