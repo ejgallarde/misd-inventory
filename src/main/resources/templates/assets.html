@@ -418,8 +418,8 @@
     <div th:replace="~{fragments/asset-history :: assetHistoryModal}"></div>
 
     <!-- IT Asset Detail Slideout (Offcanvas) -->
-    <div class="offcanvas offcanvas-end shadow" tabindex="-1" id="itDetailOffcanvas" aria-labelledby="itDetailLabel"
-        style="width: min(860px, 96vw);">
+    <div th:replace="~{fragments/asset-detail :: assetDetailOffcanvas}" class="offcanvas offcanvas-end shadow"
+        tabindex="-1" id="itDetailOffcanvas" aria-labelledby="itDetailLabel" style="width: min(860px, 96vw);">
         <div class="offcanvas-header bg-dark text-white">
             <h5 class="offcanvas-title mb-0" id="itDetailLabel">IT Asset Details</h5>
             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"

@@ -82,6 +82,15 @@ public class MainDashboardController {
         @Value("#{'${document.upload.categories}'.split(',')}")
         private List<String> documentUploadCategories;
 
+        @Value("#{'${dropdown.asset-deployment-statuses}'.split(',')}")
+        private List<String> assetDeploymentStatusOptions;
+
+        @Value("#{'${dropdown.asset-maintenance-health-statuses}'.split(',')}")
+        private List<String> assetMaintenanceHealthStatusOptions;
+
+        @Value("#{'${dropdown.asset-lifecycle-statuses}'.split(',')}")
+        private List<String> assetLifecycleStatusOptions;
+
         public MainDashboardController(DashboardRepository dashboardRepo, FleetVehicleRepository fleetRepo,
                         RealEstatePropertyRepository propertyRepo, EquipmentCatalogRepository catalogRepo,
                         PersonnelRepository personnelRepo, RegistryService registryService) {
@@ -153,6 +162,9 @@ public class MainDashboardController {
                 model.addAttribute("documentUploadCategories", documentUploadCategories.stream()
                                 .sorted(String.CASE_INSENSITIVE_ORDER)
                                 .toList());
+                model.addAttribute("assetDeploymentStatusOptions", assetDeploymentStatusOptions);
+                model.addAttribute("assetMaintenanceHealthStatusOptions", assetMaintenanceHealthStatusOptions);
+                model.addAttribute("assetLifecycleStatusOptions", assetLifecycleStatusOptions);
                 model.addAttribute("vehicleTypes", vehicleTypes.stream()
                                 .sorted(String.CASE_INSENSITIVE_ORDER)
                                 .toList());
