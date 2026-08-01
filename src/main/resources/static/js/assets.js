@@ -160,12 +160,12 @@ $(document).ready(function () {
         const STATUS_COL = 7;
         const FILTERS = {
             'deployed': ['Deployment: Deployed', false],
-            'deployment-issues': ['Deployment: (Missing / Unaccounted|On Loan|In Transit)', true],
-            'maintenance-issues': ['Health: (Degraded|Under Repair|Awaiting Parts|Beyond Economic Repair)', true],
-            'lifecycle-issues': ['Lifecycle: (End of Life|Decommissioned|Disposed|Sold)', true],
+            'deployment-issues': ['Deployment: Missing / Unaccounted', false],
+            'maintenance-issues': ['Health: (Degraded|Under Repair|Beyond Economic Repair)', true],
+            'decommissioned-retired': ['Lifecycle: Decommissioned / Retired', false],
             'problematic': [
-                'Deployment: (Missing / Unaccounted|On Loan|In Transit)' +
-                '|Health: (Degraded|Under Repair|Awaiting Parts|Beyond Economic Repair)' +
+                'Deployment: Missing / Unaccounted' +
+                '|Health: (Degraded|Under Repair|Beyond Economic Repair)' +
                 '|Lifecycle: (End of Life|Decommissioned|Disposed|Sold)',
                 true
             ]
@@ -332,7 +332,7 @@ $(document).ready(function () {
         }
 
         // Keep 'Assigned To' locked unless deployment status indicates active assignment.
-        if ($('#editDeploymentStatus').val() !== 'Deployed' && $('#editDeploymentStatus').val() !== 'Deployed / Assigned' && $('#editDeploymentStatus').val() !== 'On Loan') {
+        if ($('#editDeploymentStatus').val() !== 'Deployed' && $('#editDeploymentStatus').val() !== 'Deployed / Assigned') {
             $('#editCurrentOwnerID').prop('disabled', true);
         }
 
@@ -349,7 +349,7 @@ $(document).ready(function () {
 
     // Listen for Status Changes
     $('#editDeploymentStatus').on('change', function () {
-        if ($(this).val() === 'Deployed' || $(this).val() === 'Deployed / Assigned' || $(this).val() === 'On Loan') {
+        if ($(this).val() === 'Deployed' || $(this).val() === 'Deployed / Assigned') {
             $('#editCurrentOwnerID').prop('disabled', false);
         } else {
             $('#editCurrentOwnerID').prop('disabled', true).val(''); // Clear owner if not deployed

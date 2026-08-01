@@ -399,14 +399,14 @@ public class ITAssetController {
                 || "Disposed".equals(lifecycle)
                 || "Sold".equals(lifecycle)) {
             asset.setCurrentOwnerID(null);
-            if (deployment.isBlank() || "Deployed".equals(deployment) || "On Loan".equals(deployment)) {
+            if (deployment.isBlank() || "Deployed".equals(deployment)) {
                 asset.setDeploymentStatus("In Storage");
                 deployment = "In Storage";
             }
         }
 
         // Active assignment/repair states promote lifecycle out of pre-deployment.
-        if (("Deployed".equals(deployment) || "On Loan".equals(deployment) || "Under Repair".equals(maintenance))
+        if (("Deployed".equals(deployment) || "Under Repair".equals(maintenance))
                 && (lifecycle.isBlank() || "Procured / Pre-Deployment".equals(lifecycle))) {
             asset.setLifecycleStatus("Active");
         }

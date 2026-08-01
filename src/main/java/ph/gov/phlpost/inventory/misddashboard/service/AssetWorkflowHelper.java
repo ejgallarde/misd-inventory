@@ -25,7 +25,6 @@ public class AssetWorkflowHelper {
         return switch (status) {
             case "In Storage" -> "badge bg-secondary";
             case "Deployed" -> "badge bg-success";
-            case "On Loan", "In Transit" -> "badge bg-warning text-dark";
             case "Unavailable", "Missing / Unaccounted" -> "badge bg-danger";
             case "With Service Center", "With MISD Technician" -> "badge bg-info";
             default -> "badge bg-dark";
@@ -39,7 +38,6 @@ public class AssetWorkflowHelper {
             case "Operational" -> "badge bg-success";
             case "Degraded" -> "badge bg-warning text-dark";
             case "Under Repair" -> "badge bg-danger";
-            case "Awaiting Parts" -> "badge bg-secondary";
             case "Beyond Economic Repair (BER)" -> "badge bg-danger";
             case "Not Applicable" -> "badge bg-dark";
             default -> "badge bg-dark";
@@ -62,8 +60,6 @@ public class AssetWorkflowHelper {
         return switch (status) {
             case "In Storage" -> "Stored and ready for deployment.";
             case "Deployed" -> "Currently assigned to a user.";
-            case "On Loan" -> "Temporarily loaned and awaiting return.";
-            case "In Transit" -> "Moving between locations and pending receipt.";
             case "Missing / Unaccounted" -> "Cannot be physically accounted for.";
             case "Unavailable" -> "Not available for deployment.";
             case "With Service Center" -> "In warranty or service repair.";
@@ -79,7 +75,6 @@ public class AssetWorkflowHelper {
             case "Operational" -> "Fully working.";
             case "Degraded" -> "Working with reduced performance.";
             case "Under Repair" -> "Under repair by technician/vendor.";
-            case "Awaiting Parts" -> "Repair pending parts availability.";
             case "Beyond Economic Repair (BER)" -> "Repair cost exceeds asset value.";
             case "Not Applicable" -> "Status not applicable to this asset.";
             default -> "Maintenance health status.";
@@ -124,22 +119,19 @@ public class AssetWorkflowHelper {
 
     /** "Assign Asset" — asset is available for deployment. */
     public boolean canAssign(String deploymentStatus) {
-        return "In Storage".equals(deploymentStatus)
-                || "In Transit".equals(deploymentStatus);
+        return "In Storage".equals(deploymentStatus);
     }
 
     /** "Re-assign User" — asset is already out with someone. */
     public boolean canReassign(String deploymentStatus) {
-        return "Deployed".equals(deploymentStatus)
-                || "On Loan".equals(deploymentStatus);
+        return "Deployed".equals(deploymentStatus);
     }
 
     /**
-     * "Return to MISD" — asset is deployed or on loan and needs to come back.
+     * "Return to MISD" — asset is deployed and needs to come back.
      */
     public boolean canReturn(String deploymentStatus) {
-        return "Deployed".equals(deploymentStatus)
-                || "On Loan".equals(deploymentStatus);
+        return "Deployed".equals(deploymentStatus);
     }
 
     /** "Return for Warranty" — only when not already under repair. */

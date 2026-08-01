@@ -210,7 +210,7 @@
         $('#cancelEditBtn').on('click', function () { load(currentAssetTag); });
         $('#saveEditBtn').on('click', save);
         $('#editDeploymentStatus').on('change', function () {
-            const assigned = ['Deployed', 'Deployed / Assigned', 'On Loan'].includes($(this).val());
+            const assigned = ['Deployed', 'Deployed / Assigned'].includes($(this).val());
             $('#editCurrentOwnerID').prop('disabled', !assigned);
             if (!assigned) {
                 $('#editCurrentOwnerID').val('');

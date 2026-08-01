@@ -125,7 +125,7 @@ public class MainDashboardController {
                 model.addAttribute("problematicAssetsCount", dashboardRepo.countProblematicAssets());
                 model.addAttribute("deploymentIssueCount", dashboardRepo.countDeploymentIssues());
                 model.addAttribute("maintenanceIssueCount", dashboardRepo.countMaintenanceIssues());
-                model.addAttribute("lifecycleIssueCount", dashboardRepo.countLifecycleIssues());
+                model.addAttribute("decommissionedRetiredAssets", dashboardRepo.countDecommissionedRetiredAssets());
                 model.addAttribute("catalogItems", catalogRepo.findAll());
 
                 // Fleet
