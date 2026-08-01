@@ -607,8 +607,8 @@
 
                 <div class="mb-3">
                     <label class="form-label fw-bold text-muted small text-uppercase">Attach Documents</label>
-                    <input type="file" class="form-control js-document-upload-input" name="documentFiles" multiple
-                        data-document-preview-target="receiveDocumentPreview"
+                    <input type="file" id="receiveDocumentFilesInput" class="form-control js-document-upload-input"
+                        name="documentFiles" multiple data-document-preview-target="receiveDocumentPreview"
                         data-document-category-template-target="receiveDocumentCategoryTemplate"
                         th:attr="data-document-allowed-extensions=${documentUploadAllowedExtensions},data-document-max-size-mb=${documentUploadMaxSizeMb}"
                         accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx">
@@ -730,8 +730,8 @@
                             name="insuranceExpiry" required></div>
                 </div>
                 <div class="mb-3"><label class="form-label fw-bold">Attach Documents</label><input type="file"
-                        class="form-control js-document-upload-input" name="documentFiles" multiple
-                        data-document-preview-target="vehicleDocumentPreview"
+                        id="vehicleDocumentFilesInput" class="form-control js-document-upload-input"
+                        name="documentFiles" multiple data-document-preview-target="vehicleDocumentPreview"
                         data-document-category-template-target="vehicleDocumentCategoryTemplate"
                         th:attr="data-document-allowed-extensions=${documentUploadAllowedExtensions},data-document-max-size-mb=${documentUploadMaxSizeMb}"
                         accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx">
@@ -892,8 +892,8 @@
                     </div>
                 </div>
                 <div class="mb-3"><label class="form-label fw-bold">Attach Documents</label><input type="file"
-                        class="form-control js-document-upload-input" name="documentFiles" multiple
-                        data-document-preview-target="propertyDocumentPreview"
+                        id="propertyDocumentFilesInput" class="form-control js-document-upload-input"
+                        name="documentFiles" multiple data-document-preview-target="propertyDocumentPreview"
                         data-document-category-template-target="propertyDocumentCategoryTemplate"
                         th:attr="data-document-allowed-extensions=${documentUploadAllowedExtensions},data-document-max-size-mb=${documentUploadMaxSizeMb}"
                         accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx">

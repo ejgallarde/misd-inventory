@@ -213,11 +213,13 @@ window.MISDCommon = (function (jqueryGlobal) {
             .map(value => value.trim().toLowerCase())
             .filter(Boolean);
         const maxSizeMb = Number.parseInt(input?.dataset?.documentMaxSizeMb || '15', 10);
+        const maxFiles = Number.parseInt(input?.dataset?.documentMaxFiles || '25', 10);
         const maxSizeBytes = Number.isFinite(maxSizeMb) && maxSizeMb > 0 ? maxSizeMb * 1024 * 1024 : 15 * 1024 * 1024;
 
         return {
             allowedExtensions,
             maxSizeMb,
+            maxFiles,
             maxSizeBytes
         };
     }
@@ -332,13 +334,16 @@ window.MISDCommon = (function (jqueryGlobal) {
         return merged.slice();
     }
 
-    function clearSelectedFiles(input) {
+    function clearSelectedFiles(input, options = {}) {
+        const { preserveNativeSelection = false } = options;
         if (!input) {
             return;
         }
 
         selectedFilesByInput.delete(input);
-        input.value = '';
+        if (!preserveNativeSelection) {
+            input.value = '';
+        }
     }
 
     function getOrCreateUploadErrorContainer(input) {
@@ -368,7 +373,13 @@ window.MISDCommon = (function (jqueryGlobal) {
     }
 
     function validateFileInputBySize(input) {
-        const { maxSizeMb } = getUploadConstraints(input);
+        const { maxSizeMb, maxFiles } = getUploadConstraints(input);
+        const selectedCount = getSelectedFiles(input).length;
+        if (selectedCount > maxFiles) {
+            showUploadError(input, `You selected ${selectedCount} files. Maximum allowed is ${maxFiles}.`);
+            return false;
+        }
+
         const validationResults = getFileValidationResults(input);
         const tooLarge = validationResults.filter(result => !result.sizeAllowed).map(result => result.file.name);
 
@@ -382,7 +393,7 @@ window.MISDCommon = (function (jqueryGlobal) {
     }
 
     function renderDocumentPreviewBySelectors(inputSelector, previewSelector, templateSelector, options = {}) {
-        const { mergeSelection = true } = options;
+        const { mergeSelection = true, enableRemove = true } = options;
         const input = document.querySelector(inputSelector);
         const previewList = document.querySelector(previewSelector);
         const categoryTemplate = document.querySelector(templateSelector);
@@ -396,6 +407,15 @@ window.MISDCommon = (function (jqueryGlobal) {
         // Preserve already chosen files when users pick additional files in follow-up selections.
         if (mergeSelection) {
             prepareMultiFileSelection(input);
+        }
+
+        const { maxFiles } = getUploadConstraints(input);
+        const selectedFiles = getSelectedFiles(input);
+        if (selectedFiles.length > maxFiles) {
+            const trimmedFiles = selectedFiles.slice(0, maxFiles);
+            setSelectedFiles(input, trimmedFiles);
+            showUploadError(input,
+                `You selected ${selectedFiles.length} files. Maximum allowed is ${maxFiles}. Only the first ${maxFiles} files were kept.`);
         }
 
         const validationResults = getFileValidationResults(input);
@@ -429,7 +449,7 @@ window.MISDCommon = (function (jqueryGlobal) {
                         <div class="small text-muted">${formatBytes(file.size)}</div>
                     </div>
                     <div class="d-flex flex-column align-items-end gap-2">
-                        <button type="button" class="btn btn-sm btn-outline-danger" aria-label="Remove ${escapeHtml(file.name)}">X</button>
+                        ${enableRemove ? `<button type="button" class="btn btn-sm btn-outline-danger" aria-label="Remove ${escapeHtml(file.name)}">X</button>` : ''}
                         <span class="badge ${result.typeAllowed && result.sizeAllowed ? 'bg-success' : 'bg-danger'}">
                             ${result.typeAllowed && result.sizeAllowed ? 'Ready' : (!result.typeAllowed ? 'Invalid type' : 'Too large')}
                         </span>
@@ -437,12 +457,15 @@ window.MISDCommon = (function (jqueryGlobal) {
                 </div>
             `;
 
-            const removeButton = item.querySelector('button');
-            removeButton.addEventListener('click', function () {
-                const updatedFiles = getSelectedFiles(input).filter((_, fileIndex) => fileIndex !== index);
-                setSelectedFiles(input, updatedFiles);
-                renderDocumentPreviewBySelectors(inputSelector, previewSelector, templateSelector, { mergeSelection: false });
-            });
+            if (enableRemove) {
+                const removeButton = item.querySelector('button');
+                removeButton.addEventListener('click', function () {
+                    const updatedFiles = getSelectedFiles(input).filter((_, fileIndex) => fileIndex !== index);
+                    setSelectedFiles(input, updatedFiles);
+                    renderDocumentPreviewBySelectors(inputSelector, previewSelector, templateSelector,
+                        { mergeSelection: false, enableRemove: true });
+                });
+            }
 
             if (categoryTemplate) {
                 const label = document.createElement('label');

@@ -28,6 +28,7 @@ public class DocumentService {
     private final FleetVehicleRepository fleetVehicleRepository;
     private final RealEstatePropertyRepository realEstatePropertyRepository;
     private final long maxFileSizeBytes;
+    private final int maxFileCount;
     private final Set<String> allowedExtensions;
     private final Set<String> allowedCategories;
 
@@ -35,6 +36,7 @@ public class DocumentService {
             FleetVehicleRepository fleetVehicleRepository,
             RealEstatePropertyRepository realEstatePropertyRepository,
             @Value("${document.upload.max-size-mb:15}") long maxFileSizeMb,
+            @Value("${document.upload.max-files:25}") int maxFileCount,
             @Value("${document.upload.allowed-extensions:pdf,jpg,jpeg,png,doc,docx,xls,xlsx}") String allowedExtensionsConfig,
             @Value("#{'${document.upload.categories:Delivery Receipt,Official Receipt / Invoice,Warranty Certificate,Inspection Report,Acceptance Report,Appendix 71,Serial Number Label,Photographs,Equipment Specification Sheet,Repair or Service Report,OR/CR,Insurance Policy,Deed of Sale,Title,Tax Declaration,Property Photo,Service Report}'.split(',')}") List<String> allowedCategoriesConfig) {
         this.storageService = storageService;
@@ -42,6 +44,7 @@ public class DocumentService {
         this.fleetVehicleRepository = fleetVehicleRepository;
         this.realEstatePropertyRepository = realEstatePropertyRepository;
         this.maxFileSizeBytes = Math.max(1L, maxFileSizeMb) * 1024L * 1024L;
+        this.maxFileCount = Math.max(1, maxFileCount);
         this.allowedExtensions = Arrays.stream(allowedExtensionsConfig.split(","))
                 .map(token -> token == null ? "" : token.trim())
                 .filter(token -> !token.isBlank())
@@ -204,6 +207,11 @@ public class DocumentService {
 
     private void validateCategoryCount(MultipartFile[] files, String[] documentCategories) {
         int fileCount = (int) Arrays.stream(files).filter(file -> file != null && !file.isEmpty()).count();
+        if (fileCount > maxFileCount) {
+            throw new IllegalArgumentException(
+                    "A maximum of " + maxFileCount + " files can be uploaded at once.");
+        }
+
         int categoryCount = documentCategories == null ? 0
                 : (int) Arrays.stream(documentCategories)
                         .filter(category -> category != null && !category.isBlank())

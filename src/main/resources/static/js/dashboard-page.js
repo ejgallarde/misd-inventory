@@ -187,127 +187,49 @@ $(document).ready(function () {
     }
     updatePropertyIdentifierRules();
 
-    function removeSelectedFile(input, fileIndex) {
-        const files = Array.from(input.files || []);
-        const updatedFiles = files.filter((_, index) => index !== fileIndex);
-        MISDCommon.setInputFiles(input, updatedFiles);
-        renderDocumentPreview(input);
-    }
-
     function validateFileInputBeforeSubmit(input) {
         return MISDCommon.validateFileInputBySize(input);
     }
 
-    function renderDocumentPreview(input) {
+    function renderDocumentPreview(input, options = {}) {
+        const { mergeSelection = true, enableRemove = true } = options;
         const previewTarget = input.dataset.documentPreviewTarget;
-        const previewList = previewTarget ? document.getElementById(previewTarget) : null;
         const categoryTemplateTarget = input.dataset.documentCategoryTemplateTarget;
-        const categoryTemplate = categoryTemplateTarget ? document.getElementById(categoryTemplateTarget) : null;
+        const inputId = input.id;
 
-        if (!previewList) {
+        if (!previewTarget || !categoryTemplateTarget || !inputId) {
             return;
         }
 
-        previewList.innerHTML = '';
+        MISDCommon.renderDocumentPreviewBySelectors(
+            `#${inputId}`,
+            `#${previewTarget}`,
+            `#${categoryTemplateTarget}`,
+            { mergeSelection, enableRemove }
+        );
+    }
 
-        const validationResults = MISDCommon.getFileValidationResults(input);
-        const files = validationResults.map(result => result.file);
-        const { maxSizeMb } = MISDCommon.getUploadConstraints(input);
-        const tooLarge = validationResults.filter(result => !result.sizeAllowed).map(result => result.file.name);
-        if (tooLarge.length) {
-            MISDCommon.showUploadError(input, `File size exceeds ${maxSizeMb}MB: ${tooLarge.join(', ')}`);
-        } else {
-            MISDCommon.clearUploadError(input);
-        }
-
-        if (files.length === 0) {
-            const emptyItem = document.createElement('li');
-            emptyItem.className = 'list-group-item text-muted';
-            emptyItem.textContent = 'No files selected.';
-            previewList.appendChild(emptyItem);
-            return;
-        }
-
-        validationResults.forEach((result, index) => {
-            const file = result.file;
-            const item = document.createElement('li');
-            item.className = 'list-group-item d-flex flex-column gap-2';
-
-            const fileInfo = document.createElement('div');
-            fileInfo.className = 'd-flex justify-content-between align-items-start gap-3';
-
-            const fileName = document.createElement('div');
-            fileName.className = 'fw-semibold';
-            fileName.textContent = file.name;
-
-            const fileMeta = document.createElement('div');
-            fileMeta.className = 'text-muted small';
-            fileMeta.textContent = MISDCommon.formatBytes(file.size);
-
-            const fileLabelWrapper = document.createElement('div');
-            fileLabelWrapper.className = 'd-flex flex-column';
-            fileLabelWrapper.appendChild(fileName);
-            fileLabelWrapper.appendChild(fileMeta);
-
-            const removeButton = document.createElement('button');
-            removeButton.type = 'button';
-            removeButton.className = 'btn btn-sm btn-outline-danger';
-            removeButton.textContent = 'X';
-            removeButton.setAttribute('aria-label', `Remove ${file.name}`);
-            removeButton.addEventListener('click', function () {
-                removeSelectedFile(input, index);
-            });
-
-            fileInfo.appendChild(fileLabelWrapper);
-            fileInfo.appendChild(removeButton);
-
-            const badge = document.createElement('span');
-            const typeAllowed = result.typeAllowed;
-            const sizeAllowed = result.sizeAllowed;
-
-            if (typeAllowed && sizeAllowed) {
-                badge.className = 'badge bg-success align-self-center';
-                badge.textContent = 'Ready';
-            } else {
-                badge.className = 'badge bg-danger align-self-center';
-                badge.textContent = !typeAllowed ? 'Invalid type' : 'Too large';
-            }
-
-            item.appendChild(fileInfo);
-
-            const footer = document.createElement('div');
-            footer.className = 'd-flex flex-column gap-2';
-
-            if (categoryTemplate) {
-                const categoryLabel = document.createElement('label');
-                categoryLabel.className = 'form-label fw-semibold mb-0 small';
-                categoryLabel.innerHTML = 'Document category <span class="required-indicator" aria-hidden="true">*</span>';
-
-                const categorySelect = document.createElement('select');
-                categorySelect.className = 'form-select form-select-sm';
-                categorySelect.name = 'documentCategories';
-                categorySelect.required = true;
-                categorySelect.innerHTML = categoryTemplate.innerHTML;
-
-                footer.appendChild(categoryLabel);
-                footer.appendChild(categorySelect);
-            }
-
-            const metaRow = document.createElement('div');
-            metaRow.className = 'd-flex justify-content-between align-items-center';
-            metaRow.appendChild(document.createElement('span'));
-            metaRow.appendChild(badge);
-
-            footer.appendChild(metaRow);
-            item.appendChild(footer);
-            previewList.appendChild(item);
-        });
+    function isReceiveAssetUploadInput(input) {
+        return input && input.id === 'receiveDocumentFilesInput';
     }
 
     $('.js-document-upload-input').each(function () {
-        renderDocumentPreview(this);
+        const receiveInput = isReceiveAssetUploadInput(this);
+        renderDocumentPreview(this, { mergeSelection: false, enableRemove: !receiveInput });
         $(this).on('change', function () {
-            renderDocumentPreview(this);
+            const input = this;
+            const receiveChange = isReceiveAssetUploadInput(input);
+
+            if (receiveChange) {
+                MISDCommon.clearSelectedFiles(input, { preserveNativeSelection: true });
+            }
+
+            window.requestAnimationFrame(function () {
+                renderDocumentPreview(input, {
+                    mergeSelection: !receiveChange,
+                    enableRemove: !receiveChange
+                });
+            });
         });
     });
 
@@ -356,8 +278,20 @@ $(document).ready(function () {
         }
 
         $(this).find('.js-document-upload-input').each(function () {
-            renderDocumentPreview(this);
+            const receiveInput = isReceiveAssetUploadInput(this);
+            MISDCommon.clearSelectedFiles(this);
+            renderDocumentPreview(this, { mergeSelection: false, enableRemove: !receiveInput });
         });
+    });
+
+    $('#receiveAssetOffcanvas').on('shown.bs.offcanvas', function () {
+        const receiveInput = document.getElementById('receiveDocumentFilesInput');
+        if (!receiveInput) {
+            return;
+        }
+
+        MISDCommon.clearSelectedFiles(receiveInput);
+        renderDocumentPreview(receiveInput, { mergeSelection: false, enableRemove: false });
     });
 
     $('#receiveAssetOffcanvas').on('hidden.bs.offcanvas', function () {
