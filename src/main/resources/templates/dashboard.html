@@ -135,7 +135,7 @@
                         <a href="/assets?filter=decommissioned-retired" class="text-decoration-none">
                             <div class="card text-white bg-dark mb-3 shadow-sm hover-effect">
                                 <div class="card-body">
-                                    <h5 class="card-title">Decommissioned / Retired</h5>
+                                    <h5 class="card-title">Decommissioned</h5>
                                     <h2 class="card-text" th:text="${decommissionedRetiredAssets}">0</h2>
                                 </div>
                             </div>
@@ -229,52 +229,64 @@
                         </a>
                     </div>
                     <div class="col">
-                        <div class="card text-white bg-secondary mb-3 shadow-sm">
-                            <div class="card-body">
-                                <h5 class="card-title">Total Problematic</h5>
-                                <h2 class="card-text" th:text="${totalProblematicVehicles}">0</h2>
+                        <a href="/fleet?filter=problematic" class="text-decoration-none">
+                            <div class="card text-white bg-secondary mb-3 shadow-sm hover-effect">
+                                <div class="card-body">
+                                    <h5 class="card-title">Total Problematic</h5>
+                                    <h2 class="card-text" th:text="${totalProblematicVehicles}">0</h2>
+                                </div>
                             </div>
-                        </div>
+                        </a>
                     </div>
                     <div class="col">
-                        <div class="card text-white bg-danger mb-3 shadow-sm">
-                            <div class="card-body">
-                                <h5 class="card-title">Admin / Legal Issues</h5>
-                                <h2 class="card-text" th:text="${vehiclesWithAdminLegalIssues}">0</h2>
+                        <a href="/fleet?filter=admin-legal-issues" class="text-decoration-none">
+                            <div class="card text-white bg-danger mb-3 shadow-sm hover-effect">
+                                <div class="card-body">
+                                    <h5 class="card-title">Admin / Legal Issues</h5>
+                                    <h2 class="card-text" th:text="${vehiclesWithAdminLegalIssues}">0</h2>
+                                </div>
                             </div>
-                        </div>
+                        </a>
                     </div>
                     <div class="col">
-                        <div class="card text-white bg-warning mb-3 shadow-sm">
-                            <div class="card-body">
-                                <h5 class="card-title">Maintenance Issues</h5>
-                                <h2 class="card-text" th:text="${vehiclesWithOperationalMaintenanceIssues}">0</h2>
+                        <a href="/fleet?filter=maintenance-issues" class="text-decoration-none">
+                            <div class="card text-white bg-warning mb-3 shadow-sm hover-effect">
+                                <div class="card-body">
+                                    <h5 class="card-title">Maintenance Issues</h5>
+                                    <h2 class="card-text" th:text="${vehiclesWithOperationalMaintenanceIssues}">0</h2>
+                                </div>
                             </div>
-                        </div>
+                        </a>
                     </div>
                     <div class="col">
-                        <div class="card text-white bg-dark mb-3 shadow-sm">
-                            <div class="card-body">
-                                <h5 class="card-title">Expiring Registrations</h5>
-                                <h2 class="card-text" th:text="${expiringRegistrations}">0</h2>
+                        <a href="/fleet?filter=expiring-registrations" class="text-decoration-none">
+                            <div class="card text-white bg-dark mb-3 shadow-sm hover-effect">
+                                <div class="card-body">
+                                    <h5 class="card-title">Expiring Registrations</h5>
+                                    <h2 class="card-text" th:text="${expiringRegistrations}">0</h2>
+                                </div>
                             </div>
-                        </div>
+                        </a>
                     </div>
                     <div class="col">
-                        <div class="card text-white bg-success mb-3 shadow-sm">
-                            <div class="card-body">
-                                <h5 class="card-title">Sold</h5>
-                                <h2 class="card-text" th:text="${soldVehicles}">0</h2>
+                        <a href="/fleet?filter=sold" class="text-decoration-none">
+                            <div class="card text-white bg-success mb-3 shadow-sm hover-effect">
+                                <div class="card-body">
+                                    <h5 class="card-title">Sold</h5>
+                                    <h2 class="card-text" th:text="${soldVehicles}">0</h2>
+                                </div>
                             </div>
-                        </div>
+                        </a>
                     </div>
                     <div class="col">
-                        <div class="card text-white bg-info mb-3 shadow-sm">
-                            <div class="card-body">
-                                <h5 class="card-title">Decommissioned</h5>
-                                <h2 class="card-text" th:text="${disposedOrDecommissionedVehicles}">0</h2>
+                        <a href="/fleet?filter=decommissioned" class="text-decoration-none">
+                            <div class="card text-white bg-info mb-3 shadow-sm hover-effect">
+                                <div class="card-body">
+                                    <h5 class="card-title">Decommissioned</h5>
+                                    <h2 class="card-text" th:text="${disposedOrDecommissionedVehicles}">0</h2>
+                                </div>
                             </div>
-                        </div>
+                        </a>
                     </div>
                 </div>
 
@@ -294,6 +306,7 @@
                                 class="table table-hover table-striped w-100 border-top">
                                 <thead class="table-dark">
                                     <tr>
+                                        <th>Vehicle ID</th>
                                         <th>Plate No.</th>
                                         <th>Type</th>
                                         <th>Make & Model</th>
@@ -305,8 +318,18 @@
                                 </thead>
                                 <tbody>
                                     <tr th:each="vehicle : ${problematicVehicles}">
-                                        <td class="fw-bold"
-                                            th:text="${vehicle.plateNumber != null and !#strings.isEmpty(vehicle.plateNumber) ? vehicle.plateNumber : ('Vehicle ID ' + vehicle.vehicleID)}">
+                                        <td class="fw-bold">
+                                            <a href="#" class="fleet-detail-link text-decoration-none"
+                                                th:data-vehicle-id="${vehicle.vehicleID}"
+                                                th:text="${vehicle.vehicleID}"></a>
+                                        </td>
+                                        <td class="fw-bold">
+                                            <a href="#" class="fleet-detail-link text-decoration-none"
+                                                th:if="${vehicle.plateNumber != null and !#strings.isEmpty(vehicle.plateNumber)}"
+                                                th:data-vehicle-id="${vehicle.vehicleID}"
+                                                th:text="${vehicle.plateNumber}"></a>
+                                            <span
+                                                th:if="${vehicle.plateNumber == null or #strings.isEmpty(vehicle.plateNumber)}">N/A</span>
                                         </td>
                                         <td th:text="${vehicle.vehicleType}"></td>
                                         <td th:text="${vehicle.make + ' ' + vehicle.model}"></td>
@@ -915,6 +938,7 @@
     </div>
 
     <div th:replace="~{fragments/asset-detail :: assetDetailOffcanvas}"></div>
+    <div th:replace="~{fragments/fleet-detail :: fleetDetailOffcanvas}"></div>
 
     <!-- Core Scripts -->
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
@@ -930,6 +954,7 @@
     <script th:src="@{/js/csrf.js}"></script>
     <script th:src="@{/js/location-cascade.js}"></script>
     <script th:src="@{/js/asset-detail.js}"></script>
+    <script th:src="@{/js/fleet-page.js}"></script>
     <script th:src="@{/js/dashboard-page.js}"></script>
 </body>
 

@@ -62,8 +62,9 @@ public class FleetController {
     }
 
     @GetMapping
-    public String viewAllFleet(Model model) {
+    public String viewAllFleet(@RequestParam(required = false) String filter, Model model) {
         model.addAttribute("allVehicles", fleetRepo.findAll());
+        model.addAttribute("filter", filter);
         model.addAttribute("employeeMap", registryService.getEmployeeNameMap());
         model.addAttribute("documentUploadMaxSizeMb", documentUploadMaxSizeMb);
         model.addAttribute("documentUploadAllowedExtensions", documentUploadAllowedExtensions);

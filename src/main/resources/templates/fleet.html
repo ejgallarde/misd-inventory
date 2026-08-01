@@ -44,6 +44,7 @@
     </nav>
 
     <div class="container-fluid px-4">
+        <div id="fleetPageConfig" class="d-none" th:data-filter="${filter}"></div>
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3">
             <div>
                 <h2 class="page-title fw-bold mb-1">Fleet</h2>
@@ -67,13 +68,14 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr th:each="v : ${allVehicles}">
+                        <tr th:each="v : ${allVehicles}" th:data-manufacture-year="${v.manufactureYear}"
+                            th:data-registration-expiry="${v.registrationExpiry}"
+                            th:data-admin-status="${v.adminLegaltionalStatus}"
+                            th:data-operational-status="${v.operationalStatus}"
+                            th:data-maintenance-status="${v.maintenanceStatus}">
                             <td>
-                                <a href="#" th:if="${v.plateNumber == null or #strings.isEmpty(v.plateNumber)}"
-                                    th:data-vehicle-id="${v.vehicleID}" th:text="${v.vehicleID}"
+                                <a href="#" th:data-vehicle-id="${v.vehicleID}" th:text="${v.vehicleID}"
                                     class="text-decoration-none fw-bold fleet-detail-link"></a>
-                                <span th:if="${v.plateNumber != null and !#strings.isEmpty(v.plateNumber)}"
-                                    th:text="${v.vehicleID}"></span>
                             </td>
                             <td class="fw-bold">
                                 <a href="#" th:if="${v.plateNumber != null and !#strings.isEmpty(v.plateNumber)}"
@@ -275,8 +277,8 @@
     <script th:src="@{/js/fleet-page.js}"></script>
 
     <!-- Fleet Detail Slideout (Offcanvas) -->
-    <div class="offcanvas offcanvas-end shadow" tabindex="-1" id="fleetDetailOffcanvas"
-        aria-labelledby="fleetDetailLabel" style="width: min(860px, 96vw);">
+    <div th:replace="~{fragments/fleet-detail :: fleetDetailOffcanvas}" class="offcanvas offcanvas-end shadow"
+        tabindex="-1" id="fleetDetailOffcanvas" aria-labelledby="fleetDetailLabel" style="width: min(860px, 96vw);">
         <div class="offcanvas-header bg-dark text-white">
             <h5 class="offcanvas-title mb-0" id="fleetDetailLabel">Fleet Vehicle Details</h5>
             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"

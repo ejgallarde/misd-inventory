@@ -172,6 +172,10 @@ public class MainDashboardController {
                 model.addAttribute("fuelTypes", fuelTypes.stream()
                                 .sorted(String.CASE_INSENSITIVE_ORDER)
                                 .toList());
+                model.addAttribute("fleetVehicleYears", vehicleYears);
+                model.addAttribute("fleetFuelTypes", fuelTypes.stream()
+                                .sorted(String.CASE_INSENSITIVE_ORDER)
+                                .toList());
                 model.addAttribute("fleetAdminLegalStatuses", fleetAdminLegalStatuses);
                 model.addAttribute("fleetOperationalStatuses", fleetOperationalStatuses);
                 model.addAttribute("fleetMaintenanceStatuses", fleetMaintenanceStatuses);

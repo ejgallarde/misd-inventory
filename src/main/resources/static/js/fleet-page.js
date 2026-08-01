@@ -202,11 +202,15 @@ $(document).ready(function () {
         };
     }
 
-    MISDCommon.initPageUI({
-        themeToggleId: 'themeToggleBtn',
-        successToastId: 'successToast',
-        initializeSelect2Modals: true
-    });
+    const hasFleetRegistry = $('#fleetTable').length > 0;
+
+    if (hasFleetRegistry) {
+        MISDCommon.initPageUI({
+            themeToggleId: 'themeToggleBtn',
+            successToastId: 'successToast',
+            initializeSelect2Modals: true
+        });
+    }
 
     document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function (element) {
         bootstrap.Tooltip.getOrCreateInstance(element);
@@ -214,35 +218,89 @@ $(document).ready(function () {
 
     setFleetEditMode(false);
 
-    const fleetTable = $('#fleetTable').DataTable(MISDCommon.buildStandardDataTableConfig({
-        pageLength: 10,
-        lengthMenu: [[10, 25, 50, -1], [10, 25, 50, 'All']],
-        order: [[0, 'asc']]
-    }));
+    if (hasFleetRegistry) {
+        let activeFleetFilter = $('#fleetPageConfig').data('filter') || '';
+        const terminalStatuses = ['Sold', 'Disposed', 'Decommissioned'];
+        const operationalIssues = ['Grounded', 'Missing/Stolen', 'Slated for Disposal'];
+        const maintenanceIssues = [
+            'Scheduled Maintenance', 'Under Repair', 'Awaiting Parts',
+            'Beyond Economic Repair (BER)'
+        ];
 
-    MISDCommon.attachDataTableClearButton({
-        filterContainerSelector: '#fleetTable_filter',
-        buttonId: 'clearFleetFiltersBtn',
-        ariaLabel: 'Clear fleet table search',
-        onClear: function () {
-            MISDCommon.clearDataTableFilters(fleetTable, { stateKey: 'fleetTableState' });
+        function registrationExpiresSoon(value) {
+            if (!value) return false;
+            const expiry = new Date(value + 'T00:00:00');
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const cutoff = new Date(today);
+            cutoff.setDate(cutoff.getDate() + 30);
+            return expiry >= today && expiry <= cutoff;
         }
-    });
 
-    MISDCommon.bindClick('.action-btn', function (button) {
-        const vId = button.data('id');
-        const plate = button.data('plate');
-        const displayLabel = plate || `Vehicle ID ${vId}`;
+        $.fn.dataTable.ext.search.push(function (settings, _data, dataIndex) {
+            if (settings.nTable.id !== 'fleetTable' || !activeFleetFilter) return true;
+            const row = settings.aoData[dataIndex].nTr;
+            const manufactureYear = Number(row.dataset.manufactureYear);
+            const adminStatus = row.dataset.adminStatus || '';
+            const operationalStatus = row.dataset.operationalStatus || '';
+            const maintenanceStatus = row.dataset.maintenanceStatus || '';
+            const isTerminal = terminalStatuses.includes(adminStatus);
+            const hasAdminIssue = ['Registration Expired', 'Impounded'].includes(adminStatus);
+            const hasOperationalMaintenanceIssue = !isTerminal && (
+                operationalIssues.includes(operationalStatus) || maintenanceIssues.includes(maintenanceStatus)
+            );
+            const expiresSoon = registrationExpiresSoon(row.dataset.registrationExpiry);
+            const isOldVehicle = manufactureYear > 0 && new Date().getFullYear() - manufactureYear >= 10;
 
-        $('#assignVehicleID').val(vId);
-        $('#assignPlateDisplay').val(displayLabel);
+            switch (activeFleetFilter) {
+                case 'problematic':
+                    return !isTerminal && (isOldVehicle || expiresSoon || hasAdminIssue || hasOperationalMaintenanceIssue);
+                case 'admin-legal-issues':
+                    return hasAdminIssue;
+                case 'maintenance-issues':
+                    return hasOperationalMaintenanceIssue;
+                case 'expiring-registrations':
+                    return expiresSoon;
+                case 'sold':
+                    return adminStatus === 'Sold';
+                case 'decommissioned':
+                    return ['Disposed', 'Decommissioned'].includes(adminStatus);
+                default:
+                    return true;
+            }
+        });
 
-        $('#returnVehicleID').val(vId);
-        $('#returnPlateDisplay').text(displayLabel);
+        const fleetTable = $('#fleetTable').DataTable(MISDCommon.buildStandardDataTableConfig({
+            pageLength: 10,
+            lengthMenu: [[10, 25, 50, -1], [10, 25, 50, 'All']],
+            order: [[0, 'asc']]
+        }));
 
-        $('#retireVehicleID').val(vId);
-        $('#retirePlateDisplay').text(displayLabel);
-    });
+        MISDCommon.attachDataTableClearButton({
+            filterContainerSelector: '#fleetTable_filter',
+            buttonId: 'clearFleetFiltersBtn',
+            ariaLabel: 'Clear fleet table search',
+            onClear: function () {
+                activeFleetFilter = '';
+                MISDCommon.clearDataTableFilters(fleetTable, { stateKey: 'fleetTableState' });
+            }
+        });
+
+        MISDCommon.bindClick('.action-btn', function (button) {
+            const vehicleId = button.data('id');
+            const plate = button.data('plate');
+            const displayLabel = plate || `Vehicle ID ${vehicleId}`;
+
+            $('#assignVehicleID').val(vehicleId);
+            $('#assignPlateDisplay').val(displayLabel);
+
+            $('#returnVehicleID').val(vehicleId);
+            $('#returnPlateDisplay').text(displayLabel);
+
+            $('#retireVehicleID').val(vehicleId);
+            $('#retirePlateDisplay').text(displayLabel);
+        });
+    }
 
     MISDCommon.bindClick('.fleet-detail-link', function (link, event) {
         event.preventDefault();

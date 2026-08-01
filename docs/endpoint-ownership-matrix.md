@@ -33,8 +33,8 @@ Purpose: Track controller endpoint ownership and internal callers (template form
 | POST | /fleet/assign | FleetController | Form submit | templates/fleet.html (Assign/Re-assign modal) | Active |
 | POST | /fleet/return | FleetController | Form submit | templates/fleet.html (Return modal) | Active |
 | POST | /fleet/retire | FleetController | Form submit | templates/fleet.html (Retire modal) | Active |
-| GET | /fleet/{id} | FleetController | JS AJAX | static/js/fleet-page.js (loadFleetDetails) | Active |
-| POST | /fleet/update | FleetController | API endpoint (no current internal caller) | No current template/JS reference | Keep (possible external/manual API use) |
+| GET | /fleet/{id} | FleetController | Shared Fleet detail AJAX | fleet.html and dashboard.html via static/js/fleet-page.js | Active |
+| POST | /fleet/update | FleetController | Shared Fleet detail AJAX | fleet.html and dashboard.html via static/js/fleet-page.js | Active |
 | GET | /properties | PropertiesController | Link | templates/dashboard.html (Properties card href) | Active |
 | POST | /properties/add | PropertiesController | Form submit | templates/dashboard.html (Add Property form) | Active |
 | POST | /properties/assign-custodian | PropertiesController | Form submit | templates/properties.html (Custodian modal) | Active |
@@ -50,11 +50,7 @@ Purpose: Track controller endpoint ownership and internal callers (template form
 ## Endpoints With No Current Internal Callers
 These are not removed because they may be used by external tools, manual calls, or future UI integrations.
 
-1. POST /fleet/update
-- Declared in FleetController.
-- No current template form or JS route reference.
-
-2. POST /properties/update
+1. POST /properties/update
 - Declared in PropertiesController.
 - No current template form or JS route reference.
 
