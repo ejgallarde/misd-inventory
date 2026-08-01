@@ -61,6 +61,92 @@ $(document).ready(function () {
         order: [[0, 'asc']]
     }));
 
+    const assetHistoryTable = $('#assetHistoryTable').DataTable({
+        data: [],
+        columns: [
+            {
+                data: 'transactionDate',
+                render: function (value, type) {
+                    if (type === 'sort' || type === 'type') {
+                        return value || '';
+                    }
+                    return value ? new Intl.DateTimeFormat('en-PH', {
+                        dateStyle: 'medium',
+                        timeStyle: 'medium'
+                    }).format(new Date(value)) : 'N/A';
+                }
+            },
+            { data: 'logType', render: $.fn.dataTable.render.text() },
+            { data: 'actionType', render: $.fn.dataTable.render.text() },
+            { data: 'recordedBy', render: $.fn.dataTable.render.text() },
+            { data: 'notes', defaultContent: '', render: $.fn.dataTable.render.text() }
+        ],
+        order: [[0, 'desc']],
+        pageLength: 10,
+        lengthMenu: [[10, 25, 50, -1], [10, 25, 50, 'All']],
+        buttons: [{
+            extend: 'excel',
+            className: 'd-none',
+            title: function () {
+                return `Asset History - ${$('#assetHistoryAssetTag').text()}`;
+            },
+            filename: function () {
+                return `Asset_History_${$('#assetHistoryAssetTag').text()}`;
+            }
+        }],
+        dom: "<'d-none'B>" +
+            "<'row mb-3'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6'f>>" +
+            "<'row'<'col-sm-12'tr>>" +
+            "<'row pt-2'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
+        language: {
+            emptyTable: 'No history has been recorded for this asset.'
+        }
+    });
+
+    function loadAssetHistory(assetTag) {
+        $('#assetHistoryAssetTag').text(assetTag);
+        $('#assetHistoryError').addClass('d-none').text('');
+        assetHistoryTable.clear().draw();
+
+        $.get(`/api/assets/${encodeURIComponent(assetTag)}/history`, function (history) {
+            assetHistoryTable.rows.add(history).draw();
+            assetHistoryTable.columns.adjust();
+        }).fail(function () {
+            $('#assetHistoryError').removeClass('d-none').text('Unable to load asset history.');
+        });
+    }
+
+    function printAssetHistory() {
+        const assetTag = $('#assetHistoryAssetTag').text();
+        const rows = assetHistoryTable.rows({ search: 'applied' }).data().toArray();
+        const rowMarkup = rows.map(function (entry) {
+            const transactionDate = entry.transactionDate
+                ? new Intl.DateTimeFormat('en-PH', { dateStyle: 'medium', timeStyle: 'medium' })
+                    .format(new Date(entry.transactionDate))
+                : 'N/A';
+            return `<tr><td>${MISDCommon.escapeHtml(transactionDate)}</td>` +
+                `<td>${MISDCommon.escapeHtml(entry.logType || '')}</td>` +
+                `<td>${MISDCommon.escapeHtml(entry.actionType || '')}</td>` +
+                `<td>${MISDCommon.escapeHtml(entry.recordedBy || '')}</td>` +
+                `<td>${MISDCommon.escapeHtml(entry.notes || '')}</td></tr>`;
+        }).join('');
+        const printWindow = window.open('', '_blank', 'width=1100,height=700');
+        if (!printWindow) {
+            alert('Allow popups to print asset history.');
+            return;
+        }
+        printWindow.document.write(`<!doctype html><html><head><title>Asset History - ${MISDCommon.escapeHtml(assetTag)}</title>` +
+            '<style>body{font-family:Arial,sans-serif;margin:24px}table{border-collapse:collapse;width:100%}' +
+            'th,td{border:1px solid #bbb;padding:8px;text-align:left;vertical-align:top}th{background:#eee}</style>' +
+            `</head><body><h1>Asset History</h1><p>Asset Tag: ${MISDCommon.escapeHtml(assetTag)}</p>` +
+            '<table><thead><tr><th>Date and Time</th><th>Log Type</th><th>Action</th>' +
+            `<th>Recorded By / Employee</th><th>Notes</th></tr></thead><tbody>${rowMarkup}</tbody></table>` +
+            '</body></html>');
+        printWindow.document.close();
+        printWindow.focus();
+        printWindow.print();
+    }
+
     assetsTable.on('search.dt draw.dt order.dt page.dt', function () {
         MISDCommon.syncDataTableStateToSessionAndUrl(assetsTable, {
             stateKey: tableStateKey,
@@ -438,6 +524,11 @@ $(document).ready(function () {
             return;
         }
 
+        if (modal.attr('id') === 'assetHistoryModal') {
+            loadAssetHistory(assetTag);
+            return;
+        }
+
         MISDCommon.populateModalFields(modal, {
             'input[name="assetTag"]': assetTag
         });
@@ -471,6 +562,16 @@ $(document).ready(function () {
                 '#retireAssetTagDisplay': assetTag
             });
         }
+    });
+
+    $('#assetHistoryModal').on('shown.bs.modal', function () {
+        assetHistoryTable.columns.adjust();
+    });
+
+    $('#printAssetHistoryBtn').on('click', printAssetHistory);
+
+    $('#exportAssetHistoryBtn').on('click', function () {
+        assetHistoryTable.button(0).trigger();
     });
 
 });

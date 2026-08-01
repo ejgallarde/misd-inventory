@@ -102,6 +102,44 @@ class ITAssetServiceTest {
     }
 
     @Test
+    void assignAssetRecordsReassignmentAndResultingStatuses() {
+        Asset asset = asset("TAG-REASSIGN");
+        asset.setCurrentOwnerID("EMP-OLD");
+        asset.setDeploymentStatus("Deployed");
+        asset.setMaintenanceHealthStatus("Operational");
+        asset.setLifecycleStatus("Active");
+        when(assetRepository.findById("TAG-REASSIGN")).thenReturn(Optional.of(asset));
+
+        service.assignAsset("TAG-REASSIGN", "EMP-NEW", "Transferred to new user");
+
+        verify(auditLogService).logAssignment(
+                "TAG-REASSIGN", "EMP-NEW", "Reassignment", "Transferred to new user");
+        verify(auditLogService).logLifecycleEvent(
+                org.mockito.ArgumentMatchers.eq("TAG-REASSIGN"),
+                org.mockito.ArgumentMatchers.eq("SYSTEM"),
+                org.mockito.ArgumentMatchers.eq("Reassignment"),
+                org.mockito.ArgumentMatchers.contains("Deployment: Deployed"));
+    }
+
+    @Test
+    void markUnserviceableRecordsResultingBerAndEndOfLifeStatuses() {
+        Asset asset = asset("TAG-BER");
+        asset.setDeploymentStatus("In Storage");
+        asset.setMaintenanceHealthStatus("Degraded");
+        asset.setLifecycleStatus("Active");
+        when(assetRepository.findById("TAG-BER")).thenReturn(Optional.of(asset));
+
+        service.updateLifecycle("TAG-BER", "Unserviceable", "Marked Unserviceable", "Failed inspection");
+
+        verify(auditLogService).logLifecycleEvent(
+                org.mockito.ArgumentMatchers.eq("TAG-BER"),
+                org.mockito.ArgumentMatchers.eq("SYSTEM"),
+                org.mockito.ArgumentMatchers.eq("Marked Unserviceable"),
+                org.mockito.ArgumentMatchers.contains("Health: Beyond Economic Repair (BER)"));
+        assertThat(asset.getLifecycleStatus()).isEqualTo("End of Life (EOL)");
+    }
+
+    @Test
     void markRepairedReturnsAssetToStorageAndClearsOwner() {
         Asset asset = asset("TAG-4");
         asset.setCurrentOwnerID("TECH-1");

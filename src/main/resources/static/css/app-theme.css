@@ -144,6 +144,26 @@ body[data-theme="dark"] .navbar-dark .dropdown-toggle {
     color: #ffffff !important;
 }
 
+#assetHistoryModal .asset-history-modal-header {
+    background-color: #1d2939 !important;
+    color: #ffffff !important;
+}
+
+#assetHistoryModal .asset-history-modal-header .modal-title,
+#assetHistoryModal .asset-history-modal-header .small {
+    color: #ffffff !important;
+}
+
+#assetHistoryTable thead,
+#assetHistoryTable thead th {
+    --bs-table-bg: var(--app-accent);
+    --bs-table-color: #ffffff;
+    background-color: var(--app-accent) !important;
+    color: #ffffff !important;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
 .form-control,
 .form-select {
     background-color: var(--app-surface) !important;

@@ -26,6 +26,7 @@ Purpose: Track controller endpoint ownership and internal callers (template form
 | POST | /assets/repaired | ITAssetController | Form submit | templates/assets.html (Mark Asset as Repaired modal) | Active |
 | POST | /assets/retire | ITAssetController | Form submit | templates/assets.html (Retire modal) | Active |
 | GET | /assets/{id} | ITAssetController | JS AJAX | static/js/assets.js (loadAssetDetails) | Active |
+| GET | /api/assets/{assetTag}/history | ITAssetController | JS AJAX | static/js/assets.js (View Asset History modal) | Active |
 | POST | /assets/update | ITAssetController | JS AJAX | static/js/assets.js (save edit) | Active |
 | GET | /fleet | FleetController | Link | templates/dashboard.html (Fleet card href) | Active |
 | POST | /fleet/add | FleetController | Form submit | templates/dashboard.html (Register Vehicle form) | Active |

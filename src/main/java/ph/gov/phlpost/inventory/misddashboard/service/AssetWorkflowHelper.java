@@ -161,4 +161,9 @@ public class AssetWorkflowHelper {
     public boolean canMarkUnserviceable(String maintenanceHealthStatus) {
         return !"Beyond Economic Repair (BER)".equals(maintenanceHealthStatus);
     }
+
+    /** BER assets are locked to the disposal/retirement workflow. */
+    public boolean isUnserviceable(String maintenanceHealthStatus) {
+        return "Beyond Economic Repair (BER)".equals(maintenanceHealthStatus);
+    }
 }

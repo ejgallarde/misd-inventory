@@ -23,4 +23,11 @@ class AssetWorkflowHelperTest {
         assertThat(helper.canMarkRepaired("Deployed", "Under Repair")).isFalse();
         assertThat(helper.canMarkRepaired("With MISD Technician", "Operational")).isFalse();
     }
+
+    @Test
+    void unserviceableAssetsAreRestrictedToRetirementWorkflow() {
+        assertThat(helper.isUnserviceable("Beyond Economic Repair (BER)")).isTrue();
+        assertThat(helper.isUnserviceable("Operational")).isFalse();
+        assertThat(helper.canMarkUnserviceable("Beyond Economic Repair (BER)")).isFalse();
+    }
 }

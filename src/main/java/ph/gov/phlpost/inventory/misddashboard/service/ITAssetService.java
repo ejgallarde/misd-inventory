@@ -30,6 +30,7 @@ public class ITAssetService {
     @Transactional
     public void assignAsset(String assetTag, String employeeId, String notes) {
         Asset asset = assetRepo.findById(assetTag).orElseThrow(() -> new IllegalArgumentException("Asset not found."));
+        String previousOwner = asset.getCurrentOwnerID();
         asset.setCurrentOwnerID(employeeId);
         asset.setDeploymentStatus("Deployed");
         if (asset.getLifecycleStatus() == null || asset.getLifecycleStatus().isBlank()
@@ -41,7 +42,10 @@ public class ITAssetService {
             asset.setMaintenanceHealthStatus("Operational");
         }
         assetRepo.save(asset);
-        auditService.logAssignment(assetTag, employeeId, "Checkout", notes);
+        String actionType = previousOwner == null || previousOwner.isBlank() ? "Checkout" : "Reassignment";
+        auditService.logAssignment(assetTag, employeeId, actionType, notes);
+        auditService.logLifecycleEvent(assetTag, "SYSTEM", actionType,
+                statusSummary(asset) + appendNotes(notes));
     }
 
     @Transactional
@@ -55,6 +59,8 @@ public class ITAssetService {
         }
         assetRepo.save(asset);
         logAssignmentForExistingOwner(assetTag, prevOwner, "Return", notes);
+        auditService.logLifecycleEvent(assetTag, "SYSTEM", "Returned to MISD",
+                statusSummary(asset) + appendNotes(notes));
     }
 
     @Transactional
@@ -109,6 +115,7 @@ public class ITAssetService {
     @Transactional
     public void updateLifecycle(String assetTag, String status, String actionType, String notes) {
         Asset asset = findAsset(assetTag);
+        String previousOwner = asset.getCurrentOwnerID();
 
         if ("Unserviceable".equals(status)) {
             asset.setMaintenanceHealthStatus("Beyond Economic Repair (BER)");
@@ -121,7 +128,40 @@ public class ITAssetService {
         }
 
         assetRepo.save(asset);
-        auditService.logLifecycleEvent(assetTag, "SYSTEM", actionType, notes);
+        if ("Retired".equals(status)) {
+            logAssignmentForExistingOwner(assetTag, previousOwner, "Asset Retired", notes);
+        }
+        auditService.logLifecycleEvent(assetTag, "SYSTEM", actionType,
+                statusSummary(asset) + appendNotes(notes));
+    }
+
+    @Transactional
+    public void recordReceived(Asset asset, String performedBy) {
+        auditService.logLifecycleEvent(asset.getAssetTag(), performedBy, "Asset Received",
+                statusSummary(asset) + appendNotes(asset.getRemarks()));
+    }
+
+    @Transactional
+    public void updateAsset(Asset updatedAsset, String performedBy) {
+        Asset existingAsset = findAsset(updatedAsset.getAssetTag());
+        String previousOwner = existingAsset.getCurrentOwnerID();
+        String previousStatuses = statusSummary(existingAsset);
+
+        assetRepo.save(updatedAsset);
+
+        if (!java.util.Objects.equals(previousOwner, updatedAsset.getCurrentOwnerID())) {
+            String auditOwner = updatedAsset.getCurrentOwnerID() != null
+                    ? updatedAsset.getCurrentOwnerID()
+                    : previousOwner;
+            logAssignmentForExistingOwner(updatedAsset.getAssetTag(), auditOwner, "Assignment Updated",
+                    "Owner changed from " + displayValue(previousOwner) + " to "
+                            + displayValue(updatedAsset.getCurrentOwnerID()) + ".");
+        }
+
+        String currentStatuses = statusSummary(updatedAsset);
+        String actionType = previousStatuses.equals(currentStatuses) ? "Asset Details Updated" : "Asset Status Updated";
+        auditService.logLifecycleEvent(updatedAsset.getAssetTag(), performedBy, actionType,
+                previousStatuses + " -> " + currentStatuses);
     }
 
     private Asset findAsset(String assetTag) {
@@ -157,6 +197,20 @@ public class ITAssetService {
         if (ownerId != null && !ownerId.isBlank() && personnelRepo.existsById(ownerId)) {
             auditService.logAssignment(assetTag, ownerId, actionType, notes);
         }
+    }
+
+    private String statusSummary(Asset asset) {
+        return "Deployment: " + displayValue(asset.getDeploymentStatus())
+                + "; Health: " + displayValue(asset.getMaintenanceHealthStatus())
+                + "; Lifecycle: " + displayValue(asset.getLifecycleStatus());
+    }
+
+    private String appendNotes(String notes) {
+        return notes == null || notes.isBlank() ? "" : "; Notes: " + notes.trim();
+    }
+
+    private String displayValue(String value) {
+        return value == null || value.isBlank() ? "None" : value;
     }
 
     private void ensureSupplierOwnerExists() {

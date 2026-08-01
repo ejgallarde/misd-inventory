@@ -7,6 +7,7 @@ import ph.gov.phlpost.inventory.misddashboard.repository.AssetRepository;
 import ph.gov.phlpost.inventory.misddashboard.repository.EquipmentCatalogRepository;
 import ph.gov.phlpost.inventory.misddashboard.repository.PersonnelRepository;
 import ph.gov.phlpost.inventory.misddashboard.service.DocumentService;
+import ph.gov.phlpost.inventory.misddashboard.service.AssetHistoryService;
 import ph.gov.phlpost.inventory.misddashboard.service.ITAssetService;
 import ph.gov.phlpost.inventory.misddashboard.service.RegistryService;
 
@@ -41,6 +42,7 @@ public class ITAssetController {
     private final ITAssetService assetService;
     private final RegistryService registryService;
     private final DocumentService documentService;
+    private final AssetHistoryService assetHistoryService;
     private final ObjectMapper objectMapper;
 
     @Value("${document.upload.max-size-mb:15}")
@@ -68,6 +70,7 @@ public class ITAssetController {
             EquipmentCatalogRepository catalogRepo, ITAssetService assetService,
             RegistryService registryService,
             DocumentService documentService,
+            AssetHistoryService assetHistoryService,
             PersonnelRepository personnelRepo,
             ObjectMapper objectMapper) {
         this.assetRepo = assetRepo;
@@ -75,6 +78,7 @@ public class ITAssetController {
         this.assetService = assetService;
         this.registryService = registryService;
         this.documentService = documentService;
+        this.assetHistoryService = assetHistoryService;
         this.personnelRepo = personnelRepo;
         this.objectMapper = objectMapper;
     }
@@ -158,6 +162,8 @@ public class ITAssetController {
             }
 
             assetRepo.save(newAsset);
+            String performedBy = authentication != null ? authentication.getName() : "SYSTEM";
+            assetService.recordReceived(newAsset, performedBy);
             createdAssetTags.add(newAsset.getAssetTag());
         }
 
@@ -331,10 +337,21 @@ public class ITAssetController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @GetMapping("/api/assets/{assetTag}/history")
+    @ResponseBody
+    public ResponseEntity<List<AssetHistoryService.AssetHistoryEntry>> getAssetHistory(
+            @PathVariable String assetTag) {
+        if (!assetRepo.existsById(assetTag)) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(assetHistoryService.getHistory(assetTag));
+    }
+
     @PostMapping("/assets/update")
-    public ResponseEntity<String> updateITAsset(@RequestBody Asset updatedAsset) {
+    public ResponseEntity<String> updateITAsset(@RequestBody Asset updatedAsset, Authentication authentication) {
         applyStatusTransitions(updatedAsset);
-        assetRepo.save(updatedAsset);
+        String performedBy = authentication != null ? authentication.getName() : "SYSTEM";
+        assetService.updateAsset(updatedAsset, performedBy);
         return ResponseEntity.ok("Asset updated successfully");
     }
 
