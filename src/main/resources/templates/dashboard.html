@@ -154,53 +154,9 @@
                     </a>
                     <div class="collapse show" id="collapseIT">
                         <div class="card-body pt-0">
-                            <table id="agingTable" class="table table-hover table-striped w-100 border-top">
-                                <thead class="table-dark">
-                                    <tr>
-                                        <th>Asset Tag</th>
-                                        <th>Category</th>
-                                        <th>Model</th>
-                                        <th>Accountable Owner</th>
-                                        <th>Purchase Date</th>
-                                        <th>Status Overview</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr th:each="asset : ${problematicAssets}">
-                                        <td>
-                                            <a href="#" th:text="${asset.assetTag}"
-                                                class="text-decoration-none fw-bold asset-detail-link"
-                                                th:data-assettag="${asset.assetTag}"></a>
-                                        </td>
-                                        <td th:text="${asset.category}"></td>
-                                        <td th:text="${asset.modelName}"></td>
-                                        <td th:text="${asset.accountableOwner}"></td>
-                                        <td th:text="${asset.purchaseDate}"></td>
-                                        <td>
-                                            <div class="d-flex flex-column gap-1 small">
-                                                <span
-                                                    th:if="${asset.deploymentStatus != null and !#strings.isEmpty(asset.deploymentStatus)}"
-                                                    th:class="${@assetHelper.deploymentBadgeClass(asset.deploymentStatus)}"
-                                                    th:title="${@assetHelper.deploymentTooltip(asset.deploymentStatus)}"
-                                                    data-bs-toggle="tooltip" data-bs-placement="top"
-                                                    th:text="${@assetHelper.deploymentLabel(asset.deploymentStatus)}"></span>
-                                                <span
-                                                    th:if="${asset.maintenanceHealthStatus != null and !#strings.isEmpty(asset.maintenanceHealthStatus)}"
-                                                    th:class="${@assetHelper.healthBadgeClass(asset.maintenanceHealthStatus)}"
-                                                    th:title="${@assetHelper.healthTooltip(asset.maintenanceHealthStatus)}"
-                                                    data-bs-toggle="tooltip" data-bs-placement="top"
-                                                    th:text="${'Health: ' + asset.maintenanceHealthStatus}"></span>
-                                                <span
-                                                    th:if="${asset.lifecycleStatus != null and !#strings.isEmpty(asset.lifecycleStatus)}"
-                                                    th:class="${@assetHelper.lifecycleBadgeClass(asset.lifecycleStatus)}"
-                                                    th:title="${@assetHelper.lifecycleTooltip(asset.lifecycleStatus)}"
-                                                    data-bs-toggle="tooltip" data-bs-placement="top"
-                                                    th:text="${'Lifecycle: ' + asset.lifecycleStatus}"></span>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                            <div
+                                th:replace="~{fragments/asset-table :: assetTable('agingTable', ${problematicAssets}, false)}">
+                            </div>
                         </div>
                     </div>
                 </div>

@@ -1,6 +1,8 @@
 package ph.gov.phlpost.inventory.misddashboard.service;
 
 import ph.gov.phlpost.inventory.misddashboard.model.EquipmentCatalog;
+import ph.gov.phlpost.inventory.misddashboard.model.Personnel;
+import ph.gov.phlpost.inventory.misddashboard.model.PersonnelBaseLocation;
 import ph.gov.phlpost.inventory.misddashboard.repository.EquipmentCatalogRepository;
 import ph.gov.phlpost.inventory.misddashboard.repository.PersonnelRepository;
 import org.springframework.beans.factory.annotation.Value;
@@ -9,8 +11,10 @@ import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 public class RegistryService {
@@ -77,6 +81,40 @@ public class RegistryService {
         return divisions;
     }
 
+    @Cacheable("personnelLocationMap")
+    public Map<String, String> getPersonnelLocationMap() {
+        Map<String, String> locations = personnelRepository.findAll().stream()
+                .collect(Collectors.toMap(
+                        Personnel::getEmployeeID,
+                        personnel -> formatLocation(personnel.getBaseLocation()),
+                        (existing, replacement) -> existing,
+                        LinkedHashMap::new));
+        locations.put(supplierOwnerId, "External Service Center");
+        return locations;
+    }
+
+    @Cacheable("managerNameMap")
+    public Map<String, String> getManagerNameMap() {
+        List<Personnel> personnel = personnelRepository.findAll();
+        Map<String, String> employeeNames = personnel.stream()
+                .collect(Collectors.toMap(
+                        Personnel::getEmployeeID,
+                        employee -> employee.getLastName() + ", " + employee.getFirstName(),
+                        (existing, replacement) -> existing,
+                        LinkedHashMap::new));
+
+        Map<String, String> managerNames = personnel.stream()
+                .collect(Collectors.toMap(
+                        Personnel::getEmployeeID,
+                        employee -> employee.getManagerID() == null || employee.getManagerID().isBlank()
+                                ? "No Manager"
+                                : employeeNames.getOrDefault(employee.getManagerID(), "Unknown Manager"),
+                        (existing, replacement) -> existing,
+                        LinkedHashMap::new));
+        managerNames.put(supplierOwnerId, "No Manager");
+        return managerNames;
+    }
+
     public String getManagerNameByEmployeeId(String employeeId) {
         if (employeeId == null || employeeId.isBlank()) {
             return "No Manager";
@@ -94,5 +132,15 @@ public class RegistryService {
 
     private String normalize(String value) {
         return value == null ? "" : value.trim().toLowerCase();
+    }
+
+    private String formatLocation(PersonnelBaseLocation location) {
+        if (location == null) {
+            return "Unassigned";
+        }
+        return Stream.of(location.getArea(), location.getProvince(), location.getOfficeAddress())
+                .filter(value -> value != null && !value.isBlank())
+                .distinct()
+                .collect(Collectors.joining(", "));
     }
 }

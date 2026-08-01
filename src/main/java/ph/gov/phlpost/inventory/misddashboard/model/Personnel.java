@@ -2,7 +2,10 @@ package ph.gov.phlpost.inventory.misddashboard.model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 @Entity
@@ -30,6 +33,10 @@ public class Personnel {
 
     @Column(name = "ManagerID")
     private String managerID;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "BaseLocationID", referencedColumnName = "LocationID", insertable = false, updatable = false)
+    private PersonnelBaseLocation baseLocation;
 
     public Personnel() {
     }
@@ -85,5 +92,9 @@ public class Personnel {
 
     public String getManagerID() {
         return managerID;
+    }
+
+    public PersonnelBaseLocation getBaseLocation() {
+        return baseLocation;
     }
 }

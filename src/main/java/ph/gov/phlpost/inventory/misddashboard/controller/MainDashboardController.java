@@ -2,6 +2,7 @@ package ph.gov.phlpost.inventory.misddashboard.controller;
 
 import ph.gov.phlpost.inventory.misddashboard.model.Personnel;
 import ph.gov.phlpost.inventory.misddashboard.repository.DashboardRepository;
+import ph.gov.phlpost.inventory.misddashboard.repository.AssetRepository;
 import ph.gov.phlpost.inventory.misddashboard.repository.EquipmentCatalogRepository;
 import ph.gov.phlpost.inventory.misddashboard.repository.FleetVehicleRepository;
 import ph.gov.phlpost.inventory.misddashboard.repository.PersonnelRepository;
@@ -31,6 +32,7 @@ import java.util.stream.Collectors;
 public class MainDashboardController {
 
         private final DashboardRepository dashboardRepo;
+        private final AssetRepository assetRepo;
         private final FleetVehicleRepository fleetRepo;
         private final RealEstatePropertyRepository propertyRepo;
         private final EquipmentCatalogRepository catalogRepo;
@@ -91,10 +93,12 @@ public class MainDashboardController {
         @Value("#{'${dropdown.asset-lifecycle-statuses}'.split(',')}")
         private List<String> assetLifecycleStatusOptions;
 
-        public MainDashboardController(DashboardRepository dashboardRepo, FleetVehicleRepository fleetRepo,
+        public MainDashboardController(DashboardRepository dashboardRepo, AssetRepository assetRepo,
+                        FleetVehicleRepository fleetRepo,
                         RealEstatePropertyRepository propertyRepo, EquipmentCatalogRepository catalogRepo,
                         PersonnelRepository personnelRepo, RegistryService registryService) {
                 this.dashboardRepo = dashboardRepo;
+                this.assetRepo = assetRepo;
                 this.fleetRepo = fleetRepo;
                 this.propertyRepo = propertyRepo;
                 this.catalogRepo = catalogRepo;
@@ -121,7 +125,7 @@ public class MainDashboardController {
                 // IT Assets
                 model.addAttribute("totalAssets", dashboardRepo.countTotalAssets());
                 model.addAttribute("deployedAssets", dashboardRepo.countDeployedAssets());
-                model.addAttribute("problematicAssets", dashboardRepo.findProblematicAssets());
+                model.addAttribute("problematicAssets", assetRepo.findProblematicAssets());
                 model.addAttribute("problematicAssetsCount", dashboardRepo.countProblematicAssets());
                 model.addAttribute("deploymentIssueCount", dashboardRepo.countDeploymentIssues());
                 model.addAttribute("maintenanceIssueCount", dashboardRepo.countMaintenanceIssues());
@@ -154,6 +158,10 @@ public class MainDashboardController {
                 // Mappings
                 model.addAttribute("employeeMap", registryService.getEmployeeNameMap());
                 model.addAttribute("catalogMap", registryService.getCatalogMap());
+                model.addAttribute("departmentMap", registryService.getDepartmentMap());
+                model.addAttribute("divisionMap", registryService.getDivisionMap());
+                model.addAttribute("personnelLocationMap", registryService.getPersonnelLocationMap());
+                model.addAttribute("managerNameMap", registryService.getManagerNameMap());
                 model.addAttribute("equipmentCategories", equipmentCategories.stream()
                                 .sorted(String.CASE_INSENSITIVE_ORDER)
                                 .toList());

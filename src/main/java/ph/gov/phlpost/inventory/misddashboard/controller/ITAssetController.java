@@ -92,6 +92,8 @@ public class ITAssetController {
         model.addAttribute("catalogMap", registryService.getCatalogMap());
         model.addAttribute("departmentMap", registryService.getDepartmentMap());
         model.addAttribute("divisionMap", registryService.getDivisionMap());
+        model.addAttribute("personnelLocationMap", registryService.getPersonnelLocationMap());
+        model.addAttribute("managerNameMap", registryService.getManagerNameMap());
         model.addAttribute("documentUploadMaxSizeMb", documentUploadMaxSizeMb);
         model.addAttribute("documentUploadAllowedExtensions", documentUploadAllowedExtensions);
         model.addAttribute("documentUploadCategories", documentUploadCategories.stream()

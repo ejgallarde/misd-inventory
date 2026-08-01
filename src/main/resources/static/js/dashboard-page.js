@@ -41,7 +41,7 @@ $(document).ready(function () {
         }));
     }
 
-    initDashboardTable('#agingTable', [[5, 'desc']], 'No aging equipment found.');
+    initDashboardTable('#agingTable', [[7, 'desc']], 'No problematic IT assets found.');
     initDashboardTable('#fleetActionRequiredTable', [[0, 'asc']], 'No problematic vehicles found in the fleet.');
     initDashboardTable('#propertiesActionRequiredTable', [[0, 'asc']], 'All property dues and taxes are up to date.');
 
