@@ -415,6 +415,11 @@ body[data-theme="dark"] .form-select.is-invalid {
 }
 
 /* ── Login page background image ─────────────────────────────────────────── */
+.login-page {
+    display: flex;
+    flex-direction: column;
+}
+
 .login-content {
     position: relative;
     flex: 1 0 auto;
