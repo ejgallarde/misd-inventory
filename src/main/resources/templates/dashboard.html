@@ -84,55 +84,84 @@
                     <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-end gap-2 mb-3">
                         <div>
                             <h3 class="h5 fw-bold mb-1" id="assetPortfolioTitle">IT Asset Portfolio</h3>
-                            <p class="text-muted small mb-0">Select a card to view matching assets</p>
+                            <p class="text-muted small mb-0">Select a card to view matching assets, or use the arrow
+                                button to expand a breakdown</p>
                         </div>
                     </div>
 
-                    <div class="asset-portfolio-flow">
-                        <div class="asset-portfolio-stage asset-portfolio-stage-total">
+                    <div class="asset-portfolio-tree">
+                        <div class="asset-metric-row">
                             <a href="/assets" class="asset-metric asset-metric-total">
                                 <span class="asset-metric-label">Total IT Assets</span>
                                 <strong class="asset-metric-value" th:text="${totalAssets}">0</strong>
                                 <span class="asset-metric-context">Complete registry of current and decommissioned IT
                                     assets</span>
                             </a>
+                            <button type="button" class="asset-portfolio-toggle" data-bs-toggle="collapse"
+                                data-bs-target="#assetLifecycleCollapse" aria-expanded="false"
+                                aria-controls="assetLifecycleCollapse"
+                                aria-label="Toggle Current Inventory and Decommissioned breakdown">
+                                <span class="asset-portfolio-toggle-icon">&#10148;</span>
+                            </button>
                         </div>
 
-                        <div class="asset-portfolio-stage asset-portfolio-stage-lifecycle">
-                            <div class="asset-current-inventory-branch">
-                                <a href="/assets?filter=current-inventory" class="asset-metric asset-metric-current">
-                                    <span class="asset-metric-label">Current Inventory</span>
-                                    <strong class="asset-metric-value" th:text="${currentInventoryAssets}">0</strong>
-                                    <span class="asset-metric-context">Actively in use, regardless of status</span>
-                                </a>
+                        <div class="collapse" id="assetLifecycleCollapse">
+                            <div class="asset-portfolio-branch">
+                                <div class="asset-portfolio-branch-row">
+                                    <div class="asset-current-inventory-branch">
+                                        <div class="asset-metric-row">
+                                            <a href="/assets?filter=current-inventory"
+                                                class="asset-metric asset-metric-current">
+                                                <span class="asset-metric-label">Current Inventory</span>
+                                                <strong class="asset-metric-value"
+                                                    th:text="${currentInventoryAssets}">0</strong>
+                                                <span class="asset-metric-context">Actively in use, regardless of
+                                                    status</span>
+                                            </a>
+                                            <button type="button" class="asset-portfolio-toggle"
+                                                data-bs-toggle="collapse" data-bs-target="#assetOperationsCollapse"
+                                                aria-expanded="false" aria-controls="assetOperationsCollapse"
+                                                aria-label="Toggle operational views within current inventory">
+                                                <span class="asset-portfolio-toggle-icon">&#10148;</span>
+                                            </button>
+                                        </div>
 
-                                <div class="asset-portfolio-stage asset-portfolio-stage-operations">
-                                    <div class="asset-stage-label">Operational views within current inventory</div>
-                                    <div class="asset-operational-cards">
-                                        <a href="/assets?filter=deployed" class="asset-metric asset-metric-deployed">
-                                            <span class="asset-metric-label">Deployed</span>
-                                            <strong class="asset-metric-value" th:text="${deployedAssets}">0</strong>
-                                            <span class="asset-metric-context">Assigned and in use, including ageing and
-                                                fully depreciated assets</span>
-                                        </a>
-                                        <a href="/assets?filter=under-maintenance"
-                                            class="asset-metric asset-metric-maintenance">
-                                            <span class="asset-metric-label">Under Maintenance</span>
-                                            <strong class="asset-metric-value"
-                                                th:text="${underMaintenanceAssets}">0</strong>
-                                            <span class="asset-metric-context">With Vendor or MISD Technician</span>
-                                        </a>
+                                        <div class="collapse" id="assetOperationsCollapse">
+                                            <div class="asset-portfolio-branch-operations">
+                                                <div class="asset-stage-label">Operational views within current
+                                                    inventory</div>
+                                                <div class="asset-operational-cards">
+                                                    <a href="/assets?filter=deployed"
+                                                        class="asset-metric asset-metric-deployed">
+                                                        <span class="asset-metric-label">Deployed</span>
+                                                        <strong class="asset-metric-value"
+                                                            th:text="${deployedAssets}">0</strong>
+                                                        <span class="asset-metric-context">Assigned and in use,
+                                                            including ageing and fully depreciated assets</span>
+                                                    </a>
+                                                    <a href="/assets?filter=under-maintenance"
+                                                        class="asset-metric asset-metric-maintenance">
+                                                        <span class="asset-metric-label">Under Maintenance</span>
+                                                        <strong class="asset-metric-value"
+                                                            th:text="${underMaintenanceAssets}">0</strong>
+                                                        <span class="asset-metric-context">With Vendor or MISD
+                                                            Technician</span>
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
+                                    <a href="/assets?filter=decommissioned-retired"
+                                        class="asset-metric asset-metric-decommissioned">
+                                        <span class="asset-metric-label">Decommissioned</span>
+                                        <strong class="asset-metric-value"
+                                            th:text="${decommissionedRetiredAssets}">0</strong>
+                                        <span class="asset-metric-context">Retired from service, disposed, or
+                                            sold</span>
+                                    </a>
                                 </div>
                             </div>
-                            <a href="/assets?filter=decommissioned-retired"
-                                class="asset-metric asset-metric-decommissioned">
-                                <span class="asset-metric-label">Decommissioned</span>
-                                <strong class="asset-metric-value" th:text="${decommissionedRetiredAssets}">0</strong>
-                                <span class="asset-metric-context">Retired from service, disposed, or sold</span>
-                            </a>
                         </div>
-
                     </div>
                 </section>
 
@@ -170,68 +199,94 @@
                     <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-end gap-2 mb-3">
                         <div>
                             <h3 class="h5 fw-bold mb-1" id="vehiclePortfolioTitle">Fleet Portfolio</h3>
-                            <p class="text-muted small mb-0">Select a card to view matching assets</p>
+                            <p class="text-muted small mb-0">Select a card to view matching assets, or use the arrow
+                                button to expand a breakdown</p>
                         </div>
                     </div>
 
-                    <div class="asset-portfolio-flow fleet-portfolio-flow">
-                        <div class="asset-portfolio-stage asset-portfolio-stage-total">
+                    <div class="asset-portfolio-tree fleet-portfolio-tree">
+                        <div class="asset-metric-row">
                             <a href="/fleet" class="asset-metric asset-metric-total">
                                 <span class="asset-metric-label">Total Vehicles</span>
                                 <strong class="asset-metric-value" th:text="${totalVehicles}">0</strong>
                                 <span class="asset-metric-context">Complete registry of current and decommissioned
                                     vehicles</span>
                             </a>
+                            <button type="button" class="asset-portfolio-toggle" data-bs-toggle="collapse"
+                                data-bs-target="#fleetLifecycleCollapse" aria-expanded="false"
+                                aria-controls="fleetLifecycleCollapse"
+                                aria-label="Toggle Current Inventory and Decommissioned breakdown">
+                                <span class="asset-portfolio-toggle-icon">&#10148;</span>
+                            </button>
                         </div>
 
-                        <div class="asset-portfolio-stage asset-portfolio-stage-lifecycle">
-                            <div class="asset-current-inventory-branch fleet-current-inventory-branch">
-                                <a href="/fleet?filter=current-inventory" class="asset-metric asset-metric-current">
-                                    <span class="asset-metric-label">Current Inventory</span>
-                                    <strong class="asset-metric-value" th:text="${currentInventoryVehicles}">0</strong>
-                                    <span class="asset-metric-context">Vehicles still in circulation</span>
-                                </a>
+                        <div class="collapse" id="fleetLifecycleCollapse">
+                            <div class="asset-portfolio-branch">
+                                <div class="asset-portfolio-branch-row">
+                                    <div class="asset-current-inventory-branch fleet-current-inventory-branch">
+                                        <div class="asset-metric-row">
+                                            <a href="/fleet?filter=current-inventory"
+                                                class="asset-metric asset-metric-current">
+                                                <span class="asset-metric-label">Current Inventory</span>
+                                                <strong class="asset-metric-value"
+                                                    th:text="${currentInventoryVehicles}">0</strong>
+                                                <span class="asset-metric-context">Vehicles in circulation</span>
+                                            </a>
+                                            <button type="button" class="asset-portfolio-toggle"
+                                                data-bs-toggle="collapse" data-bs-target="#fleetOperationsCollapse"
+                                                aria-expanded="false" aria-controls="fleetOperationsCollapse"
+                                                aria-label="Toggle operational views within current inventory">
+                                                <span class="asset-portfolio-toggle-icon">&#10148;</span>
+                                            </button>
+                                        </div>
 
-                                <div class="asset-portfolio-stage asset-portfolio-stage-operations">
-                                    <div class="asset-stage-label">Operational views within current inventory</div>
-                                    <div class="asset-operational-cards fleet-operational-cards">
-                                        <a href="/fleet?filter=available-idle"
-                                            class="asset-metric asset-metric-deployed">
-                                            <span class="asset-metric-label">Available / Idle</span>
-                                            <strong class="asset-metric-value"
-                                                th:text="${availableIdleVehicles}">0</strong>
-                                            <span class="asset-metric-context">Ready for dispatch</span>
-                                        </a>
-                                        <a href="/fleet?filter=dispatched" class="asset-metric asset-metric-deployed">
-                                            <span class="asset-metric-label">Dispatched</span>
-                                            <strong class="asset-metric-value"
-                                                th:text="${dispatchedVehicles}">0</strong>
-                                            <span class="asset-metric-context">In active use</span>
-                                        </a>
-                                        <a href="/fleet?filter=under-maintenance"
-                                            class="asset-metric asset-metric-maintenance">
-                                            <span class="asset-metric-label">Under Repair</span>
-                                            <strong class="asset-metric-value"
-                                                th:text="${underRepairVehicles}">0</strong>
-                                            <span class="asset-metric-context">Being serviced</span>
-                                        </a>
-                                        <a href="/fleet?filter=slated-for-disposal"
-                                            class="asset-metric asset-metric-problematic">
-                                            <span class="asset-metric-label">Slated for Disposal</span>
-                                            <strong class="asset-metric-value"
-                                                th:text="${slatedForDisposalVehicles}">0</strong>
-                                            <span class="asset-metric-context">Pending disposal</span>
-                                        </a>
+                                        <div class="collapse" id="fleetOperationsCollapse">
+                                            <div class="asset-portfolio-branch-operations">
+                                                <div class="asset-stage-label">Operational views within current
+                                                    inventory</div>
+                                                <div class="asset-operational-cards fleet-operational-cards">
+                                                    <a href="/fleet?filter=available-idle"
+                                                        class="asset-metric asset-metric-deployed">
+                                                        <span class="asset-metric-label">Available / Idle</span>
+                                                        <strong class="asset-metric-value"
+                                                            th:text="${availableIdleVehicles}">0</strong>
+                                                        <span class="asset-metric-context">Ready for dispatch</span>
+                                                    </a>
+                                                    <a href="/fleet?filter=dispatched"
+                                                        class="asset-metric asset-metric-deployed">
+                                                        <span class="asset-metric-label">Dispatched</span>
+                                                        <strong class="asset-metric-value"
+                                                            th:text="${dispatchedVehicles}">0</strong>
+                                                        <span class="asset-metric-context">In active use</span>
+                                                    </a>
+                                                    <a href="/fleet?filter=under-maintenance"
+                                                        class="asset-metric asset-metric-maintenance">
+                                                        <span class="asset-metric-label">Under Repair</span>
+                                                        <strong class="asset-metric-value"
+                                                            th:text="${underRepairVehicles}">0</strong>
+                                                        <span class="asset-metric-context">Being serviced</span>
+                                                    </a>
+                                                    <a href="/fleet?filter=slated-for-disposal"
+                                                        class="asset-metric asset-metric-problematic">
+                                                        <span class="asset-metric-label">Slated for Disposal</span>
+                                                        <strong class="asset-metric-value"
+                                                            th:text="${slatedForDisposalVehicles}">0</strong>
+                                                        <span class="asset-metric-context">Pending disposal</span>
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
+                                    <a href="/fleet?filter=decommissioned"
+                                        class="asset-metric asset-metric-decommissioned">
+                                        <span class="asset-metric-label">Decommissioned</span>
+                                        <strong class="asset-metric-value"
+                                            th:text="${decommissionedVehicles}">0</strong>
+                                        <span class="asset-metric-context">Sold, disposed, or retired</span>
+                                    </a>
                                 </div>
                             </div>
-                            <a href="/fleet?filter=decommissioned" class="asset-metric asset-metric-decommissioned">
-                                <span class="asset-metric-label">Decommissioned</span>
-                                <strong class="asset-metric-value" th:text="${decommissionedVehicles}">0</strong>
-                                <span class="asset-metric-context">Sold, disposed, or retired</span>
-                            </a>
                         </div>
-
                     </div>
                 </section>
 
@@ -266,17 +321,108 @@
                         data-bs-target="#addPropertyOffcanvas">+ Add Property</button>
                 </div>
 
-                <div class="row g-3 mb-4" style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));">
-                    <div class="col">
-                        <a href="/properties" class="text-decoration-none">
-                            <div class="card text-white bg-primary mb-3 shadow-sm hover-effect">
-                                <div class="card-body">
-                                    <h5 class="card-title">Total Properties</h5>
-                                    <h2 class="card-text" th:text="${totalProperties}">0</h2>
+                <section class="asset-portfolio mb-4" aria-labelledby="propertyPortfolioTitle">
+                    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-end gap-2 mb-3">
+                        <div>
+                            <h3 class="h5 fw-bold mb-1" id="propertyPortfolioTitle">Properties & Facilities Portfolio
+                            </h3>
+                            <p class="text-muted small mb-0">Select a card to view the properties registry, or use the
+                                arrow button to expand a breakdown</p>
+                        </div>
+                    </div>
+
+                    <div class="asset-portfolio-tree property-portfolio-tree">
+                        <div class="asset-metric-row">
+                            <a href="/properties" class="asset-metric asset-metric-total">
+                                <span class="asset-metric-label">Total Properties</span>
+                                <strong class="asset-metric-value" th:text="${totalProperties}">0</strong>
+                                <span class="asset-metric-context">Complete registry of properties and
+                                    facilities</span>
+                            </a>
+                            <button type="button" class="asset-portfolio-toggle" data-bs-toggle="collapse"
+                                data-bs-target="#propertyLifecycleCollapse" aria-expanded="false"
+                                aria-controls="propertyLifecycleCollapse"
+                                aria-label="Toggle Current Inventory and Slated for Disposal breakdown">
+                                <span class="asset-portfolio-toggle-icon">&#10148;</span>
+                            </button>
+                        </div>
+
+                        <div class="collapse" id="propertyLifecycleCollapse">
+                            <div class="asset-portfolio-branch">
+                                <div class="asset-portfolio-branch-row">
+                                    <div class="asset-current-inventory-branch property-current-inventory-branch">
+                                        <div class="asset-metric-row">
+                                            <a href="/properties" class="asset-metric asset-metric-current">
+                                                <span class="asset-metric-label">Current Inventory</span>
+                                                <strong class="asset-metric-value"
+                                                    th:text="${currentInventoryProperties}">0</strong>
+                                                <span class="asset-metric-context">In portfolio, excludes properties
+                                                    slated for disposal</span>
+                                            </a>
+                                            <button type="button" class="asset-portfolio-toggle"
+                                                data-bs-toggle="collapse" data-bs-target="#propertyOperationsCollapse"
+                                                aria-expanded="false" aria-controls="propertyOperationsCollapse"
+                                                aria-label="Toggle operational views within current inventory">
+                                                <span class="asset-portfolio-toggle-icon">&#10148;</span>
+                                            </button>
+                                        </div>
+
+                                        <div class="collapse" id="propertyOperationsCollapse">
+                                            <div class="asset-portfolio-branch-operations">
+                                                <div class="asset-stage-label">Operational views within current
+                                                    inventory</div>
+                                                <div class="asset-operational-cards property-operational-cards">
+                                                    <a href="/properties" class="asset-metric asset-metric-deployed">
+                                                        <span class="asset-metric-label">Active / In Use</span>
+                                                        <strong class="asset-metric-value"
+                                                            th:text="${activeInUseProperties}">0</strong>
+                                                        <span class="asset-metric-context">Actively utilized</span>
+                                                    </a>
+                                                    <a href="/properties" class="asset-metric asset-metric-maintenance">
+                                                        <span class="asset-metric-label">Vacant / Idle</span>
+                                                        <strong class="asset-metric-value"
+                                                            th:text="${vacantIdleProperties}">0</strong>
+                                                        <span class="asset-metric-context">Needs utilization
+                                                            action</span>
+                                                    </a>
+                                                    <a href="/properties" class="asset-metric asset-metric-deployed">
+                                                        <span class="asset-metric-label">Co-Located</span>
+                                                        <strong class="asset-metric-value"
+                                                            th:text="${coLocatedProperties}">0</strong>
+                                                        <span class="asset-metric-context">Shared usage with another
+                                                            office</span>
+                                                    </a>
+                                                    <a href="/properties" class="asset-metric asset-metric-deployed">
+                                                        <span class="asset-metric-label">Leased Out</span>
+                                                        <strong class="asset-metric-value"
+                                                            th:text="${leasedOutProperties}">0</strong>
+                                                        <span class="asset-metric-context">Active through lease
+                                                            arrangement</span>
+                                                    </a>
+                                                    <a href="/properties" class="asset-metric asset-metric-maintenance">
+                                                        <span class="asset-metric-label">Under Construction</span>
+                                                        <strong class="asset-metric-value"
+                                                            th:text="${underConstructionProperties}">0</strong>
+                                                        <span class="asset-metric-context">Construction or upgrade
+                                                            ongoing</span>
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <a href="/properties" class="asset-metric asset-metric-decommissioned">
+                                        <span class="asset-metric-label">Slated for Disposal</span>
+                                        <strong class="asset-metric-value"
+                                            th:text="${slatedForDisposalProperties}">0</strong>
+                                        <span class="asset-metric-context">Marked for disposal</span>
+                                    </a>
                                 </div>
                             </div>
-                        </a>
+                        </div>
                     </div>
+                </section>
+
+                <div class="row g-3 mb-4" style="display:grid;grid-template-columns:repeat(6,minmax(0,1fr));">
                     <div class="col">
                         <div class="card text-white bg-secondary mb-3 shadow-sm">
                             <div class="card-body">
@@ -333,76 +479,22 @@
                         class="text-decoration-none">
                         <div
                             class="card-header bg-white border-bottom-0 pt-3 pb-3 d-flex justify-content-between align-items-center">
-                            <h5 class="card-title text-danger fw-bold mb-0">Action Required: Properties Pending Payment
-                                / Tax</h5>
+                            <h5 class="card-title text-danger fw-bold mb-0">Properties & Facilities Requiring
+                                Attention</h5>
                             <span class="text-muted">&#9660;</span>
                         </div>
                     </a>
                     <div class="collapse show" id="collapseProperties">
                         <div class="card-body pt-0">
-                            <table id="propertiesActionRequiredTable"
-                                class="table table-hover table-striped w-100 border-top">
-                                <thead class="table-dark">
-                                    <tr>
-                                        <th>Property Name</th>
-                                        <th>Title No.</th>
-                                        <th>Location</th>
-                                        <th>Custodian</th>
-                                        <th>Assessed Value</th>
-                                        <th>Status Overview</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr th:each="prop : ${pendingProperties}">
-                                        <td class="fw-bold" th:text="${prop.propertyName}"></td>
-                                        <td
-                                            th:text="${prop.titleNumber != null and !#strings.isEmpty(prop.titleNumber) ? prop.titleNumber : (prop.taxDeclarationNumber != null and !#strings.isEmpty(prop.taxDeclarationNumber) ? prop.taxDeclarationNumber : 'N/A')}">
-                                        </td>
-                                        <td
-                                            th:text="${(prop.addressLine1 != null ? prop.addressLine1 : '') + (prop.city != null and !#strings.isEmpty(prop.city) ? ', ' + prop.city : '') + (prop.province != null and !#strings.isEmpty(prop.province) ? ', ' + prop.province : '')}">
-                                        </td>
-                                        <td
-                                            th:text="${prop.custodianID != null and employeeMap[prop.custodianID] != null ? employeeMap[prop.custodianID] : 'Unassigned'}">
-                                        </td>
-                                        <td
-                                            th:text="'PHP ' + ${#numbers.formatDecimal(prop.assessedValue, 1, 'COMMA', 2, 'POINT')}">
-                                        </td>
-                                        <td>
-                                            <div class="d-flex flex-column gap-1 small">
-                                                <span
-                                                    th:if="${prop.propertyTaxStatus != null and !#strings.isEmpty(prop.propertyTaxStatus)}"
-                                                    th:class="${prop.propertyTaxStatus != null and prop.propertyTaxStatus.startsWith('Paid') ? 'badge bg-success' : 'badge bg-danger'}"
-                                                    th:title="${prop.propertyTaxStatus != null and prop.propertyTaxStatus.startsWith('Paid') ? 'Tax obligations are up to date.' : 'Tax payment is pending or overdue.'}"
-                                                    data-bs-toggle="tooltip" data-bs-placement="top"
-                                                    th:text="${'Tax: ' + prop.propertyTaxStatus}"></span>
-                                                <span
-                                                    th:if="${prop.legalTitlingStatus != null and !#strings.isEmpty(prop.legalTitlingStatus)}"
-                                                    th:class="${prop.legalTitlingStatus == 'Titled' ? 'badge bg-success' : ((prop.legalTitlingStatus == 'In Process') ? 'badge bg-secondary' : ((prop.legalTitlingStatus == 'Under Dispute') ? 'badge bg-danger' : ((prop.legalTitlingStatus == 'Tax Declared Only' or prop.legalTitlingStatus == 'Expropriated') ? 'badge bg-warning text-dark' : 'badge bg-dark')))}"
-                                                    th:title="${prop.legalTitlingStatus == 'Titled' ? 'Title documentation is complete.' : (prop.legalTitlingStatus == 'Tax Declared Only' ? 'Tax declared but title not yet complete.' : (prop.legalTitlingStatus == 'In Process' ? 'Titling documentation is being processed.' : (prop.legalTitlingStatus == 'Leased' ? 'Property is under lease arrangement.' : (prop.legalTitlingStatus == 'Under Dispute' ? 'Property has legal dispute exposure.' : (prop.legalTitlingStatus == 'Expropriated' ? 'Subject to expropriation proceedings.' : 'Legal titling status.')))))}"
-                                                    data-bs-toggle="tooltip" data-bs-placement="top"
-                                                    th:text="${'Legal: ' + prop.legalTitlingStatus}"></span>
-                                                <span
-                                                    th:if="${prop.operationalStatus != null and !#strings.isEmpty(prop.operationalStatus)}"
-                                                    th:class="${prop.operationalStatus == 'Active/In Use' ? 'badge bg-success' : ((prop.operationalStatus == 'Vacant/Idle' or prop.operationalStatus == 'Slated for Disposal') ? 'badge bg-danger' : ((prop.operationalStatus == 'Under Construction') ? 'badge bg-secondary' : ((prop.operationalStatus == 'Co-Located' or prop.operationalStatus == 'Leased Out') ? 'badge bg-primary' : 'badge bg-dark')))}"
-                                                    th:title="${prop.operationalStatus == 'Active/In Use' ? 'Property is actively utilized.' : (prop.operationalStatus == 'Vacant/Idle' ? 'Property is idle and needs utilization action.' : (prop.operationalStatus == 'Co-Located' ? 'Shared operational usage with another office.' : (prop.operationalStatus == 'Leased Out' ? 'Operationally active through lease arrangement.' : (prop.operationalStatus == 'Under Construction' ? 'Construction or upgrade is ongoing.' : (prop.operationalStatus == 'Slated for Disposal' ? 'Marked for disposal.' : 'Operational status.')))))}"
-                                                    data-bs-toggle="tooltip" data-bs-placement="top"
-                                                    th:text="${'Operational: ' + prop.operationalStatus}"></span>
-                                                <span
-                                                    th:if="${prop.conditionStatus != null and !#strings.isEmpty(prop.conditionStatus)}"
-                                                    th:class="${prop.conditionStatus == 'Excellent' or prop.conditionStatus == 'Good' ? 'badge bg-success' : ((prop.conditionStatus == 'Fair') ? 'badge bg-warning text-dark' : ((prop.conditionStatus == 'Poor' or prop.conditionStatus == 'Condemned') ? 'badge bg-danger' : 'badge bg-dark'))}"
-                                                    th:title="${prop.conditionStatus == 'Excellent' ? 'Excellent physical condition.' : (prop.conditionStatus == 'Good' ? 'Good condition with routine maintenance only.' : (prop.conditionStatus == 'Fair' ? 'Needs minor repairs or monitoring.' : (prop.conditionStatus == 'Poor' ? 'Needs major intervention.' : (prop.conditionStatus == 'Condemned' ? 'Unsafe condition requiring immediate action.' : 'Condition status.'))))}"
-                                                    data-bs-toggle="tooltip" data-bs-placement="top"
-                                                    th:text="${'Condition: ' + prop.conditionStatus}"></span>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                            <div
+                                th:replace="~{fragments/properties-table :: propertiesTable('propertiesActionRequiredTable', ${problematicProperties}, false)}">
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div> <!-- End Tab Content -->
+
     </div>
 
     <div th:replace="~{fragments/components :: appFooter}"></div>
@@ -826,6 +918,7 @@
 
     <div th:replace="~{fragments/asset-detail :: assetDetailOffcanvas}"></div>
     <div th:replace="~{fragments/fleet-detail :: fleetDetailOffcanvas}"></div>
+    <div th:replace="~{fragments/properties-detail :: propertyDetailOffcanvas}"></div>
 
     <!-- Core Scripts -->
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
@@ -842,6 +935,7 @@
     <script th:src="@{/js/location-cascade.js}"></script>
     <script th:src="@{/js/asset-detail.js}"></script>
     <script th:src="@{/js/fleet-page.js}"></script>
+    <script th:src="@{/js/properties-page.js}"></script>
     <script th:src="@{/js/dashboard-page.js}"></script>
 </body>
 

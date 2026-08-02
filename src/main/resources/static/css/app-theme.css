@@ -145,7 +145,8 @@ body[data-theme="dark"] .navbar-dark .dropdown-toggle {
 }
 
 #assetHistoryModal .asset-history-modal-header,
-#fleetHistoryModal .fleet-history-modal-header {
+#fleetHistoryModal .fleet-history-modal-header,
+#propertyHistoryModal .property-history-modal-header {
     background-color: #1d2939 !important;
     color: #ffffff !important;
 }
@@ -153,14 +154,18 @@ body[data-theme="dark"] .navbar-dark .dropdown-toggle {
 #assetHistoryModal .asset-history-modal-header .modal-title,
 #assetHistoryModal .asset-history-modal-header .small,
 #fleetHistoryModal .fleet-history-modal-header .modal-title,
-#fleetHistoryModal .fleet-history-modal-header .small {
+#fleetHistoryModal .fleet-history-modal-header .small,
+#propertyHistoryModal .property-history-modal-header .modal-title,
+#propertyHistoryModal .property-history-modal-header .small {
     color: #ffffff !important;
 }
 
 #assetHistoryTable thead,
 #assetHistoryTable thead th,
 #fleetHistoryTable thead,
-#fleetHistoryTable thead th {
+#fleetHistoryTable thead th,
+#propertyHistoryTable thead,
+#propertyHistoryTable thead th {
     --bs-table-bg: var(--app-accent);
     --bs-table-color: #ffffff;
     background-color: var(--app-accent) !important;
@@ -265,29 +270,76 @@ body[data-theme="dark"] .navbar-dark .dropdown-toggle {
     text-transform: uppercase;
 }
 
-.asset-portfolio-flow {
-    display: grid;
-    grid-template-columns: minmax(180px, 0.6fr) minmax(540px, 2fr);
-    gap: 2.5rem;
-    align-items: stretch;
-}
-
-.asset-portfolio-stage {
-    position: relative;
-    display: grid;
+.asset-portfolio-tree {
+    display: flex;
+    flex-direction: column;
     gap: 0.75rem;
-    align-content: center;
 }
 
-.asset-portfolio-stage-lifecycle {
-    grid-template-columns: minmax(0, 2fr) minmax(190px, 0.8fr);
-    grid-template-rows: 1fr;
+.asset-metric-row {
+    display: flex;
     align-items: stretch;
+    gap: 0.5rem;
+}
+
+.asset-metric-row .asset-metric {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.asset-portfolio-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 44px;
+    border: 1px solid var(--app-border);
+    border-radius: 6px;
+    background: var(--app-surface-muted);
+    color: var(--app-text-muted);
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.asset-portfolio-toggle:hover,
+.asset-portfolio-toggle:focus-visible {
+    background: var(--app-surface);
+    color: var(--app-accent);
+    border-color: var(--app-accent);
+}
+
+.asset-portfolio-toggle-icon {
+    display: inline-block;
+    font-size: 1rem;
+    line-height: 1;
+    transition: transform 0.2s ease;
+}
+
+.asset-portfolio-toggle[aria-expanded="true"] .asset-portfolio-toggle-icon {
+    transform: rotate(90deg);
+}
+
+.asset-portfolio-branch {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.asset-portfolio-branch-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 0.75rem;
+}
+
+.asset-portfolio-branch-row>* {
+    flex: 1 1 0;
+    min-width: 220px;
 }
 
 .asset-current-inventory-branch {
-    display: grid;
-    grid-template-rows: auto 1fr;
+    display: flex;
+    flex-direction: column;
     gap: 0.75rem;
     padding: 0.75rem;
     border: 1px solid color-mix(in srgb, #198754 45%, var(--app-border));
@@ -295,8 +347,7 @@ body[data-theme="dark"] .navbar-dark .dropdown-toggle {
     background: color-mix(in srgb, #198754 5%, var(--app-surface));
 }
 
-.asset-portfolio-stage-operations {
-    align-content: start;
+.asset-portfolio-branch-operations {
     padding: 0.75rem;
     border: 1px dashed color-mix(in srgb, #198754 45%, var(--app-border));
     border-radius: 6px;
@@ -304,9 +355,15 @@ body[data-theme="dark"] .navbar-dark .dropdown-toggle {
 }
 
 .asset-operational-cards {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    display: flex;
+    flex-wrap: wrap;
     gap: 0.75rem;
+    margin-top: 0.5rem;
+}
+
+.asset-operational-cards>* {
+    flex: 1 1 0;
+    min-width: 0;
 }
 
 .asset-metric {
@@ -355,7 +412,6 @@ body[data-theme="dark"] .navbar-dark .dropdown-toggle {
 .asset-metric-decommissioned {
     min-height: 92px;
     height: 92px;
-    align-self: center;
 }
 
 .asset-metric-total {
@@ -380,23 +436,22 @@ body[data-theme="dark"] .navbar-dark .dropdown-toggle {
     --metric-accent: #dc3545;
 }
 
-@media (max-width: 991.98px) {
-    .asset-portfolio-flow {
-        grid-template-columns: 1fr;
-        gap: 1rem;
-    }
-
-}
-
 @media (max-width: 767.98px) {
     .asset-portfolio {
         padding: 1rem;
     }
 
-    .asset-portfolio-flow,
-    .asset-portfolio-stage-lifecycle,
-    .asset-operational-cards {
-        grid-template-columns: 1fr;
+    .asset-metric-row {
+        flex-wrap: wrap;
+    }
+
+    .asset-portfolio-branch-row>* {
+        flex: 1 1 100%;
+        min-width: 0;
+    }
+
+    .asset-operational-cards>* {
+        flex: 1 1 100%;
     }
 
 }

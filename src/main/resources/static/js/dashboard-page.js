@@ -43,7 +43,7 @@ $(document).ready(function () {
 
     initDashboardTable('#agingTable', [[7, 'desc']], 'No problematic IT assets found.');
     initDashboardTable('#fleetActionRequiredTable', [[0, 'asc']], 'No problematic vehicles found in the fleet.');
-    initDashboardTable('#propertiesActionRequiredTable', [[0, 'asc']], 'All property dues and taxes are up to date.');
+    initDashboardTable('#propertiesActionRequiredTable', [[1, 'asc']], 'No properties currently require attention.');
 
     const specOptions = [
         'Processor (CPU)', 'Memory (RAM)', 'Storage (SSD/HDD)',

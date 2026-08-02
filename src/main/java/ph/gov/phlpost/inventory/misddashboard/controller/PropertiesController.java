@@ -2,6 +2,7 @@ package ph.gov.phlpost.inventory.misddashboard.controller;
 
 import ph.gov.phlpost.inventory.misddashboard.model.RealEstateProperty;
 import ph.gov.phlpost.inventory.misddashboard.repository.RealEstatePropertyRepository;
+import ph.gov.phlpost.inventory.misddashboard.service.AssetHistoryService;
 import ph.gov.phlpost.inventory.misddashboard.service.AuditLogService;
 import ph.gov.phlpost.inventory.misddashboard.service.DocumentService;
 import ph.gov.phlpost.inventory.misddashboard.service.RegistryService;
@@ -27,6 +28,7 @@ public class PropertiesController {
     private final RegistryService registryService;
     private final AuditLogService auditService;
     private final DocumentService documentService;
+    private final AssetHistoryService assetHistoryService;
 
     @Value("${document.upload.max-size-mb:15}")
     private int documentUploadMaxSizeMb;
@@ -51,11 +53,13 @@ public class PropertiesController {
 
     public PropertiesController(RealEstatePropertyRepository propertyRepo, RegistryService registryService,
             AuditLogService auditService,
-            DocumentService documentService) {
+            DocumentService documentService,
+            AssetHistoryService assetHistoryService) {
         this.propertyRepo = propertyRepo;
         this.registryService = registryService;
         this.auditService = auditService;
         this.documentService = documentService;
+        this.assetHistoryService = assetHistoryService;
     }
 
     @GetMapping
@@ -179,6 +183,10 @@ public class PropertiesController {
         return propertyType != null && propertyType.equalsIgnoreCase("Lot");
     }
 
+    private String resolveReferenceId(RealEstateProperty property) {
+        return property.getTitleNumber() != null ? property.getTitleNumber() : "PROP-" + property.getPropertyID();
+    }
+
     @PostMapping("/assign-custodian")
     @Transactional
     public String assignCustodian(@RequestParam Integer propertyID, @RequestParam String employeeID,
@@ -187,7 +195,7 @@ public class PropertiesController {
         if (property != null) {
             property.setCustodianID(employeeID);
             propertyRepo.save(property);
-            String refId = property.getTitleNumber() != null ? property.getTitleNumber() : "PROP-" + propertyID;
+            String refId = resolveReferenceId(property);
             auditService.logAssignment(refId, employeeID, "Custodian Assigned", conditionNotes);
             redirectAttributes.addFlashAttribute("successMessage", "Custodian assigned.");
         } else {
@@ -204,13 +212,22 @@ public class PropertiesController {
         if (property != null) {
             property.setPropertyTaxStatus(taxStatus);
             propertyRepo.save(property);
-            String refId = property.getTitleNumber() != null ? property.getTitleNumber() : "PROP-" + propertyID;
+            String refId = resolveReferenceId(property);
             auditService.logLifecycleEvent(refId, "FINANCE", "Tax Status Updated: " + taxStatus, conditionNotes);
             redirectAttributes.addFlashAttribute("successMessage", "Tax status updated.");
         } else {
             redirectAttributes.addFlashAttribute("errorMessage", "Property not found.");
         }
         return "redirect:/properties";
+    }
+
+    @GetMapping("/{id}/history")
+    @ResponseBody
+    public ResponseEntity<List<AssetHistoryService.AssetHistoryEntry>> getPropertyHistory(@PathVariable Integer id) {
+        return propertyRepo.findById(id)
+                .map(property -> assetHistoryService.getHistory(resolveReferenceId(property)))
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @GetMapping("/{id}")

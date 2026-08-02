@@ -160,7 +160,17 @@ public class MainDashboardController {
                 model.addAttribute("propertiesWithOperationalIssues",
                                 propertyRepo.countPropertiesWithOperationalIssues());
                 model.addAttribute("propertiesWithConditionIssues", propertyRepo.countPropertiesWithConditionIssues());
-                model.addAttribute("pendingProperties", propertyRepo.findPropertiesNeedingPayment());
+                model.addAttribute("currentInventoryProperties",
+                                propertyRepo.countByOperationalStatusNot("Slated for Disposal"));
+                model.addAttribute("activeInUseProperties", propertyRepo.countByOperationalStatus("Active/In Use"));
+                model.addAttribute("vacantIdleProperties", propertyRepo.countByOperationalStatus("Vacant/Idle"));
+                model.addAttribute("coLocatedProperties", propertyRepo.countByOperationalStatus("Co-Located"));
+                model.addAttribute("leasedOutProperties", propertyRepo.countByOperationalStatus("Leased Out"));
+                model.addAttribute("underConstructionProperties",
+                                propertyRepo.countByOperationalStatus("Under Construction"));
+                model.addAttribute("slatedForDisposalProperties",
+                                propertyRepo.countByOperationalStatus("Slated for Disposal"));
+                model.addAttribute("problematicProperties", propertyRepo.findProblematicProperties());
 
                 // Mappings
                 model.addAttribute("employeeMap", registryService.getEmployeeNameMap());

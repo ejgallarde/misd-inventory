@@ -168,11 +168,15 @@ $(document).ready(function () {
         };
     }
 
-    MISDCommon.initPageUI({
-        themeToggleId: 'themeToggleBtn',
-        successToastId: 'successToast',
-        initializeSelect2Modals: true
-    });
+    const hasPropertiesRegistry = $('#propertiesTable').length > 0;
+
+    if (hasPropertiesRegistry) {
+        MISDCommon.initPageUI({
+            themeToggleId: 'themeToggleBtn',
+            successToastId: 'successToast',
+            initializeSelect2Modals: true
+        });
+    }
 
     document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function (element) {
         bootstrap.Tooltip.getOrCreateInstance(element);
@@ -180,20 +184,126 @@ $(document).ready(function () {
 
     setPropertyEditMode(false);
 
-    const propertiesTable = $('#propertiesTable').DataTable(MISDCommon.buildStandardDataTableConfig({
-        pageLength: 10,
-        lengthMenu: [[10, 25, 50, -1], [10, 25, 50, 'All']],
-        order: [[1, 'asc']]
-    }));
+    if (hasPropertiesRegistry) {
+        const propertiesTable = $('#propertiesTable').DataTable(MISDCommon.buildStandardDataTableConfig({
+            pageLength: 10,
+            lengthMenu: [[10, 25, 50, -1], [10, 25, 50, 'All']],
+            order: [[1, 'asc']]
+        }));
 
-    MISDCommon.attachDataTableClearButton({
-        filterContainerSelector: '#propertiesTable_filter',
-        buttonId: 'clearPropertyFiltersBtn',
-        ariaLabel: 'Clear properties table search',
-        onClear: function () {
-            MISDCommon.clearDataTableFilters(propertiesTable, { stateKey: 'propertiesTableState' });
+        MISDCommon.attachDataTableClearButton({
+            filterContainerSelector: '#propertiesTable_filter',
+            buttonId: 'clearPropertyFiltersBtn',
+            ariaLabel: 'Clear properties table search',
+            onClear: function () {
+                MISDCommon.clearDataTableFilters(propertiesTable, { stateKey: 'propertiesTableState' });
+            }
+        });
+    }
+
+    if ($('#propertyHistoryTable').length > 0) {
+        const propertyHistoryTable = $('#propertyHistoryTable').DataTable({
+            data: [],
+            columns: [
+                {
+                    data: 'transactionDate',
+                    render: function (value, type) {
+                        if (type === 'sort' || type === 'type') return value || '';
+                        return value ? new Intl.DateTimeFormat('en-PH', {
+                            dateStyle: 'medium',
+                            timeStyle: 'medium'
+                        }).format(new Date(value)) : 'N/A';
+                    }
+                },
+                { data: 'logType', render: $.fn.dataTable.render.text() },
+                { data: 'actionType', render: $.fn.dataTable.render.text() },
+                { data: 'recordedBy', render: $.fn.dataTable.render.text() },
+                { data: 'notes', defaultContent: '', render: $.fn.dataTable.render.text() }
+            ],
+            order: [[0, 'desc']],
+            pageLength: 10,
+            lengthMenu: [[10, 25, 50, -1], [10, 25, 50, 'All']],
+            buttons: [{
+                extend: 'excel',
+                className: 'd-none',
+                title: function () {
+                    return `Property History - ${$('#propertyHistoryPropertyName').text()}`;
+                },
+                filename: function () {
+                    return `Property_History_${$('#propertyHistoryPropertyId').text()}`;
+                }
+            }],
+            dom: "<'d-none'B>" +
+                "<'row mb-3'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6'f>>" +
+                "<'row'<'col-sm-12'tr>>" +
+                "<'row pt-2'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
+            language: {
+                emptyTable: 'No history has been recorded for this property.'
+            }
+        });
+
+        function loadPropertyHistory(propertyId, propertyName) {
+            $('#propertyHistoryPropertyId').text(propertyId);
+            $('#propertyHistoryPropertyName').text(propertyName || 'N/A');
+            $('#propertyHistoryError').addClass('d-none').text('');
+            propertyHistoryTable.clear().draw();
+
+            $.get(`/properties/${encodeURIComponent(propertyId)}/history`, function (history) {
+                propertyHistoryTable.rows.add(history).draw();
+                propertyHistoryTable.columns.adjust();
+            }).fail(function () {
+                $('#propertyHistoryError').removeClass('d-none').text('Unable to load property history.');
+            });
         }
-    });
+
+        function printPropertyHistory() {
+            const propertyId = $('#propertyHistoryPropertyId').text();
+            const propertyName = $('#propertyHistoryPropertyName').text();
+            const rows = propertyHistoryTable.rows({ search: 'applied' }).data().toArray();
+            const rowMarkup = rows.map(function (entry) {
+                const transactionDate = entry.transactionDate
+                    ? new Intl.DateTimeFormat('en-PH', { dateStyle: 'medium', timeStyle: 'medium' })
+                        .format(new Date(entry.transactionDate))
+                    : 'N/A';
+                return `<tr><td>${MISDCommon.escapeHtml(transactionDate)}</td>` +
+                    `<td>${MISDCommon.escapeHtml(entry.logType || '')}</td>` +
+                    `<td>${MISDCommon.escapeHtml(entry.actionType || '')}</td>` +
+                    `<td>${MISDCommon.escapeHtml(entry.recordedBy || '')}</td>` +
+                    `<td>${MISDCommon.escapeHtml(entry.notes || '')}</td></tr>`;
+            }).join('');
+            const printWindow = window.open('', '_blank', 'width=1100,height=700');
+            if (!printWindow) {
+                alert('Allow popups to print property history.');
+                return;
+            }
+            printWindow.document.write('<!doctype html><html><head>' +
+                `<title>Property History - ${MISDCommon.escapeHtml(propertyName)}</title>` +
+                '<style>body{font-family:Arial,sans-serif;margin:24px}table{border-collapse:collapse;width:100%}' +
+                'th,td{border:1px solid #bbb;padding:8px;text-align:left;vertical-align:top}th{background:#eee}</style>' +
+                `</head><body><h1>Property History</h1><p>Property ID: ${MISDCommon.escapeHtml(propertyId)} | ` +
+                `Property Name: ${MISDCommon.escapeHtml(propertyName)}</p>` +
+                '<table><thead><tr><th>Date and Time</th><th>Log Type</th><th>Action</th>' +
+                `<th>Recorded By / Employee</th><th>Notes</th></tr></thead><tbody>${rowMarkup}</tbody></table>` +
+                '</body></html>');
+            printWindow.document.close();
+            printWindow.focus();
+            printWindow.print();
+        }
+
+        MISDCommon.bindClick('.property-history-action', function (link) {
+            loadPropertyHistory(link.data('property-id'), link.data('name'));
+        });
+
+        $('#propertyHistoryModal').on('shown.bs.modal', function () {
+            propertyHistoryTable.columns.adjust();
+        });
+
+        $('#printPropertyHistoryBtn').on('click', printPropertyHistory);
+
+        $('#exportPropertyHistoryBtn').on('click', function () {
+            propertyHistoryTable.button(0).trigger();
+        });
+    }
 
     MISDCommon.bindClick('.action-btn', function (button) {
         const pId = button.data('id');

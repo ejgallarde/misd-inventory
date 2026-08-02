@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<body>
+    <table th:fragment="propertiesTable(tableId, properties, workflowActions)" th:id="${tableId}"
+        class="table table-striped table-hover w-100 align-middle">
+        <thead class="table-dark">
+            <tr>
+                <th>Title No.</th>
+                <th>Property Name</th>
+                <th>Type</th>
+                <th>Address</th>
+                <th>Custodian</th>
+                <th>Lot Area (sqm)</th>
+                <th>Status Overview</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="p : ${properties}">
+                <td class="fw-bold"
+                    th:text="${p.titleNumber != null and !#strings.isEmpty(p.titleNumber) ? p.titleNumber : (p.taxDeclarationNumber != null and !#strings.isEmpty(p.taxDeclarationNumber) ? p.taxDeclarationNumber : 'N/A')}">
+                </td>
+                <td>
+                    <a href="#" class="text-decoration-none fw-bold property-detail-link"
+                        th:data-property-id="${p.propertyID}"
+                        th:text="${p.propertyName != null and !#strings.isEmpty(p.propertyName) ? p.propertyName : 'Unnamed Property'}"></a>
+                </td>
+                <td th:text="${p.propertyType}"></td>
+                <td
+                    th:text="${(p.addressLine1 != null ? p.addressLine1 : '') + (p.city != null and !#strings.isEmpty(p.city) ? ', ' + p.city : '') + (p.province != null and !#strings.isEmpty(p.province) ? ', ' + p.province : '')}">
+                </td>
+                <td th:text="${p.custodianID != null ? employeeMap[p.custodianID] : 'Unassigned'}"></td>
+                <td th:text="${#numbers.formatDecimal(p.lotAreaSqm, 1, 'COMMA', 2, 'POINT')}"></td>
+                <td>
+                    <div class="d-flex flex-column gap-1 small">
+                        <span th:if="${p.propertyTaxStatus != null and !#strings.isEmpty(p.propertyTaxStatus)}"
+                            th:class="${p.propertyTaxStatus != null and p.propertyTaxStatus.startsWith('Paid') ? 'badge bg-success' : 'badge bg-danger'}"
+                            th:title="${p.propertyTaxStatus != null and p.propertyTaxStatus.startsWith('Paid') ? 'Tax obligations are up to date.' : 'Tax payment is pending or overdue.'}"
+                            data-bs-toggle="tooltip" data-bs-placement="top"
+                            th:text="${'Tax: ' + p.propertyTaxStatus}"></span>
+                        <span th:if="${p.legalTitlingStatus != null and !#strings.isEmpty(p.legalTitlingStatus)}"
+                            th:class="${p.legalTitlingStatus == 'Titled' ? 'badge bg-success' : ((p.legalTitlingStatus == 'In Process') ? 'badge bg-secondary' : ((p.legalTitlingStatus == 'Under Dispute') ? 'badge bg-danger' : ((p.legalTitlingStatus == 'Tax Declared Only' or p.legalTitlingStatus == 'Expropriated') ? 'badge bg-warning text-dark' : 'badge bg-dark')))}"
+                            th:title="${p.legalTitlingStatus == 'Titled' ? 'Title documentation is complete.' : (p.legalTitlingStatus == 'Tax Declared Only' ? 'Tax declared but title not yet complete.' : (p.legalTitlingStatus == 'In Process' ? 'Titling documentation is being processed.' : (p.legalTitlingStatus == 'Leased' ? 'Property is under lease arrangement.' : (p.legalTitlingStatus == 'Under Dispute' ? 'Property has legal dispute exposure.' : (p.legalTitlingStatus == 'Expropriated' ? 'Subject to expropriation proceedings.' : 'Legal titling status.')))))}"
+                            data-bs-toggle="tooltip" data-bs-placement="top"
+                            th:text="${'Legal: ' + p.legalTitlingStatus}"></span>
+                        <span th:if="${p.operationalStatus != null and !#strings.isEmpty(p.operationalStatus)}"
+                            th:class="${p.operationalStatus == 'Active/In Use' ? 'badge bg-success' : ((p.operationalStatus == 'Vacant/Idle' or p.operationalStatus == 'Slated for Disposal') ? 'badge bg-danger' : ((p.operationalStatus == 'Under Construction') ? 'badge bg-secondary' : ((p.operationalStatus == 'Co-Located' or p.operationalStatus == 'Leased Out') ? 'badge bg-primary' : 'badge bg-dark')))}"
+                            th:title="${p.operationalStatus == 'Active/In Use' ? 'Property is actively utilized.' : (p.operationalStatus == 'Vacant/Idle' ? 'Property is idle and needs utilization action.' : (p.operationalStatus == 'Co-Located' ? 'Shared operational usage with another office.' : (p.operationalStatus == 'Leased Out' ? 'Operationally active through lease arrangement.' : (p.operationalStatus == 'Under Construction' ? 'Construction or upgrade is ongoing.' : (p.operationalStatus == 'Slated for Disposal' ? 'Marked for disposal.' : 'Operational status.')))))}"
+                            data-bs-toggle="tooltip" data-bs-placement="top"
+                            th:text="${'Operational: ' + p.operationalStatus}"></span>
+                        <span th:if="${p.conditionStatus != null and !#strings.isEmpty(p.conditionStatus)}"
+                            th:class="${p.conditionStatus == 'Excellent' or p.conditionStatus == 'Good' ? 'badge bg-success' : ((p.conditionStatus == 'Fair') ? 'badge bg-warning text-dark' : ((p.conditionStatus == 'Poor' or p.conditionStatus == 'Condemned') ? 'badge bg-danger' : 'badge bg-dark'))}"
+                            th:title="${p.conditionStatus == 'Excellent' ? 'Excellent physical condition.' : (p.conditionStatus == 'Good' ? 'Good condition with routine maintenance only.' : (p.conditionStatus == 'Fair' ? 'Needs minor repairs or monitoring.' : (p.conditionStatus == 'Poor' ? 'Needs major intervention.' : (p.conditionStatus == 'Condemned' ? 'Unsafe condition requiring immediate action.' : 'Condition status.'))))}"
+                            data-bs-toggle="tooltip" data-bs-placement="top"
+                            th:text="${'Condition: ' + p.conditionStatus}"></span>
+                    </div>
+                </td>
+                <td>
+                    <div th:if="${workflowActions}" class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                            Actions
+                        </button>
+                        <ul class="dropdown-menu shadow-sm">
+                            <li>
+                                <a class="dropdown-item action-btn" href="#" data-bs-toggle="modal"
+                                    data-bs-target="#custodianModal" th:data-id="${p.propertyID}"
+                                    th:data-name="${p.propertyName}">Assign Custodian</a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item action-btn" href="#" data-bs-toggle="modal"
+                                    data-bs-target="#taxModal" th:data-id="${p.propertyID}"
+                                    th:data-name="${p.propertyName}">Update Tax Status</a>
+                            </li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li>
+                                <a class="dropdown-item action-btn property-history-action" href="#"
+                                    data-bs-toggle="modal" data-bs-target="#propertyHistoryModal"
+                                    th:data-property-id="${p.propertyID}" th:data-name="${p.propertyName}">View Property
+                                    History</a>
+                            </li>
+                        </ul>
+                    </div>
+                    <button th:unless="${workflowActions}" type="button"
+                        class="btn btn-sm btn-outline-secondary property-detail-link"
+                        th:data-property-id="${p.propertyID}">View details</button>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</body>
+
+</html>
