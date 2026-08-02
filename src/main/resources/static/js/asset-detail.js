@@ -42,6 +42,28 @@
         </div>`;
     }
 
+    function updateCurrentValuation(data) {
+        const valuation = MISDCommon.computeStraightLineValuation(data.purchasePrice, data.purchaseDate);
+        const valueElement = $('#assetCurrentValuation');
+
+        if (valuation == null) {
+            valueElement.text('N/A — original cost and purchase date required');
+            valueElement.removeClass('text-danger fw-bold').addClass('text-primary');
+            return;
+        }
+
+        const yearsUsed = Math.max(0, new Date().getFullYear() - new Date(data.purchaseDate).getFullYear());
+        const fullyDepreciated = yearsUsed >= 10;
+        const formatted = MISDCommon.formatPesoCurrency(valuation);
+        const note = fullyDepreciated ? ' (fully depreciated — residual value only)' : '';
+        valueElement.text(formatted + note);
+        if (fullyDepreciated) {
+            valueElement.removeClass('text-primary').addClass('text-danger fw-bold');
+        } else {
+            valueElement.removeClass('text-danger fw-bold').addClass('text-primary');
+        }
+    }
+
     function loadDocuments(assetTag) {
         MISDCommon.loadDocumentsForReference({
             refType: documentConfig.refType,
@@ -74,6 +96,7 @@
             $('#editSerialNumber').val(serialNumber);
             $('#editPurchaseDate').val(data.purchaseDate ? data.purchaseDate.split('T')[0] : '');
             $('#editPurchasePrice').val(data.purchasePrice);
+            updateCurrentValuation(data);
             $('#editCurrentOwnerID').val(data.currentOwnerID);
             $('#editDeploymentStatus').val(data.deploymentStatus);
             $('#editMaintenanceHealthStatus').val(data.maintenanceHealthStatus);

@@ -135,6 +135,12 @@ public class MainDashboardController {
 
                 // Fleet
                 model.addAttribute("totalVehicles", fleetRepo.count());
+                model.addAttribute("currentInventoryVehicles", fleetRepo.countCurrentInventoryVehicles());
+                model.addAttribute("availableIdleVehicles", fleetRepo.countAvailableIdleVehicles());
+                model.addAttribute("dispatchedVehicles", fleetRepo.countDispatchedVehicles());
+                model.addAttribute("underRepairVehicles", fleetRepo.countUnderRepairVehicles());
+                model.addAttribute("slatedForDisposalVehicles", fleetRepo.countSlatedForDisposalVehicles());
+                model.addAttribute("decommissionedVehicles", fleetRepo.countDecommissionedVehicles());
                 model.addAttribute("totalProblematicVehicles", fleetRepo.countProblematicVehicles());
                 model.addAttribute("vehiclesWithAdminLegalIssues", fleetRepo.countVehiclesWithAdminLegalIssues());
                 model.addAttribute("vehiclesWithOperationalMaintenanceIssues",

@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<body>
+    <table th:fragment="fleetTable(tableId, vehicles, workflowActions)" th:id="${tableId}"
+        class="table table-striped table-hover w-100 align-middle">
+        <thead class="table-dark">
+            <tr>
+                <th>Vehicle ID</th>
+                <th>Plate No.</th>
+                <th>Accountable Owner</th>
+                <th>Type</th>
+                <th>Insurance Expiry</th>
+                <th>Reg. Expiry</th>
+                <th>Manager</th>
+                <th>Status Overview</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="vehicle : ${vehicles}" class="fleet-table-row" th:data-vehicle-id="${vehicle.vehicleID}"
+                th:data-vehicle-manufacture-year="${vehicle.manufactureYear}" th:data-vehicle-make="${vehicle.make}"
+                th:data-vehicle-model="${vehicle.model}" th:data-vehicle-fuel-type="${vehicle.fuelType}"
+                th:data-admin-status="${vehicle.adminLegaltionalStatus}"
+                th:data-operational-status="${vehicle.operationalStatus}"
+                th:data-maintenance-status="${vehicle.maintenanceStatus}"
+                th:data-registration-expiry="${vehicle.registrationExpiry}"
+                th:data-insurance-expiry="${vehicle.insuranceExpiry}">
+                <td>
+                    <a href="#" class="text-decoration-none fw-bold fleet-detail-link"
+                        th:data-vehicle-id="${vehicle.vehicleID}" th:text="${vehicle.vehicleID}"></a>
+                </td>
+                <td class="fw-bold">
+                    <a href="#" th:if="${vehicle.plateNumber != null and !#strings.isEmpty(vehicle.plateNumber)}"
+                        th:data-vehicle-id="${vehicle.vehicleID}" th:text="${vehicle.plateNumber}"
+                        class="text-decoration-none fleet-detail-link"></a>
+                    <span th:if="${vehicle.plateNumber == null or #strings.isEmpty(vehicle.plateNumber)}">N/A</span>
+                </td>
+                <td th:classappend="${vehicle.assignedDriverID != null ? 'fw-bold' : ''}"
+                    th:text="${vehicle.assignedDriverID != null and employeeMap[vehicle.assignedDriverID] != null ? employeeMap[vehicle.assignedDriverID] : 'Unassigned'}">
+                </td>
+                <td>
+                    <span class="fleet-type-info" tabindex="0"
+                        th:data-vehicle-manufacture-year="${vehicle.manufactureYear}"
+                        th:data-vehicle-make="${vehicle.make}" th:data-vehicle-model="${vehicle.model}"
+                        th:data-vehicle-fuel-type="${vehicle.fuelType}"
+                        th:aria-label="${'View vehicle details for ' + (vehicle.vehicleType != null ? vehicle.vehicleType : 'Unknown')}"
+                        th:text="${vehicle.vehicleType != null ? vehicle.vehicleType : 'Unknown'}">
+                    </span>
+                </td>
+                <td
+                    th:text="${vehicle.insuranceExpiry != null ? #temporals.format(vehicle.insuranceExpiry, 'MMM d, yyyy') : 'N/A'}">
+                </td>
+                <td
+                    th:text="${vehicle.registrationExpiry != null ? #temporals.format(vehicle.registrationExpiry, 'MMM d, yyyy') : 'N/A'}">
+                </td>
+                <td
+                    th:text="${vehicle.assignedDriverID != null and managerNameMap[vehicle.assignedDriverID] != null ? managerNameMap[vehicle.assignedDriverID] : 'No Manager'}">
+                </td>
+                <td>
+                    <div class="d-flex flex-column gap-1 small">
+                        <span
+                            th:if="${vehicle.adminLegaltionalStatus != null and !#strings.isEmpty(vehicle.adminLegaltionalStatus)}"
+                            th:class="${@fleetHelper.legalBadgeClass(vehicle.adminLegaltionalStatus)}"
+                            th:title="${@fleetHelper.legalTooltip(vehicle.adminLegaltionalStatus)}"
+                            data-bs-toggle="tooltip" data-bs-placement="top"
+                            th:text="${@fleetHelper.legalLabel(vehicle.adminLegaltionalStatus)}"></span>
+                        <span
+                            th:if="${vehicle.operationalStatus != null and !#strings.isEmpty(vehicle.operationalStatus)}"
+                            th:class="${@fleetHelper.operationalBadgeClass(vehicle.operationalStatus)}"
+                            th:title="${@fleetHelper.operationalTooltip(vehicle.operationalStatus)}"
+                            data-bs-toggle="tooltip" data-bs-placement="top"
+                            th:text="${@fleetHelper.operationalLabel(vehicle.operationalStatus)}"></span>
+                        <span
+                            th:if="${vehicle.maintenanceStatus != null and !#strings.isEmpty(vehicle.maintenanceStatus)}"
+                            th:class="${@fleetHelper.maintenanceBadgeClass(vehicle.maintenanceStatus)}"
+                            th:title="${@fleetHelper.maintenanceTooltip(vehicle.maintenanceStatus)}"
+                            data-bs-toggle="tooltip" data-bs-placement="top"
+                            th:text="${@fleetHelper.maintenanceLabel(vehicle.maintenanceStatus)}"></span>
+                    </div>
+                </td>
+                <td class="fleet-actions-cell">
+                    <div th:if="${workflowActions}" class="dropup">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
+                            data-bs-toggle="dropdown" aria-expanded="false">Actions</button>
+                        <ul class="dropdown-menu shadow-sm">
+                            <li th:if="${@fleetHelper.canAssignDriver(vehicle.operationalStatus)}">
+                                <a class="dropdown-item action-btn" href="#" data-bs-toggle="modal"
+                                    data-bs-target="#assignModal" th:data-id="${vehicle.vehicleID}"
+                                    th:data-plate="${vehicle.plateNumber}">Assign Driver (Accountable Owner)</a>
+                            </li>
+                            <li th:if="${@fleetHelper.canReturnToMotorpool(vehicle.operationalStatus)}">
+                                <form
+                                    th:action="@{/fleet/{vehicleID}/return-to-motorpool(vehicleID=${vehicle.vehicleID})}"
+                                    method="post" class="m-0">
+                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                    <button type="submit" class="dropdown-item text-start">Return to Motorpool</button>
+                                </form>
+                            </li>
+                            <li th:if="${@fleetHelper.hasActions(vehicle.adminLegaltionalStatus)}">
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li th:if="${@fleetHelper.canMarkUnderMaintenance(vehicle.maintenanceStatus)}">
+                                <form
+                                    th:action="@{/fleet/{vehicleID}/under-maintenance(vehicleID=${vehicle.vehicleID})}"
+                                    method="post" class="m-0">
+                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                    <button type="submit" class="dropdown-item text-start">Mark as Under
+                                        Maintenance</button>
+                                </form>
+                            </li>
+                            <li th:if="${@fleetHelper.canMarkImpounded(vehicle.adminLegaltionalStatus)}">
+                                <form th:action="@{/fleet/{vehicleID}/impound(vehicleID=${vehicle.vehicleID})}"
+                                    method="post" class="m-0">
+                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                    <button type="submit" class="dropdown-item text-start">Mark as Impounded</button>
+                                </form>
+                            </li>
+                            <li th:if="${@fleetHelper.canMarkBeyondEconomicRepair(vehicle.maintenanceStatus)}">
+                                <form th:action="@{/fleet/{vehicleID}/ber(vehicleID=${vehicle.vehicleID})}"
+                                    method="post" class="m-0">
+                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                    <button type="submit" class="dropdown-item text-start">Mark as Beyond Economic
+                                        Repair</button>
+                                </form>
+                            </li>
+                            <li th:if="${@fleetHelper.canMarkStolen(vehicle.adminLegaltionalStatus)}">
+                                <form th:action="@{/fleet/{vehicleID}/stolen(vehicleID=${vehicle.vehicleID})}"
+                                    method="post" class="m-0">
+                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                    <button type="submit" class="dropdown-item text-start">Mark as Stolen</button>
+                                </form>
+                            </li>
+                            <li th:if="${@fleetHelper.canMarkMissing(vehicle.adminLegaltionalStatus)}">
+                                <form th:action="@{/fleet/{vehicleID}/missing(vehicleID=${vehicle.vehicleID})}"
+                                    method="post" class="m-0">
+                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                    <button type="submit" class="dropdown-item text-start">Mark as Missing</button>
+                                </form>
+                            </li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li>
+                                <a class="dropdown-item action-btn fleet-history-action" href="#" data-bs-toggle="modal"
+                                    data-bs-target="#fleetHistoryModal" th:data-vehicle-id="${vehicle.vehicleID}"
+                                    th:data-plate="${vehicle.plateNumber}">View Vehicle History</a>
+                            </li>
+                        </ul>
+                    </div>
+                    <button th:unless="${workflowActions}" type="button"
+                        class="btn btn-sm btn-outline-secondary fleet-detail-link"
+                        th:data-vehicle-id="${vehicle.vehicleID}">View details</button>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</body>
+
+</html>

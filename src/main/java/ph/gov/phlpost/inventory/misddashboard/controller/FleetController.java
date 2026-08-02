@@ -70,6 +70,7 @@ public class FleetController {
         model.addAttribute("allVehicles", fleetRepo.findAll());
         model.addAttribute("filter", filter);
         model.addAttribute("employeeMap", registryService.getEmployeeNameMap());
+        model.addAttribute("managerNameMap", registryService.getManagerNameMap());
         model.addAttribute("documentUploadMaxSizeMb", documentUploadMaxSizeMb);
         model.addAttribute("documentUploadAllowedExtensions", documentUploadAllowedExtensions);
         model.addAttribute("documentUploadCategories", documentUploadCategories.stream()
@@ -99,7 +100,7 @@ public class FleetController {
         }
 
         if (newVehicle.getAdminLegaltionalStatus() == null || newVehicle.getAdminLegaltionalStatus().isBlank()) {
-            newVehicle.setAdminLegaltionalStatus("Active / Registered");
+            newVehicle.setAdminLegaltionalStatus("Registered");
         }
         if (newVehicle.getOperationalStatus() == null || newVehicle.getOperationalStatus().isBlank()) {
             newVehicle.setOperationalStatus("Available/Idle");
@@ -179,6 +180,84 @@ public class FleetController {
         try {
             fleetService.assignVehicle(vehicleID, employeeID, conditionNotes);
             redirectAttributes.addFlashAttribute("successMessage", "Success! Vehicle assigned.");
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
+        return "redirect:/fleet";
+    }
+
+    @PostMapping("/{vehicleID}/return-to-motorpool")
+    public String returnToMotorpool(@PathVariable Integer vehicleID,
+            @RequestParam(required = false) String conditionNotes,
+            RedirectAttributes redirectAttributes) {
+        try {
+            fleetService.returnVehicle(vehicleID, conditionNotes);
+            redirectAttributes.addFlashAttribute("successMessage", "Vehicle returned to motorpool.");
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
+        return "redirect:/fleet";
+    }
+
+    @PostMapping("/{vehicleID}/under-maintenance")
+    public String markUnderMaintenance(@PathVariable Integer vehicleID,
+            @RequestParam(required = false) String conditionNotes,
+            RedirectAttributes redirectAttributes) {
+        try {
+            fleetService.markVehicleUnderMaintenance(vehicleID, conditionNotes);
+            redirectAttributes.addFlashAttribute("successMessage", "Vehicle marked under maintenance.");
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
+        return "redirect:/fleet";
+    }
+
+    @PostMapping("/{vehicleID}/impound")
+    public String markImpounded(@PathVariable Integer vehicleID,
+            @RequestParam(required = false) String conditionNotes,
+            RedirectAttributes redirectAttributes) {
+        try {
+            fleetService.markVehicleImpounded(vehicleID, conditionNotes);
+            redirectAttributes.addFlashAttribute("successMessage", "Vehicle marked impounded.");
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
+        return "redirect:/fleet";
+    }
+
+    @PostMapping("/{vehicleID}/ber")
+    public String markBeyondEconomicRepair(@PathVariable Integer vehicleID,
+            @RequestParam(required = false) String conditionNotes,
+            RedirectAttributes redirectAttributes) {
+        try {
+            fleetService.markVehicleBeyondEconomicRepair(vehicleID, conditionNotes);
+            redirectAttributes.addFlashAttribute("successMessage", "Vehicle marked beyond economic repair.");
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
+        return "redirect:/fleet";
+    }
+
+    @PostMapping("/{vehicleID}/stolen")
+    public String markStolen(@PathVariable Integer vehicleID,
+            @RequestParam(required = false) String conditionNotes,
+            RedirectAttributes redirectAttributes) {
+        try {
+            fleetService.markVehicleStolen(vehicleID, conditionNotes);
+            redirectAttributes.addFlashAttribute("successMessage", "Vehicle marked stolen.");
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
+        return "redirect:/fleet";
+    }
+
+    @PostMapping("/{vehicleID}/missing")
+    public String markMissing(@PathVariable Integer vehicleID,
+            @RequestParam(required = false) String conditionNotes,
+            RedirectAttributes redirectAttributes) {
+        try {
+            fleetService.markVehicleMissing(vehicleID, conditionNotes);
+            redirectAttributes.addFlashAttribute("successMessage", "Vehicle marked missing.");
         } catch (IllegalArgumentException e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }

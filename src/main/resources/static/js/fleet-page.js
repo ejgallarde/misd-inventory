@@ -221,11 +221,9 @@ $(document).ready(function () {
     if (hasFleetRegistry) {
         let activeFleetFilter = $('#fleetPageConfig').data('filter') || '';
         const terminalStatuses = ['Sold', 'Disposed', 'Decommissioned'];
-        const operationalIssues = ['Grounded', 'Missing/Stolen', 'Slated for Disposal'];
-        const maintenanceIssues = [
-            'Scheduled Maintenance', 'Under Repair', 'Awaiting Parts',
-            'Beyond Economic Repair (BER)'
-        ];
+        const operationalIssues = ['Grounded', 'Missing', 'Missing/Stolen', 'Stolen', 'Slated for Disposal'];
+        const maintenanceIssues = ['Under Repair', 'Beyond Economic Repair (BER)'];
+        const adminIssues = ['Registration Expired', 'Impounded', 'Under Investigation'];
 
         function registrationExpiresSoon(value) {
             if (!value) return false;
@@ -245,7 +243,7 @@ $(document).ready(function () {
             const operationalStatus = row.dataset.operationalStatus || '';
             const maintenanceStatus = row.dataset.maintenanceStatus || '';
             const isTerminal = terminalStatuses.includes(adminStatus);
-            const hasAdminIssue = ['Registration Expired', 'Impounded'].includes(adminStatus);
+            const hasAdminIssue = adminIssues.includes(adminStatus);
             const hasOperationalMaintenanceIssue = !isTerminal && (
                 operationalIssues.includes(operationalStatus) || maintenanceIssues.includes(maintenanceStatus)
             );
@@ -253,6 +251,18 @@ $(document).ready(function () {
             const isOldVehicle = manufactureYear > 0 && new Date().getFullYear() - manufactureYear >= 10;
 
             switch (activeFleetFilter) {
+                case 'current-inventory':
+                    return !isTerminal;
+                case 'available-idle':
+                    return operationalStatus === 'Available/Idle';
+                case 'dispatched':
+                    return ['Dispatched', 'Dispatched/In Transit'].includes(operationalStatus);
+                case 'under-maintenance':
+                    return maintenanceStatus === 'Under Repair';
+                case 'slated-for-disposal':
+                    return operationalStatus === 'Slated for Disposal';
+                case 'decommissioned':
+                    return isTerminal;
                 case 'problematic':
                     return !isTerminal && (isOldVehicle || expiresSoon || hasAdminIssue || hasOperationalMaintenanceIssue);
                 case 'admin-legal-issues':
@@ -263,8 +273,6 @@ $(document).ready(function () {
                     return expiresSoon;
                 case 'sold':
                     return adminStatus === 'Sold';
-                case 'decommissioned':
-                    return ['Disposed', 'Decommissioned'].includes(adminStatus);
                 default:
                     return true;
             }
@@ -428,12 +436,10 @@ $(document).ready(function () {
             $('#fleetDetailInsuranceExpiry').text(formatDate(data.insuranceExpiry));
             $('#fleetDetailCost').text(formatCurrency(data.cost));
 
-            const valuation = computeCurrentValuation(data.cost, data.acquisitionYear);
+            const valuation = MISDCommon.computeStraightLineValuation(data.cost, data.acquisitionYear);
             const $valuationElement = $('#fleetDetailCurrentValuation');
             if (valuation !== null) {
-                const formatted = new Intl.NumberFormat('en-PH', {
-                    style: 'currency', currency: 'PHP', minimumFractionDigits: 2
-                }).format(valuation);
+                const formatted = MISDCommon.formatPesoCurrency(valuation);
                 const yearsUsed = Math.max(0, new Date().getFullYear() - parseInt(data.acquisitionYear, 10));
                 const note = yearsUsed >= 10 ? ' (fully depreciated — residual value only)' : '';
                 $valuationElement.text(formatted + note);

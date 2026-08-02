@@ -215,13 +215,17 @@ body[data-theme="dark"] .navbar-dark .dropdown-toggle {
     transform: scale(1.02);
 }
 
-.asset-table-row {
+.asset-table-row,
+.fleet-table-row {
     cursor: pointer;
 }
 
 .asset-table-row .dropdown-menu,
 .asset-table-row button,
-.asset-table-row a {
+.asset-table-row a,
+.fleet-table-row .dropdown-menu,
+.fleet-table-row button,
+.fleet-table-row a {
     cursor: auto;
 }
 
@@ -231,7 +235,17 @@ body[data-theme="dark"] .navbar-dark .dropdown-toggle {
     text-underline-offset: 0.2rem;
 }
 
+.fleet-type-info {
+    cursor: help;
+    text-decoration: underline dotted;
+    text-underline-offset: 0.2rem;
+}
+
 .catalog-details-popover {
+    --bs-popover-max-width: 420px;
+}
+
+.fleet-type-popover {
     --bs-popover-max-width: 420px;
 }
 

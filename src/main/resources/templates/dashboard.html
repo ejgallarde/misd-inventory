@@ -93,7 +93,7 @@
                             <a href="/assets" class="asset-metric asset-metric-total">
                                 <span class="asset-metric-label">Total IT Assets</span>
                                 <strong class="asset-metric-value" th:text="${totalAssets}">0</strong>
-                                <span class="asset-metric-context">Complete registry of current and decommissioned
+                                <span class="asset-metric-context">Complete registry of current and decommissioned IT
                                     assets</span>
                             </a>
                         </div>
@@ -166,152 +166,90 @@
                         data-bs-target="#addVehicleOffcanvas">+ Register Vehicle</button>
                 </div>
 
-                <div class="row g-3 mb-4" style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));">
-                    <div class="col">
-                        <a href="/fleet" class="text-decoration-none">
-                            <div class="card text-white bg-primary mb-3 shadow-sm hover-effect">
-                                <div class="card-body">
-                                    <h5 class="card-title">Total Vehicles</h5>
-                                    <h2 class="card-text" th:text="${totalVehicles}">0</h2>
+                <section class="asset-portfolio mb-4" aria-labelledby="vehiclePortfolioTitle">
+                    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-end gap-2 mb-3">
+                        <div>
+                            <h3 class="h5 fw-bold mb-1" id="vehiclePortfolioTitle">Fleet Portfolio</h3>
+                            <p class="text-muted small mb-0">Select a card to view matching assets</p>
+                        </div>
+                    </div>
+
+                    <div class="asset-portfolio-flow fleet-portfolio-flow">
+                        <div class="asset-portfolio-stage asset-portfolio-stage-total">
+                            <a href="/fleet" class="asset-metric asset-metric-total">
+                                <span class="asset-metric-label">Total Vehicles</span>
+                                <strong class="asset-metric-value" th:text="${totalVehicles}">0</strong>
+                                <span class="asset-metric-context">Complete registry of current and decommissioned
+                                    vehicles</span>
+                            </a>
+                        </div>
+
+                        <div class="asset-portfolio-stage asset-portfolio-stage-lifecycle">
+                            <div class="asset-current-inventory-branch fleet-current-inventory-branch">
+                                <a href="/fleet?filter=current-inventory" class="asset-metric asset-metric-current">
+                                    <span class="asset-metric-label">Current Inventory</span>
+                                    <strong class="asset-metric-value" th:text="${currentInventoryVehicles}">0</strong>
+                                    <span class="asset-metric-context">Vehicles still in circulation</span>
+                                </a>
+
+                                <div class="asset-portfolio-stage asset-portfolio-stage-operations">
+                                    <div class="asset-stage-label">Operational views within current inventory</div>
+                                    <div class="asset-operational-cards fleet-operational-cards">
+                                        <a href="/fleet?filter=available-idle"
+                                            class="asset-metric asset-metric-deployed">
+                                            <span class="asset-metric-label">Available / Idle</span>
+                                            <strong class="asset-metric-value"
+                                                th:text="${availableIdleVehicles}">0</strong>
+                                            <span class="asset-metric-context">Ready for dispatch</span>
+                                        </a>
+                                        <a href="/fleet?filter=dispatched" class="asset-metric asset-metric-deployed">
+                                            <span class="asset-metric-label">Dispatched</span>
+                                            <strong class="asset-metric-value"
+                                                th:text="${dispatchedVehicles}">0</strong>
+                                            <span class="asset-metric-context">In active use</span>
+                                        </a>
+                                        <a href="/fleet?filter=under-maintenance"
+                                            class="asset-metric asset-metric-maintenance">
+                                            <span class="asset-metric-label">Under Repair</span>
+                                            <strong class="asset-metric-value"
+                                                th:text="${underRepairVehicles}">0</strong>
+                                            <span class="asset-metric-context">Being serviced</span>
+                                        </a>
+                                        <a href="/fleet?filter=slated-for-disposal"
+                                            class="asset-metric asset-metric-problematic">
+                                            <span class="asset-metric-label">Slated for Disposal</span>
+                                            <strong class="asset-metric-value"
+                                                th:text="${slatedForDisposalVehicles}">0</strong>
+                                            <span class="asset-metric-context">Pending disposal</span>
+                                        </a>
+                                    </div>
                                 </div>
                             </div>
-                        </a>
+                            <a href="/fleet?filter=decommissioned" class="asset-metric asset-metric-decommissioned">
+                                <span class="asset-metric-label">Decommissioned</span>
+                                <strong class="asset-metric-value" th:text="${decommissionedVehicles}">0</strong>
+                                <span class="asset-metric-context">Sold, disposed, or retired</span>
+                            </a>
+                        </div>
+
                     </div>
-                    <div class="col">
-                        <a href="/fleet?filter=problematic" class="text-decoration-none">
-                            <div class="card text-white bg-secondary mb-3 shadow-sm hover-effect">
-                                <div class="card-body">
-                                    <h5 class="card-title">Total Problematic</h5>
-                                    <h2 class="card-text" th:text="${totalProblematicVehicles}">0</h2>
-                                </div>
-                            </div>
-                        </a>
-                    </div>
-                    <div class="col">
-                        <a href="/fleet?filter=admin-legal-issues" class="text-decoration-none">
-                            <div class="card text-white bg-danger mb-3 shadow-sm hover-effect">
-                                <div class="card-body">
-                                    <h5 class="card-title">Admin / Legal Issues</h5>
-                                    <h2 class="card-text" th:text="${vehiclesWithAdminLegalIssues}">0</h2>
-                                </div>
-                            </div>
-                        </a>
-                    </div>
-                    <div class="col">
-                        <a href="/fleet?filter=maintenance-issues" class="text-decoration-none">
-                            <div class="card text-white bg-warning mb-3 shadow-sm hover-effect">
-                                <div class="card-body">
-                                    <h5 class="card-title">Maintenance Issues</h5>
-                                    <h2 class="card-text" th:text="${vehiclesWithOperationalMaintenanceIssues}">0</h2>
-                                </div>
-                            </div>
-                        </a>
-                    </div>
-                    <div class="col">
-                        <a href="/fleet?filter=expiring-registrations" class="text-decoration-none">
-                            <div class="card text-white bg-dark mb-3 shadow-sm hover-effect">
-                                <div class="card-body">
-                                    <h5 class="card-title">Expiring Registrations</h5>
-                                    <h2 class="card-text" th:text="${expiringRegistrations}">0</h2>
-                                </div>
-                            </div>
-                        </a>
-                    </div>
-                    <div class="col">
-                        <a href="/fleet?filter=sold" class="text-decoration-none">
-                            <div class="card text-white bg-success mb-3 shadow-sm hover-effect">
-                                <div class="card-body">
-                                    <h5 class="card-title">Sold</h5>
-                                    <h2 class="card-text" th:text="${soldVehicles}">0</h2>
-                                </div>
-                            </div>
-                        </a>
-                    </div>
-                    <div class="col">
-                        <a href="/fleet?filter=decommissioned" class="text-decoration-none">
-                            <div class="card text-white bg-info mb-3 shadow-sm hover-effect">
-                                <div class="card-body">
-                                    <h5 class="card-title">Decommissioned</h5>
-                                    <h2 class="card-text" th:text="${disposedOrDecommissionedVehicles}">0</h2>
-                                </div>
-                            </div>
-                        </a>
-                    </div>
-                </div>
+                </section>
 
                 <div class="card shadow-sm mb-5">
                     <a data-bs-toggle="collapse" href="#collapseFleet" role="button" aria-expanded="true"
                         class="text-decoration-none">
                         <div
                             class="card-header bg-white border-bottom-0 pt-3 pb-3 d-flex justify-content-between align-items-center">
-                            <h5 class="card-title text-danger fw-bold mb-0">Action Required: Problematic Vehicles
+                            <h5 class="card-title text-danger fw-bold mb-0">Vehicles That Require Attention</h5>
                             </h5>
                             <span class="text-muted">&#9660;</span>
                         </div>
                     </a>
                     <div class="collapse show" id="collapseFleet">
                         <div class="card-body pt-0">
-                            <table id="fleetActionRequiredTable"
-                                class="table table-hover table-striped w-100 border-top">
-                                <thead class="table-dark">
-                                    <tr>
-                                        <th>Vehicle ID</th>
-                                        <th>Plate No.</th>
-                                        <th>Type</th>
-                                        <th>Make & Model</th>
-                                        <th>Year</th>
-                                        <th>Accountable Owner</th>
-                                        <th>Reg. Expiry</th>
-                                        <th>Status Overview</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr th:each="vehicle : ${problematicVehicles}">
-                                        <td class="fw-bold">
-                                            <a href="#" class="fleet-detail-link text-decoration-none"
-                                                th:data-vehicle-id="${vehicle.vehicleID}"
-                                                th:text="${vehicle.vehicleID}"></a>
-                                        </td>
-                                        <td class="fw-bold">
-                                            <a href="#" class="fleet-detail-link text-decoration-none"
-                                                th:if="${vehicle.plateNumber != null and !#strings.isEmpty(vehicle.plateNumber)}"
-                                                th:data-vehicle-id="${vehicle.vehicleID}"
-                                                th:text="${vehicle.plateNumber}"></a>
-                                            <span
-                                                th:if="${vehicle.plateNumber == null or #strings.isEmpty(vehicle.plateNumber)}">N/A</span>
-                                        </td>
-                                        <td th:text="${vehicle.vehicleType}"></td>
-                                        <td th:text="${vehicle.make + ' ' + vehicle.model}"></td>
-                                        <td th:text="${vehicle.manufactureYear}"></td>
-                                        <td
-                                            th:text="${vehicle.assignedDriverID != null ? employeeMap[vehicle.assignedDriverID] : 'Unassigned'}">
-                                        </td>
-                                        <td th:text="${vehicle.registrationExpiry}"></td>
-                                        <td>
-                                            <div class="d-flex flex-column gap-1 small">
-                                                <span
-                                                    th:if="${vehicle.adminLegaltionalStatus != null and !#strings.isEmpty(vehicle.adminLegaltionalStatus)}"
-                                                    th:class="${vehicle.adminLegaltionalStatus == 'Registration Expired' or vehicle.adminLegaltionalStatus == 'Impounded' ? 'badge bg-danger' : ((vehicle.adminLegaltionalStatus == 'Active / Registered') ? 'badge bg-success' : 'badge bg-dark')}"
-                                                    th:title="${vehicle.adminLegaltionalStatus == 'Active / Registered' ? 'Legally compliant for road use.' : (vehicle.adminLegaltionalStatus == 'Registration Expired' ? 'Registration renewal is required.' : (vehicle.adminLegaltionalStatus == 'Impounded' ? 'Vehicle is impounded and cannot operate.' : (vehicle.adminLegaltionalStatus == 'Decommissioned' ? 'Removed from active fleet.' : (vehicle.adminLegaltionalStatus == 'Disposed' ? 'Disposed from fleet records.' : (vehicle.adminLegaltionalStatus == 'Sold' ? 'Sold and closed out.' : 'Administrative and legal status.')))))}"
-                                                    data-bs-toggle="tooltip" data-bs-placement="top"
-                                                    th:text="${'Legal: ' + vehicle.adminLegaltionalStatus}"></span>
-                                                <span
-                                                    th:if="${vehicle.operationalStatus != null and !#strings.isEmpty(vehicle.operationalStatus)}"
-                                                    th:class="${vehicle.operationalStatus == 'Available/Idle' ? 'badge bg-primary' : ((vehicle.operationalStatus == 'Dispatched/In Transit') ? 'badge bg-success' : ((vehicle.operationalStatus == 'Reserved') ? 'badge bg-warning text-dark' : ((vehicle.operationalStatus == 'Grounded' or vehicle.operationalStatus == 'Missing/Stolen' or vehicle.operationalStatus == 'Slated for Disposal') ? 'badge bg-danger' : 'badge bg-dark')))}"
-                                                    th:title="${vehicle.operationalStatus == 'Available/Idle' ? 'Ready for dispatch.' : (vehicle.operationalStatus == 'Dispatched/In Transit' ? 'Currently deployed for operations.' : (vehicle.operationalStatus == 'Reserved' ? 'Reserved and awaiting dispatch.' : (vehicle.operationalStatus == 'Grounded' ? 'Not allowed to operate pending action.' : (vehicle.operationalStatus == 'Missing/Stolen' ? 'Missing or reported stolen.' : (vehicle.operationalStatus == 'Slated for Disposal' ? 'Queued for retirement/disposal.' : 'Operational status.')))))}"
-                                                    data-bs-toggle="tooltip" data-bs-placement="top"
-                                                    th:text="${'Operational: ' + vehicle.operationalStatus}"></span>
-                                                <span
-                                                    th:if="${vehicle.maintenanceStatus != null and !#strings.isEmpty(vehicle.maintenanceStatus)}"
-                                                    th:class="${vehicle.maintenanceStatus == 'Roadworthy' ? 'badge bg-success' : ((vehicle.maintenanceStatus == 'Scheduled Maintenance') ? 'badge bg-warning text-dark' : ((vehicle.maintenanceStatus == 'Under Repair' or vehicle.maintenanceStatus == 'Awaiting Parts') ? 'badge bg-secondary' : ((vehicle.maintenanceStatus == 'Beyond Economic Repair (BER)') ? 'badge bg-danger' : 'badge bg-dark')))}"
-                                                    th:title="${vehicle.maintenanceStatus == 'Roadworthy' ? 'Vehicle is fit for operation.' : (vehicle.maintenanceStatus == 'Scheduled Maintenance' ? 'Scheduled maintenance is pending.' : (vehicle.maintenanceStatus == 'Under Repair' ? 'Actively being repaired.' : (vehicle.maintenanceStatus == 'Awaiting Parts' ? 'Repair is waiting for parts.' : (vehicle.maintenanceStatus == 'Beyond Economic Repair (BER)' ? 'Repair is no longer economical.' : 'Maintenance health status.'))))}"
-                                                    data-bs-toggle="tooltip" data-bs-placement="top"
-                                                    th:text="${'Condition: ' + vehicle.maintenanceStatus}"></span>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                            <div
+                                th:replace="~{fragments/fleet-table :: fleetTable('fleetActionRequiredTable', ${problematicVehicles}, false)}">
+                            </div>
                         </div>
                     </div>
                 </div>

@@ -24,7 +24,7 @@ public class FleetService {
                 .orElseThrow(() -> new IllegalArgumentException("Vehicle not found."));
 
         vehicle.setAssignedDriverID(employeeId);
-        vehicle.setOperationalStatus("Dispatched/In Transit");
+        vehicle.setOperationalStatus("Dispatched");
         fleetRepo.save(vehicle);
         auditService.logAssignment(vehicle.getPlateNumber(), employeeId, "Vehicle Checkout", notes);
     }
@@ -44,6 +44,67 @@ public class FleetService {
         } else {
             auditService.logLifecycleEvent(vehicle.getPlateNumber(), "MOTORPOOL", "Vehicle Returned", notes);
         }
+    }
+
+    @Transactional
+    public void markVehicleUnderMaintenance(Integer vehicleId, String notes) {
+        FleetVehicle vehicle = fleetRepo.findById(vehicleId)
+                .orElseThrow(() -> new IllegalArgumentException("Vehicle not found."));
+
+        vehicle.setOperationalStatus("Grounded");
+        vehicle.setMaintenanceStatus("Under Repair");
+        fleetRepo.save(vehicle);
+        auditService.logLifecycleEvent(vehicle.getPlateNumber(), "SYSTEM", "Marked Under Maintenance", notes);
+    }
+
+    @Transactional
+    public void markVehicleImpounded(Integer vehicleId, String notes) {
+        FleetVehicle vehicle = fleetRepo.findById(vehicleId)
+                .orElseThrow(() -> new IllegalArgumentException("Vehicle not found."));
+
+        vehicle.setAssignedDriverID(null);
+        vehicle.setAdminLegaltionalStatus("Impounded");
+        vehicle.setOperationalStatus("Grounded");
+        vehicle.setMaintenanceStatus("Not Applicable");
+        fleetRepo.save(vehicle);
+        auditService.logLifecycleEvent(vehicle.getPlateNumber(), "SYSTEM", "Marked Impounded", notes);
+    }
+
+    @Transactional
+    public void markVehicleBeyondEconomicRepair(Integer vehicleId, String notes) {
+        FleetVehicle vehicle = fleetRepo.findById(vehicleId)
+                .orElseThrow(() -> new IllegalArgumentException("Vehicle not found."));
+
+        vehicle.setOperationalStatus("Slated for Disposal");
+        vehicle.setMaintenanceStatus("Beyond Economic Repair (BER)");
+        fleetRepo.save(vehicle);
+        auditService.logLifecycleEvent(vehicle.getPlateNumber(), "SYSTEM", "Marked BER", notes);
+    }
+
+    @Transactional
+    public void markVehicleStolen(Integer vehicleId, String notes) {
+        FleetVehicle vehicle = fleetRepo.findById(vehicleId)
+                .orElseThrow(() -> new IllegalArgumentException("Vehicle not found."));
+
+        vehicle.setAssignedDriverID(null);
+        vehicle.setAdminLegaltionalStatus("Under Investigation");
+        vehicle.setOperationalStatus("Stolen");
+        vehicle.setMaintenanceStatus("Not Applicable");
+        fleetRepo.save(vehicle);
+        auditService.logLifecycleEvent(vehicle.getPlateNumber(), "SYSTEM", "Marked Stolen", notes);
+    }
+
+    @Transactional
+    public void markVehicleMissing(Integer vehicleId, String notes) {
+        FleetVehicle vehicle = fleetRepo.findById(vehicleId)
+                .orElseThrow(() -> new IllegalArgumentException("Vehicle not found."));
+
+        vehicle.setAssignedDriverID(null);
+        vehicle.setAdminLegaltionalStatus("Under Investigation");
+        vehicle.setOperationalStatus("Missing");
+        vehicle.setMaintenanceStatus("Not Applicable");
+        fleetRepo.save(vehicle);
+        auditService.logLifecycleEvent(vehicle.getPlateNumber(), "SYSTEM", "Marked Missing", notes);
     }
 
     @Transactional

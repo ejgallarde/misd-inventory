@@ -2,6 +2,7 @@ window.MISDCommon = (function (jqueryGlobal) {
     const $ = jqueryGlobal || null;
     const selectedFilesByInput = new WeakMap();
     let assetTableInteractionsInitialized = false;
+    let fleetTableInteractionsInitialized = false;
 
     function applyTheme(theme, toggleButton, storageKey = 'misd-theme') {
         document.body.setAttribute('data-theme', theme);
@@ -68,6 +69,7 @@ window.MISDCommon = (function (jqueryGlobal) {
         }
 
         initAssetTableInteractions();
+        initFleetTableInteractions();
     }
 
     function formatCatalogSpecificationValue(value) {
@@ -106,6 +108,73 @@ window.MISDCommon = (function (jqueryGlobal) {
         return rows ? `<ul class="list-unstyled mb-0 mt-2">${rows}</ul>` : '<div class="text-muted">N/A</div>';
     }
 
+    function formatPesoCurrency(value) {
+        if (value == null || value === '' || value === 'N/A') {
+            return 'N/A';
+        }
+
+        const numericValue = typeof value === 'string'
+            ? Number.parseFloat(value.replace(/[^0-9.-]/g, ''))
+            : Number.parseFloat(value);
+        if (Number.isNaN(numericValue)) {
+            return 'N/A';
+        }
+
+        return new Intl.NumberFormat('en-PH', {
+            style: 'currency',
+            currency: 'PHP',
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }).format(numericValue);
+    }
+
+    function computeStraightLineValuation(originalValue, referenceValue, usefulLifeYears = 10, residualRate = 0.10) {
+        if (originalValue == null || referenceValue == null || referenceValue === '') {
+            return null;
+        }
+
+        const baseValue = typeof originalValue === 'string'
+            ? Number.parseFloat(originalValue.replace(/[^0-9.-]/g, ''))
+            : Number.parseFloat(originalValue);
+        if (Number.isNaN(baseValue) || baseValue <= 0) {
+            return null;
+        }
+
+        let referenceYear = null;
+        if (typeof referenceValue === 'number' && Number.isFinite(referenceValue)) {
+            referenceYear = referenceValue;
+        } else if (/^\d{4}$/.test(String(referenceValue).trim())) {
+            referenceYear = Number.parseInt(referenceValue, 10);
+        } else {
+            const parsedDate = new Date(referenceValue);
+            if (!Number.isNaN(parsedDate.getTime())) {
+                referenceYear = parsedDate.getFullYear();
+            }
+        }
+
+        if (!referenceYear || referenceYear <= 0) {
+            return null;
+        }
+
+        const yearsUsed = Math.max(0, new Date().getFullYear() - referenceYear);
+        const depreciationRate = (1 - residualRate) / usefulLifeYears;
+        const depreciationFraction = Math.min(depreciationRate * yearsUsed, 1 - residualRate);
+        return baseValue * (1 - depreciationFraction);
+    }
+
+    function renderFleetTypePopover(element) {
+        const year = element.dataset.vehicleManufactureYear || 'N/A';
+        const make = element.dataset.vehicleMake || 'N/A';
+        const model = element.dataset.vehicleModel || 'N/A';
+        const fuelType = element.dataset.vehicleFuelType || 'N/A';
+        return `<div class="d-grid gap-2 small">
+            <div><span class="text-muted fw-semibold">Year:</span> ${escapeHtml(year)}</div>
+            <div><span class="text-muted fw-semibold">Make:</span> ${escapeHtml(make)}</div>
+            <div><span class="text-muted fw-semibold">Model:</span> ${escapeHtml(model)}</div>
+            <div><span class="text-muted fw-semibold">Fuel Type:</span> ${escapeHtml(fuelType)}</div>
+        </div>`;
+    }
+
     function initAssetTableInteractions() {
         if (!$ || assetTableInteractionsInitialized) {
             return;
@@ -140,6 +209,41 @@ window.MISDCommon = (function (jqueryGlobal) {
                         <div><span class="text-muted fw-semibold">Model Name:</span> ${escapeHtml(element.dataset.catalogModel || 'Unknown')}</div>
                         <div><span class="text-muted fw-semibold">Specifications:</span>${renderCatalogSpecifications(element.dataset.catalogSpecifications)}</div>
                     </div>`;
+                }
+            });
+        });
+    }
+
+    function initFleetTableInteractions() {
+        if (!$ || fleetTableInteractionsInitialized) {
+            return;
+        }
+        fleetTableInteractionsInitialized = true;
+
+        $(document).on('click', '.fleet-table-row', function (event) {
+            if ($(event.target).closest('a, button, input, select, textarea, [data-bs-toggle], .fleet-type-info, .fleet-actions-cell').length) {
+                return;
+            }
+            if (window.getSelection && window.getSelection().toString()) {
+                return;
+            }
+            $(this).find('.fleet-detail-link').first().trigger('click');
+        });
+
+        if (typeof bootstrap === 'undefined') {
+            return;
+        }
+
+        document.querySelectorAll('.fleet-type-info').forEach(function (element) {
+            bootstrap.Popover.getOrCreateInstance(element, {
+                container: 'body',
+                customClass: 'fleet-type-popover',
+                html: true,
+                placement: 'auto',
+                trigger: 'hover focus',
+                title: 'Vehicle Details',
+                content: function () {
+                    return renderFleetTypePopover(element);
                 }
             });
         });
@@ -1171,6 +1275,8 @@ window.MISDCommon = (function (jqueryGlobal) {
         buildDocumentUploadFormData: buildDocumentUploadFormData,
         resetDocumentDetailUI: resetDocumentDetailUI,
         appendDataTableStateToFormAction: appendDataTableStateToFormAction,
-        renderCatalogSpecifications: renderCatalogSpecifications
+        renderCatalogSpecifications: renderCatalogSpecifications,
+        formatPesoCurrency: formatPesoCurrency,
+        computeStraightLineValuation: computeStraightLineValuation
     };
 })(window.jQuery);
