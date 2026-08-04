@@ -492,10 +492,12 @@ window.MISDCommon = (function (jqueryGlobal) {
         return Array.from(input.files || []);
     }
 
-    function setSelectedFiles(input, files) {
+    function setSelectedFiles(input, files, options = {}) {
         if (!input) {
             return;
         }
+
+        const { syncNativeSelection = false } = options;
 
         const normalizedFiles = dedupeFiles(Array.from(files || []));
         const existingFiles = selectedFilesByInput.get(input) || [];
@@ -505,7 +507,9 @@ window.MISDCommon = (function (jqueryGlobal) {
         }
 
         selectedFilesByInput.set(input, normalizedFiles);
-        setInputFiles(input, normalizedFiles);
+        if (syncNativeSelection) {
+            setInputFiles(input, normalizedFiles);
+        }
     }
 
     function prepareMultiFileSelection(input) {
@@ -651,7 +655,7 @@ window.MISDCommon = (function (jqueryGlobal) {
                 const removeButton = item.querySelector('button');
                 removeButton.addEventListener('click', function () {
                     const updatedFiles = getSelectedFiles(input).filter((_, fileIndex) => fileIndex !== index);
-                    setSelectedFiles(input, updatedFiles);
+                    setSelectedFiles(input, updatedFiles, { syncNativeSelection: true });
                     renderDocumentPreviewBySelectors(inputSelector, previewSelector, templateSelector,
                         { mergeSelection: false, enableRemove: true });
                 });
@@ -1125,7 +1129,7 @@ window.MISDCommon = (function (jqueryGlobal) {
             };
         }
 
-        const files = Array.from(fileInput.files || []);
+        const files = getSelectedFiles(fileInput);
         if (!files.length) {
             return {
                 isValid: false,

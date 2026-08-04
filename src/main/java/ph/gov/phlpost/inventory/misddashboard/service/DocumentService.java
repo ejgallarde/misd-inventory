@@ -5,7 +5,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.multipart.MultipartFile;
 
 import ph.gov.phlpost.inventory.misddashboard.model.Document;
-import ph.gov.phlpost.inventory.misddashboard.model.FleetVehicle;
 import ph.gov.phlpost.inventory.misddashboard.model.RealEstateProperty;
 import ph.gov.phlpost.inventory.misddashboard.repository.DocumentRepository;
 import ph.gov.phlpost.inventory.misddashboard.repository.FleetVehicleRepository;
