@@ -299,9 +299,9 @@ public class DocumentService {
         }
 
         return fleetVehicleRepository.findById(vehicleId)
-                .map(FleetVehicle::getPlateNumber)
+                .map(vehicle -> vehicle.getPlateNumber())
                 .filter(value -> value != null && !value.isBlank())
-                .map(String::trim)
+                .map(value -> value.trim())
                 .orElse(normalizedReferenceId);
     }
 

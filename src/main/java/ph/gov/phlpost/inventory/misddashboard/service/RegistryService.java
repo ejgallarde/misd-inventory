@@ -49,9 +49,9 @@ public class RegistryService {
                 .sorted(Comparator
                         .comparing((EquipmentCatalog c) -> normalize(c.getManufacturer()))
                         .thenComparing(c -> normalize(c.getModelName()))
-                        .thenComparing(EquipmentCatalog::getCatalogID))
+                        .thenComparing(c -> c.getCatalogID()))
                 .collect(Collectors.toMap(
-                        EquipmentCatalog::getCatalogID,
+                        c -> c.getCatalogID(),
                         c -> c,
                         (existing, replacement) -> existing,
                         LinkedHashMap::new));
@@ -85,7 +85,7 @@ public class RegistryService {
     public Map<String, String> getPersonnelLocationMap() {
         Map<String, String> locations = personnelRepository.findAll().stream()
                 .collect(Collectors.toMap(
-                        Personnel::getEmployeeID,
+                        personnel -> personnel.getEmployeeID(),
                         personnel -> formatLocation(personnel.getBaseLocation()),
                         (existing, replacement) -> existing,
                         LinkedHashMap::new));
@@ -98,14 +98,14 @@ public class RegistryService {
         List<Personnel> personnel = personnelRepository.findAll();
         Map<String, String> employeeNames = personnel.stream()
                 .collect(Collectors.toMap(
-                        Personnel::getEmployeeID,
+                        employee -> employee.getEmployeeID(),
                         employee -> employee.getLastName() + ", " + employee.getFirstName(),
                         (existing, replacement) -> existing,
                         LinkedHashMap::new));
 
         Map<String, String> managerNames = personnel.stream()
                 .collect(Collectors.toMap(
-                        Personnel::getEmployeeID,
+                        employee -> employee.getEmployeeID(),
                         employee -> employee.getManagerID() == null || employee.getManagerID().isBlank()
                                 ? "No Manager"
                                 : employeeNames.getOrDefault(employee.getManagerID(), "Unknown Manager"),

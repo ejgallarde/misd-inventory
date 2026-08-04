@@ -292,8 +292,8 @@ public class FleetController {
     @ResponseBody
     public ResponseEntity<List<AssetHistoryService.AssetHistoryEntry>> getVehicleHistory(@PathVariable Integer id) {
         return fleetRepo.findById(id)
-                .map(FleetVehicle::getPlateNumber)
-                .map(String::trim)
+                .map(vehicle -> vehicle.getPlateNumber())
+                .map(plateNumber -> plateNumber.trim())
                 .filter(plateNumber -> !plateNumber.isEmpty())
                 .map(assetHistoryService::getHistory)
                 .map(ResponseEntity::ok)
