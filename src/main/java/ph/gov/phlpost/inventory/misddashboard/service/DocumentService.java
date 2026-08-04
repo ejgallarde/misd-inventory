@@ -12,7 +12,9 @@ import ph.gov.phlpost.inventory.misddashboard.repository.RealEstatePropertyRepos
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
@@ -29,7 +31,7 @@ public class DocumentService {
     private final long maxFileSizeBytes;
     private final int maxFileCount;
     private final Set<String> allowedExtensions;
-    private final Set<String> allowedCategories;
+    private final Map<String, Set<String>> allowedCategoriesByReferenceType;
 
     public DocumentService(DocumentStorageService storageService, DocumentRepository documentRepository,
             FleetVehicleRepository fleetVehicleRepository,
@@ -37,7 +39,9 @@ public class DocumentService {
             @Value("${document.upload.max-size-mb:15}") long maxFileSizeMb,
             @Value("${document.upload.max-files:25}") int maxFileCount,
             @Value("${document.upload.allowed-extensions:pdf,jpg,jpeg,png,doc,docx,xls,xlsx}") String allowedExtensionsConfig,
-            @Value("#{'${document.upload.categories:Delivery Receipt,Official Receipt / Invoice,Warranty Certificate,Inspection Report,Acceptance Report,Appendix 71,Serial Number Label,Photographs,Equipment Specification Sheet,Repair or Service Report,OR/CR,Insurance Policy,Deed of Sale,Title,Tax Declaration,Property Photo,Service Report}'.split(',')}") List<String> allowedCategoriesConfig) {
+            @Value("#{'${document.upload.categories.it:Official Receipt / Invoice,Inspection Report,Acceptance Report,Serial Number Label,Photographs,Equipment Specification Sheet,Repair or Service Report,Service Report}'.split(',')}") List<String> itCategoriesConfig,
+            @Value("#{'${document.upload.categories.vehicle:Delivery Receipt,Original Receipt (OR),Certificate of Registration (CR),PMS Report,Car Insurance Policy,Stencil,TPL,Driver\'s License,Warranty Certificate}'.split(',')}") List<String> vehicleCategoriesConfig,
+            @Value("#{'${document.upload.categories.property:Title,Tax Declaration,Property Photo,Deed of Sale,Appendix 71}'.split(',')}") List<String> propertyCategoriesConfig) {
         this.storageService = storageService;
         this.documentRepository = documentRepository;
         this.fleetVehicleRepository = fleetVehicleRepository;
@@ -50,10 +54,10 @@ public class DocumentService {
                 .map(token -> token.toLowerCase(Locale.ROOT))
                 .collect(Collectors.toUnmodifiableSet());
 
-        this.allowedCategories = allowedCategoriesConfig.stream()
-                .map(token -> token == null ? "" : token.trim())
-                .filter(token -> !token.isBlank())
-                .collect(Collectors.toUnmodifiableSet());
+        this.allowedCategoriesByReferenceType = new HashMap<>();
+        this.allowedCategoriesByReferenceType.put("IT_EQUIPMENT", toCategorySet(itCategoriesConfig));
+        this.allowedCategoriesByReferenceType.put("VEHICLE", toCategorySet(vehicleCategoriesConfig));
+        this.allowedCategoriesByReferenceType.put("PROPERTY", toCategorySet(propertyCategoriesConfig));
     }
 
     public boolean hasFiles(MultipartFile[] files) {
@@ -108,6 +112,8 @@ public class DocumentService {
             throw new IllegalArgumentException("Document category is required for document upload.");
         }
 
+        validateCategoryForReferenceType(referenceType, normalizedCategory);
+
         uploadAndSaveDocuments(files, referenceType, referenceId, repeatCategory(files, normalizedCategory),
                 uploadedBy);
     }
@@ -125,13 +131,15 @@ public class DocumentService {
         validateFiles(files);
         validateCategoryCount(files, documentCategories);
 
+        String normalizedReferenceType = normalizeReferenceType(referenceType);
+
         for (int index = 0; index < files.length; index++) {
             MultipartFile file = files[index];
             if (file != null && !file.isEmpty()) {
                 String category = documentCategories != null && index < documentCategories.length
                         ? documentCategories[index]
                         : null;
-                uploadAndSaveDocument(file, referenceType, referenceId, category, uploadedBy);
+                uploadAndSaveDocument(file, normalizedReferenceType, referenceId, category, uploadedBy);
             }
         }
     }
@@ -158,6 +166,8 @@ public class DocumentService {
         if (category == null) {
             throw new IllegalArgumentException("Document category is required for document upload.");
         }
+
+        validateCategoryForReferenceType(normalizedReferenceType, category);
 
         String uploadedByValue = uploadedBy == null || uploadedBy.isBlank()
                 ? "SystemUser"
@@ -242,11 +252,34 @@ public class DocumentService {
         }
 
         String normalizedCategory = documentCategory.trim();
+        return normalizedCategory;
+    }
+
+    private Set<String> getAllowedCategoriesForReferenceType(String referenceType) {
+        String normalizedReferenceType = normalizeReferenceType(referenceType);
+        Set<String> allowedCategories = allowedCategoriesByReferenceType.get(normalizedReferenceType);
+        if (allowedCategories == null || allowedCategories.isEmpty()) {
+            throw new IllegalArgumentException(
+                    "Document categories are not configured for " + normalizedReferenceType + ".");
+        }
+        return allowedCategories;
+    }
+
+    private void validateCategoryForReferenceType(String referenceType, String documentCategory) {
+        String normalizedCategory = normalizeCategory(documentCategory);
+        Set<String> allowedCategories = getAllowedCategoriesForReferenceType(referenceType);
         if (!allowedCategories.contains(normalizedCategory)) {
             throw new IllegalArgumentException(
-                    "Document category '" + normalizedCategory + "' is not allowed.");
+                    "Document category '" + normalizedCategory + "' is not allowed for "
+                            + normalizeReferenceType(referenceType) + ".");
         }
-        return normalizedCategory;
+    }
+
+    private Set<String> toCategorySet(List<String> categories) {
+        return categories.stream()
+                .map(token -> token == null ? "" : token.trim())
+                .filter(token -> !token.isBlank())
+                .collect(Collectors.toUnmodifiableSet());
     }
 
     private String resolveFilename(MultipartFile file) {

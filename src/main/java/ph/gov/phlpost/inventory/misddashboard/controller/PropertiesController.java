@@ -37,8 +37,8 @@ public class PropertiesController {
     @Value("${document.upload.allowed-extensions:pdf,jpg,jpeg,png,doc,docx,xls,xlsx}")
     private String documentUploadAllowedExtensions;
 
-    @Value("#{'${document.upload.categories}'.split(',')}")
-    private List<String> documentUploadCategories;
+    @Value("#{'${document.upload.categories.property}'.split(',')}")
+    private List<String> propertyDocumentUploadCategories;
 
     @Value("#{'${dropdown.property-tax-status-update}'.split(',')}")
     private List<String> propertyTaxStatusesUpdate;
@@ -85,7 +85,7 @@ public class PropertiesController {
         model.addAttribute("employeeMap", registryService.getEmployeeNameMap());
         model.addAttribute("documentUploadMaxSizeMb", documentUploadMaxSizeMb);
         model.addAttribute("documentUploadAllowedExtensions", documentUploadAllowedExtensions);
-        model.addAttribute("documentUploadCategories", documentUploadCategories.stream()
+        model.addAttribute("propertyDocumentUploadCategories", propertyDocumentUploadCategories.stream()
                 .sorted(String.CASE_INSENSITIVE_ORDER)
                 .toList());
         model.addAttribute("propertyTaxStatusesUpdate", propertyTaxStatusesUpdate.stream()

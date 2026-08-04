@@ -48,10 +48,34 @@ class DocumentServiceTest {
                                 documentRepository,
                                 fleetVehicleRepository,
                                 realEstatePropertyRepository,
-                                10,
+                                15,
                                 3,
                                 "pdf,jpg,jpeg,png,doc,docx,xls,xlsx",
-                                List.of("Delivery Receipt", "Inspection Report"));
+                                List.of(
+                                                "Official Receipt / Invoice",
+                                                "Inspection Report",
+                                                "Acceptance Report",
+                                                "Serial Number Label",
+                                                "Photographs",
+                                                "Equipment Specification Sheet",
+                                                "Repair or Service Report",
+                                                "Service Report"),
+                                List.of(
+                                                "Delivery Receipt",
+                                                "Original Receipt (OR)",
+                                                "Certificate of Registration (CR)",
+                                                "PMS Report",
+                                                "Car Insurance Policy",
+                                                "Stencil",
+                                                "TPL",
+                                                "Driver's License",
+                                                "Warranty Certificate"),
+                                List.of(
+                                                "Title",
+                                                "Tax Declaration",
+                                                "Property Photo",
+                                                "Deed of Sale",
+                                                "Appendix 71"));
         }
 
         @Test

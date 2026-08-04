@@ -84,8 +84,14 @@ public class MainDashboardController {
         @Value("${document.upload.allowed-extensions:pdf,jpg,jpeg,png,doc,docx,xls,xlsx}")
         private String documentUploadAllowedExtensions;
 
-        @Value("#{'${document.upload.categories}'.split(',')}")
-        private List<String> documentUploadCategories;
+        @Value("#{'${document.upload.categories.it}'.split(',')}")
+        private List<String> itDocumentUploadCategories;
+
+        @Value("#{'${document.upload.categories.vehicle}'.split(',')}")
+        private List<String> vehicleDocumentUploadCategories;
+
+        @Value("#{'${document.upload.categories.property}'.split(',')}")
+        private List<String> propertyDocumentUploadCategories;
 
         @Value("#{'${dropdown.asset-deployment-statuses}'.split(',')}")
         private List<String> assetDeploymentStatusOptions;
@@ -209,7 +215,13 @@ public class MainDashboardController {
                                 .toList());
                 model.addAttribute("documentUploadMaxSizeMb", documentUploadMaxSizeMb);
                 model.addAttribute("documentUploadAllowedExtensions", documentUploadAllowedExtensions);
-                model.addAttribute("documentUploadCategories", documentUploadCategories.stream()
+                model.addAttribute("itDocumentUploadCategories", itDocumentUploadCategories.stream()
+                                .sorted(String.CASE_INSENSITIVE_ORDER)
+                                .toList());
+                model.addAttribute("vehicleDocumentUploadCategories", vehicleDocumentUploadCategories.stream()
+                                .sorted(String.CASE_INSENSITIVE_ORDER)
+                                .toList());
+                model.addAttribute("propertyDocumentUploadCategories", propertyDocumentUploadCategories.stream()
                                 .sorted(String.CASE_INSENSITIVE_ORDER)
                                 .toList());
                 model.addAttribute("assetDeploymentStatusOptions", assetDeploymentStatusOptions);

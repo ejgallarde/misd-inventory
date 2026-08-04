@@ -194,7 +194,7 @@
                             accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx">
                         <select id="fleetDetailDocumentCategoryTemplate" class="d-none">
                             <option value="" selected disabled>Select a document category</option>
-                            <option th:each="documentCategory : ${documentUploadCategories}"
+                            <option th:each="documentCategory : ${vehicleDocumentUploadCategories}"
                                 th:value="${documentCategory}" th:text="${documentCategory}"></option>
                         </select>
                         <ul id="fleetDetailDocumentPreview"

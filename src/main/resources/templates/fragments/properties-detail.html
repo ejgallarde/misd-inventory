@@ -179,8 +179,8 @@
                         accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx">
                     <select id="propertyDetailDocumentCategoryTemplate" class="d-none">
                         <option value="" selected disabled>Select a document category</option>
-                        <option th:each="documentCategory : ${documentUploadCategories}" th:value="${documentCategory}"
-                            th:text="${documentCategory}"></option>
+                        <option th:each="documentCategory : ${propertyDocumentUploadCategories}"
+                            th:value="${documentCategory}" th:text="${documentCategory}"></option>
                     </select>
                     <ul id="propertyDetailDocumentPreview"
                         class="list-group list-group-flush border rounded mt-2 small"></ul>

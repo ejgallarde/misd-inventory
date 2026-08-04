@@ -36,8 +36,8 @@ public class FleetController {
     @Value("${document.upload.allowed-extensions:pdf,jpg,jpeg,png,doc,docx,xls,xlsx}")
     private String documentUploadAllowedExtensions;
 
-    @Value("#{'${document.upload.categories}'.split(',')}")
-    private List<String> documentUploadCategories;
+    @Value("#{'${document.upload.categories.vehicle}'.split(',')}")
+    private List<String> vehicleDocumentUploadCategories;
 
     @Value("#{'${dropdown.fleet-admin-legal-statuses}'.split(',')}")
     private List<String> fleetAdminLegalStatuses;
@@ -73,7 +73,7 @@ public class FleetController {
         model.addAttribute("managerNameMap", registryService.getManagerNameMap());
         model.addAttribute("documentUploadMaxSizeMb", documentUploadMaxSizeMb);
         model.addAttribute("documentUploadAllowedExtensions", documentUploadAllowedExtensions);
-        model.addAttribute("documentUploadCategories", documentUploadCategories.stream()
+        model.addAttribute("vehicleDocumentUploadCategories", vehicleDocumentUploadCategories.stream()
                 .sorted(String.CASE_INSENSITIVE_ORDER)
                 .toList());
         model.addAttribute("fleetAdminLegalStatuses", fleetAdminLegalStatuses);

@@ -51,8 +51,8 @@ public class ITAssetController {
     @Value("${document.upload.allowed-extensions:pdf,jpg,jpeg,png,doc,docx,xls,xlsx}")
     private String documentUploadAllowedExtensions;
 
-    @Value("#{'${document.upload.categories}'.split(',')}")
-    private List<String> documentUploadCategories;
+    @Value("#{'${document.upload.categories.it}'.split(',')}")
+    private List<String> itDocumentUploadCategories;
 
     @Value("${asset.workflow.maintenance-technician-job-title:Computer Maintenance Technologist}")
     private String maintenanceTechnicianJobTitle;
@@ -96,7 +96,7 @@ public class ITAssetController {
         model.addAttribute("managerNameMap", registryService.getManagerNameMap());
         model.addAttribute("documentUploadMaxSizeMb", documentUploadMaxSizeMb);
         model.addAttribute("documentUploadAllowedExtensions", documentUploadAllowedExtensions);
-        model.addAttribute("documentUploadCategories", documentUploadCategories.stream()
+        model.addAttribute("itDocumentUploadCategories", itDocumentUploadCategories.stream()
                 .sorted(String.CASE_INSENSITIVE_ORDER)
                 .toList());
         model.addAttribute("maintenanceTechnicianJobTitle", maintenanceTechnicianJobTitle);

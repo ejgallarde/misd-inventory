@@ -708,8 +708,8 @@
                     <div class="form-text">Select one category for each file before upload.</div>
                     <select id="receiveDocumentCategoryTemplate" class="d-none">
                         <option value="" selected disabled>Select a document category</option>
-                        <option th:each="documentCategory : ${documentUploadCategories}" th:value="${documentCategory}"
-                            th:text="${documentCategory}"></option>
+                        <option th:each="documentCategory : ${itDocumentUploadCategories}"
+                            th:value="${documentCategory}" th:text="${documentCategory}"></option>
                     </select>
                     <ul id="receiveDocumentPreview" class="list-group list-group-flush border rounded mt-2 small"
                         aria-live="polite"></ul>
@@ -831,8 +831,8 @@
                     <div class="form-text">Select one category for each file before upload.</div>
                     <select id="vehicleDocumentCategoryTemplate" class="d-none">
                         <option value="" selected disabled>Select a document category</option>
-                        <option th:each="documentCategory : ${documentUploadCategories}" th:value="${documentCategory}"
-                            th:text="${documentCategory}"></option>
+                        <option th:each="documentCategory : ${vehicleDocumentUploadCategories}"
+                            th:value="${documentCategory}" th:text="${documentCategory}"></option>
                     </select>
                     <div class="form-text">Allowed: <span th:text="${documentUploadAllowedExtensions}"></span>. Max
                         size: <span th:text="${documentUploadMaxSizeMb}"></span> MB each.</div>
@@ -1008,8 +1008,8 @@
                     <div class="form-text">Select one category for each file before upload.</div>
                     <select id="propertyDocumentCategoryTemplate" class="d-none">
                         <option value="" selected disabled>Select a document category</option>
-                        <option th:each="documentCategory : ${documentUploadCategories}" th:value="${documentCategory}"
-                            th:text="${documentCategory}"></option>
+                        <option th:each="documentCategory : ${propertyDocumentUploadCategories}"
+                            th:value="${documentCategory}" th:text="${documentCategory}"></option>
                     </select>
                     <div class="form-text">Allowed: <span th:text="${documentUploadAllowedExtensions}"></span>. Max
                         size: <span th:text="${documentUploadMaxSizeMb}"></span> MB each.</div>
