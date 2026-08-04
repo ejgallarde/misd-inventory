@@ -255,7 +255,7 @@ body[data-theme="dark"] .navbar-dark .dropdown-toggle {
 }
 
 .asset-portfolio {
-    padding: 1.25rem;
+    padding: 0.85rem 1rem;
     border: 1px solid var(--app-border);
     border-radius: 8px;
     background: var(--app-surface);
@@ -265,21 +265,33 @@ body[data-theme="dark"] .navbar-dark .dropdown-toggle {
 .asset-portfolio-legend,
 .asset-stage-label {
     color: var(--app-text-muted);
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     font-weight: 700;
     text-transform: uppercase;
 }
 
+/* Portfolio tree: the "Total" card sits on the left with a fixed width, and
+   its breakdown reveals to the right (horizontally) instead of pushing page
+   content downward. Nested toggles (e.g. Current Inventory) follow the same
+   left-card / right-reveal pattern. */
 .asset-portfolio-tree {
     display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 0.6rem;
+}
+
+.asset-portfolio-tree>.asset-metric-row,
+.asset-current-inventory-branch>.asset-metric-row {
+    flex: 0 0 auto;
+    width: 210px;
 }
 
 .asset-metric-row {
     display: flex;
     align-items: stretch;
-    gap: 0.5rem;
+    gap: 0.4rem;
 }
 
 .asset-metric-row .asset-metric {
@@ -292,7 +304,7 @@ body[data-theme="dark"] .navbar-dark .dropdown-toggle {
     align-items: center;
     justify-content: center;
     flex: 0 0 auto;
-    width: 44px;
+    width: 32px;
     border: 1px solid var(--app-border);
     border-radius: 6px;
     background: var(--app-surface-muted);
@@ -310,45 +322,57 @@ body[data-theme="dark"] .navbar-dark .dropdown-toggle {
 
 .asset-portfolio-toggle-icon {
     display: inline-block;
-    font-size: 1rem;
+    font-size: 0.9rem;
     line-height: 1;
     transition: transform 0.2s ease;
 }
 
+/* Arrow flips to point back (collapse direction) once the horizontal reveal is open. */
 .asset-portfolio-toggle[aria-expanded="true"] .asset-portfolio-toggle-icon {
-    transform: rotate(90deg);
+    transform: rotate(180deg);
+}
+
+/* Horizontal collapse: Bootstrap animates width instead of height for
+   elements carrying both .collapse and .collapse-horizontal. These act as
+   flex items that grow to the right of their trigger card. */
+.asset-portfolio-tree>.collapse,
+.asset-current-inventory-branch>.collapse {
+    flex: 1 1 auto;
+    min-width: 0;
 }
 
 .asset-portfolio-branch {
     display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
+    align-items: flex-start;
+    gap: 0.6rem;
 }
 
 .asset-portfolio-branch-row {
     display: flex;
     flex-wrap: wrap;
     align-items: flex-start;
-    gap: 0.75rem;
+    gap: 0.6rem;
 }
 
 .asset-portfolio-branch-row>* {
-    flex: 1 1 0;
-    min-width: 220px;
+    flex: 0 0 auto;
+    min-width: 190px;
 }
 
 .asset-current-inventory-branch {
     display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-    padding: 0.75rem;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 0.6rem;
+    padding: 0.5rem;
     border: 1px solid color-mix(in srgb, #198754 45%, var(--app-border));
     border-radius: 8px;
     background: color-mix(in srgb, #198754 5%, var(--app-surface));
 }
 
 .asset-portfolio-branch-operations {
-    padding: 0.75rem;
+    padding: 0.5rem;
     border: 1px dashed color-mix(in srgb, #198754 45%, var(--app-border));
     border-radius: 6px;
     background: var(--app-surface);
@@ -357,12 +381,13 @@ body[data-theme="dark"] .navbar-dark .dropdown-toggle {
 .asset-operational-cards {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.75rem;
-    margin-top: 0.5rem;
+    gap: 0.5rem;
+    margin-top: 0;
 }
 
 .asset-operational-cards>* {
-    flex: 1 1 0;
+    flex: 0 0 auto;
+    width: 160px;
     min-width: 0;
 }
 
@@ -370,12 +395,12 @@ body[data-theme="dark"] .navbar-dark .dropdown-toggle {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     grid-template-rows: auto auto;
-    gap: 0.25rem 0.75rem;
+    gap: 0.15rem 0.5rem;
     align-items: center;
-    min-height: 92px;
-    padding: 1rem;
+    min-height: 68px;
+    padding: 0.6rem 0.7rem;
     border: 1px solid var(--app-border);
-    border-left: 5px solid var(--metric-accent, var(--app-accent));
+    border-left: 4px solid var(--metric-accent, var(--app-accent));
     border-radius: 6px;
     background: var(--app-surface-muted);
     color: var(--app-text);
@@ -392,26 +417,26 @@ body[data-theme="dark"] .navbar-dark .dropdown-toggle {
 }
 
 .asset-metric-label {
-    font-size: 0.9rem;
+    font-size: 0.78rem;
     font-weight: 700;
 }
 
 .asset-metric-value {
     grid-row: 1 / 3;
     grid-column: 2;
-    font-size: 1.75rem;
+    font-size: 1.35rem;
     line-height: 1;
 }
 
 .asset-metric-context {
     color: var(--app-text-muted);
-    font-size: 0.75rem;
+    font-size: 0.66rem;
+    line-height: 1.15;
 }
 
 .asset-metric-total,
 .asset-metric-decommissioned {
-    min-height: 92px;
-    height: 92px;
+    min-height: 68px;
 }
 
 .asset-metric-total {
@@ -436,9 +461,27 @@ body[data-theme="dark"] .navbar-dark .dropdown-toggle {
     --metric-accent: #dc3545;
 }
 
+@media (max-width: 991.98px) {
+    .asset-portfolio-tree>.asset-metric-row,
+    .asset-current-inventory-branch>.asset-metric-row {
+        width: 100%;
+    }
+
+    .asset-portfolio-tree,
+    .asset-portfolio-branch,
+    .asset-current-inventory-branch {
+        flex-direction: column;
+    }
+
+    .asset-portfolio-tree>.collapse,
+    .asset-current-inventory-branch>.collapse {
+        width: 100% !important;
+    }
+}
+
 @media (max-width: 767.98px) {
     .asset-portfolio {
-        padding: 1rem;
+        padding: 0.75rem;
     }
 
     .asset-metric-row {
@@ -452,6 +495,7 @@ body[data-theme="dark"] .navbar-dark .dropdown-toggle {
 
     .asset-operational-cards>* {
         flex: 1 1 100%;
+        width: auto;
     }
 
 }
