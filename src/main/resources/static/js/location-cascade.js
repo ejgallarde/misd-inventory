@@ -60,15 +60,45 @@
         });
     }
 
+    function normalizeOptionList(result) {
+        const rawList = Array.isArray(result)
+            ? result
+            : (result && Array.isArray(result.data) ? result.data : []);
+
+        return rawList.map(function (item) {
+            if (typeof item === 'string') {
+                return {
+                    code: item,
+                    name: item,
+                    zipCode: ''
+                };
+            }
+
+            return {
+                code: item?.code || item?.Code || item?.provinceCode || item?.cityMunicipalityCode || item?.barangayCode || item?.name || item?.Name || '',
+                name: item?.name || item?.Name || item?.provinceName || item?.cityMunicipalityName || item?.barangayName || '',
+                zipCode: item?.zipCode || item?.ZipCode || ''
+            };
+        }).filter(function (item) {
+            return !!item.name;
+        });
+    }
+
     function fetchWithCache(cacheKey, url, params) {
         const cached = readCached(cacheKey);
-        if (Array.isArray(cached)) {
-            return Promise.resolve(cached);
+        if (Array.isArray(cached) && cached.length > 0) {
+            const normalizedCached = normalizeOptionList(cached);
+            if (normalizedCached.length > 0) {
+                writeCached(cacheKey, normalizedCached);
+                return Promise.resolve(normalizedCached);
+            }
         }
 
         return $.get(url, params || {}).then(function (result) {
-            const normalized = Array.isArray(result) ? result : [];
-            writeCached(cacheKey, normalized);
+            const normalized = normalizeOptionList(result);
+            if (normalized.length > 0) {
+                writeCached(cacheKey, normalized);
+            }
             return normalized;
         });
     }

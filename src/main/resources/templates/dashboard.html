@@ -942,10 +942,11 @@
                 <div class="row mb-3">
                     <div class="col-6"><label class="form-label fw-bold">Acquisition Date</label><input type="date"
                             class="form-control" name="acquisitionDate"></div>
-                    <div class="col-6">
+                    <div class="col-6" id="propertyLegalTitlingStatusGroup">
                         <label class="form-label fw-bold">Legal &amp; Titling Status <span class="required-indicator"
                                 aria-hidden="true">*</span></label>
-                        <select class="form-select" name="legalTitlingStatus" required>
+                        <select class="form-select" id="propertyLegalTitlingStatusInput" name="legalTitlingStatus"
+                            required>
                             <option value="" selected disabled>Select legal/titling status</option>
                             <option th:each="status : ${propertyLegalTitlingStatuses}" th:value="${status}"
                                 th:text="${status}"></option>
@@ -966,23 +967,26 @@
                         <label class="form-label fw-bold d-flex align-items-center gap-1">
                             Condition Status
                             <span
-                                title="Excellent: New or recently renovated; requires routine maintenance only.<br>Good: Shows normal wear and tear but is fully functional.<br>Fair: Requires minor repairs or component replacements (e.g., new roof, plumbing fixes).<br>Poor: Requires major structural intervention to remain safe.<br>Condemned: Unsafe for occupancy and slated for demolition."
+                                title="Usable - No Known Issues: Fully usable with no known blocking condition.<br>Usable - Minor Repair Needed: Usable but needs minor corrective action.<br>Usable with Restrictions - Informal Settler Encroachment: Can be used with operational/legal limits due to encroachment.<br>Usable with Restrictions - Boundary or Right-of-Way Issue: Usable but constrained by access/boundary issues.<br>Not Usable - Informal Settler Occupation: Currently not usable due to occupation.<br>Not Usable - Major Structural Risk: Unsafe major risk or severe deterioration.<br>Not Usable - Under Legal Dispute: Use blocked by active legal dispute.<br>Not Usable - Environmental or Geohazard Risk: Use blocked by environmental/geohazard risk."
                                 data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="top" class="text-muted"
                                 style="cursor: help;">&#9432;</span>
                             <span class="required-indicator" aria-hidden="true">*</span>
                         </label>
-                        <select class="form-select" name="conditionStatus" required>
+                        <select class="form-select" id="propertyConditionStatusInput" name="conditionStatus" required>
                             <option value="" selected disabled>Select condition status</option>
                             <option th:each="status : ${propertyConditionStatuses}" th:value="${status}"
+                                th:attr="data-land-only=${#strings.contains(status, 'Encroachment') or #strings.contains(status, 'Right-of-Way')}"
                                 th:text="${status}"></option>
                         </select>
                     </div>
                 </div>
                 <div class="row mb-3">
-                    <div class="col-6"><label class="form-label fw-bold">Lot Area (sqm)</label><input type="number"
-                            step="0.01" class="form-control" name="lotAreaSqm"></div>
-                    <div class="col-6"><label class="form-label fw-bold">Floor Area (sqm)</label><input type="number"
-                            step="0.01" class="form-control" name="floorAreaSqm"></div>
+                    <div class="col-6" id="propertyLotAreaGroup"><label class="form-label fw-bold">Lot Area
+                            (sqm)</label><input type="number" step="0.01" class="form-control" id="propertyLotAreaInput"
+                            name="lotAreaSqm"></div>
+                    <div class="col-6" id="propertyFloorAreaGroup"><label class="form-label fw-bold">Floor Area
+                            (sqm)</label><input type="number" step="0.01" class="form-control"
+                            id="propertyFloorAreaInput" name="floorAreaSqm"></div>
                 </div>
                 <div class="row mb-4">
                     <div class="col-6"><label class="form-label fw-bold">Assessed Value</label><input type="number"

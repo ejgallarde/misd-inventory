@@ -168,7 +168,9 @@ $(document).ready(function () {
         };
     }
 
-    const hasPropertiesRegistry = $('#propertiesTable').length > 0;
+    const hasLandRegistry = $('#landPropertiesTable').length > 0;
+    const hasBuildingRegistry = $('#buildingFacilitiesTable').length > 0;
+    const hasPropertiesRegistry = hasLandRegistry || hasBuildingRegistry;
 
     if (hasPropertiesRegistry) {
         MISDCommon.initPageUI({
@@ -184,21 +186,32 @@ $(document).ready(function () {
 
     setPropertyEditMode(false);
 
-    if (hasPropertiesRegistry) {
-        const propertiesTable = $('#propertiesTable').DataTable(MISDCommon.buildStandardDataTableConfig({
+    function initPropertiesDataTable(selector, clearButtonId) {
+        if (!$(selector).length) {
+            return null;
+        }
+
+        const table = $(selector).DataTable(MISDCommon.buildStandardDataTableConfig({
             pageLength: 10,
             lengthMenu: [[10, 25, 50, -1], [10, 25, 50, 'All']],
             order: [[1, 'asc']]
         }));
 
         MISDCommon.attachDataTableClearButton({
-            filterContainerSelector: '#propertiesTable_filter',
-            buttonId: 'clearPropertyFiltersBtn',
+            filterContainerSelector: `${selector}_filter`,
+            buttonId: clearButtonId,
             ariaLabel: 'Clear properties table search',
             onClear: function () {
-                MISDCommon.clearDataTableFilters(propertiesTable, { stateKey: 'propertiesTableState' });
+                MISDCommon.clearDataTableFilters(table, { stateKey: `${selector}State` });
             }
         });
+
+        return table;
+    }
+
+    if (hasPropertiesRegistry) {
+        initPropertiesDataTable('#landPropertiesTable', 'clearLandPropertyFiltersBtn');
+        initPropertiesDataTable('#buildingFacilitiesTable', 'clearBuildingPropertyFiltersBtn');
     }
 
     if ($('#propertyHistoryTable').length > 0) {

@@ -62,14 +62,46 @@ $(document).ready(function () {
             : PROPERTY_FORM_CONTEXT.LAND;
     }
 
+    function ensurePropertyAreaOptions() {
+        const propertyAreaInput = document.getElementById('propertyAreaInput');
+        if (!propertyAreaInput) {
+            return;
+        }
+
+        if (propertyAreaInput.options.length > 1) {
+            return;
+        }
+
+        const defaultAreas = [
+            'Area 1', 'Area 2', 'Area 3', 'Area 4', 'Area 5',
+            'Area 6', 'Area 7', 'Area 8', 'Area 9', 'Central Office'
+        ];
+
+        defaultAreas.forEach(areaValue => {
+            const option = document.createElement('option');
+            option.value = areaValue;
+            option.textContent = areaValue;
+            propertyAreaInput.appendChild(option);
+        });
+    }
+
     function applyPropertyFormContext(context) {
         const normalizedContext = getNormalizedPropertyFormContext(context);
         const propertyTypeInput = document.getElementById('propertyTypeInput');
         const propertyTypeGroup = document.getElementById('propertyTypeGroup');
         const propertyAreaInput = document.getElementById('propertyAreaInput');
+        const propertyLotAreaGroup = document.getElementById('propertyLotAreaGroup');
+        const propertyLotAreaInput = document.getElementById('propertyLotAreaInput');
+        const propertyFloorAreaGroup = document.getElementById('propertyFloorAreaGroup');
+        const propertyFloorAreaInput = document.getElementById('propertyFloorAreaInput');
+        const propertyLegalTitlingStatusGroup = document.getElementById('propertyLegalTitlingStatusGroup');
+        const propertyLegalTitlingStatusInput = document.getElementById('propertyLegalTitlingStatusInput');
+        const propertyConditionStatusInput = document.getElementById('propertyConditionStatusInput');
         const contextInput = document.getElementById('propertyRegistrationContextInput');
         const titleEl = document.getElementById('addPropertyOffcanvasTitle');
         const submitButton = document.getElementById('addPropertySubmitBtn');
+
+        ensurePropertyAreaOptions();
 
         if (contextInput) {
             contextInput.value = normalizedContext;
@@ -93,6 +125,59 @@ $(document).ready(function () {
 
         if (propertyAreaInput) {
             propertyAreaInput.required = true;
+        }
+
+        const isBuildingContext = normalizedContext === PROPERTY_FORM_CONTEXT.BUILDING_FACILITY;
+
+        if (propertyLotAreaGroup) {
+            propertyLotAreaGroup.classList.toggle('d-none', isBuildingContext);
+            if (propertyLotAreaInput) {
+                propertyLotAreaInput.disabled = isBuildingContext;
+                if (isBuildingContext) {
+                    propertyLotAreaInput.value = '';
+                }
+            }
+        }
+
+        if (propertyFloorAreaGroup) {
+            propertyFloorAreaGroup.classList.toggle('d-none', !isBuildingContext);
+            if (propertyFloorAreaInput) {
+                propertyFloorAreaInput.disabled = !isBuildingContext;
+                if (!isBuildingContext) {
+                    propertyFloorAreaInput.value = '';
+                }
+            }
+        }
+
+        if (propertyLegalTitlingStatusGroup) {
+            propertyLegalTitlingStatusGroup.classList.toggle('d-none', isBuildingContext);
+        }
+
+        if (propertyLegalTitlingStatusInput) {
+            propertyLegalTitlingStatusInput.required = !isBuildingContext;
+            propertyLegalTitlingStatusInput.disabled = isBuildingContext;
+            if (isBuildingContext) {
+                propertyLegalTitlingStatusInput.value = '';
+            }
+        }
+
+        if (propertyConditionStatusInput) {
+            const options = Array.from(propertyConditionStatusInput.options);
+            options.forEach(option => {
+                if (!option.value) {
+                    return;
+                }
+
+                const isLandOnly = String(option.dataset.landOnly).toLowerCase() === 'true';
+                const shouldHide = isBuildingContext && isLandOnly;
+                option.hidden = shouldHide;
+                option.disabled = shouldHide;
+            });
+
+            const selectedOption = propertyConditionStatusInput.options[propertyConditionStatusInput.selectedIndex];
+            if (selectedOption && selectedOption.disabled) {
+                propertyConditionStatusInput.value = '';
+            }
         }
 
         if (!propertyTypeInput) {
@@ -283,19 +368,25 @@ $(document).ready(function () {
         return input && input.id === 'receiveDocumentFilesInput';
     }
 
+    function isPropertyUploadInput(input) {
+        return input && input.id === 'propertyDocumentFilesInput';
+    }
+
     $('.js-document-upload-input').each(function () {
         renderDocumentPreview(this, { mergeSelection: false, enableRemove: true });
         $(this).on('change', function () {
             const input = this;
             const receiveChange = isReceiveAssetUploadInput(input);
+            const propertyChange = isPropertyUploadInput(input);
+            const enforceNonMergingSelection = receiveChange || propertyChange;
 
-            if (receiveChange) {
+            if (enforceNonMergingSelection) {
                 MISDCommon.clearSelectedFiles(input, { preserveNativeSelection: true });
             }
 
             window.requestAnimationFrame(function () {
                 renderDocumentPreview(input, {
-                    mergeSelection: !receiveChange,
+                    mergeSelection: !enforceNonMergingSelection,
                     enableRemove: true
                 });
             });
@@ -361,6 +452,16 @@ $(document).ready(function () {
 
         MISDCommon.clearSelectedFiles(receiveInput);
         renderDocumentPreview(receiveInput, { mergeSelection: false, enableRemove: true });
+    });
+
+    $('#addPropertyOffcanvas').on('shown.bs.offcanvas', function () {
+        const propertyInput = document.getElementById('propertyDocumentFilesInput');
+        if (!propertyInput) {
+            return;
+        }
+
+        MISDCommon.clearSelectedFiles(propertyInput);
+        renderDocumentPreview(propertyInput, { mergeSelection: false, enableRemove: true });
     });
 
     $('#receiveAssetOffcanvas').on('hidden.bs.offcanvas', function () {

@@ -9,6 +9,7 @@ import ph.gov.phlpost.inventory.misddashboard.service.RegistryService;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Comparator;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
@@ -64,7 +65,23 @@ public class PropertiesController {
 
     @GetMapping
     public String viewAllProperties(Model model) {
-        model.addAttribute("allProperties", propertyRepo.findAll());
+        List<RealEstateProperty> allProperties = propertyRepo.findAll().stream()
+                .sorted(Comparator.comparing(
+                        property -> normalize(property.getPropertyName()),
+                        String.CASE_INSENSITIVE_ORDER))
+                .toList();
+
+        List<RealEstateProperty> landProperties = allProperties.stream()
+                .filter(property -> isLotType(property.getPropertyType()))
+                .toList();
+
+        List<RealEstateProperty> buildingFacilityProperties = allProperties.stream()
+                .filter(property -> !isLotType(property.getPropertyType()))
+                .toList();
+
+        model.addAttribute("allProperties", allProperties);
+        model.addAttribute("landProperties", landProperties);
+        model.addAttribute("buildingFacilityProperties", buildingFacilityProperties);
         model.addAttribute("employeeMap", registryService.getEmployeeNameMap());
         model.addAttribute("documentUploadMaxSizeMb", documentUploadMaxSizeMb);
         model.addAttribute("documentUploadAllowedExtensions", documentUploadAllowedExtensions);
@@ -91,6 +108,7 @@ public class PropertiesController {
         String registrationContext = normalize(propertyRegistrationContext).toUpperCase();
         if ("LAND".equals(registrationContext)) {
             newProperty.setPropertyType("Lot");
+            newProperty.setFloorAreaSqm(null);
         }
 
         String validationError = validatePropertyRegistration(newProperty, titleNotAvailable,
@@ -150,9 +168,6 @@ public class PropertiesController {
         if (isBlank(property.getBarangay())) {
             return "Barangay is required.";
         }
-        if (isBlank(property.getLegalTitlingStatus())) {
-            return "Legal & Titling Status is required.";
-        }
         if (isBlank(property.getOperationalStatus())) {
             return "Operational & Utilization Status is required.";
         }
@@ -179,6 +194,9 @@ public class PropertiesController {
         }
 
         if ("LAND".equals(registrationContext)) {
+            if (isBlank(property.getLegalTitlingStatus())) {
+                return "Legal & Titling Status is required for land assets.";
+            }
             if (titleNumber.isEmpty()) {
                 return "Title Number / TCT is required for land assets.";
             }

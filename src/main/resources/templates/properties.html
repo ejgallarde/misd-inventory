@@ -50,8 +50,18 @@
         </div>
         <div class="card shadow-sm mb-4">
             <div class="card-body">
+                <h5 class="fw-bold mb-3">Land Assets</h5>
                 <table
-                    th:replace="~{fragments/properties-table :: propertiesTable('propertiesTable', ${allProperties}, true)}">
+                    th:replace="~{fragments/land-assets-table :: landAssetsTable('landPropertiesTable', ${landProperties}, true)}">
+                </table>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <h5 class="fw-bold mb-3">Buildings &amp; Facilities</h5>
+                <table
+                    th:replace="~{fragments/building-facilities-table :: buildingFacilitiesTable('buildingFacilitiesTable', ${buildingFacilityProperties}, true)}">
                 </table>
             </div>
         </div>

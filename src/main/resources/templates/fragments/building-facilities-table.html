@@ -33,7 +33,7 @@
                 <td
                     th:text="${(p.addressLine1 != null ? p.addressLine1 : '') + (p.city != null and !#strings.isEmpty(p.city) ? ', ' + p.city : '') + (p.province != null and !#strings.isEmpty(p.province) ? ', ' + p.province : '')}">
                 </td>
-                <td th:text="${p.custodianID != null ? employeeMap[p.custodianID] : 'Unassigned'}"></td>
+                <td class="fw-bold" th:text="${p.custodianID != null ? employeeMap[p.custodianID] : 'Unassigned'}"></td>
                 <td th:text="${#numbers.formatDecimal(p.floorAreaSqm, 1, 'COMMA', 2, 'POINT')}"></td>
                 <td>
                     <div class="d-flex flex-column gap-1 small">
@@ -53,8 +53,8 @@
                             data-bs-toggle="tooltip" data-bs-placement="top"
                             th:text="${'Operational: ' + p.operationalStatus}"></span>
                         <span th:if="${p.conditionStatus != null and !#strings.isEmpty(p.conditionStatus)}"
-                            th:class="${p.conditionStatus == 'Excellent' or p.conditionStatus == 'Good' ? 'badge bg-success' : ((p.conditionStatus == 'Fair') ? 'badge bg-warning text-dark' : ((p.conditionStatus == 'Poor' or p.conditionStatus == 'Condemned') ? 'badge bg-danger' : 'badge bg-dark'))}"
-                            th:title="${p.conditionStatus == 'Excellent' ? 'Excellent physical condition.' : (p.conditionStatus == 'Good' ? 'Good condition with routine maintenance only.' : (p.conditionStatus == 'Fair' ? 'Needs minor repairs or monitoring.' : (p.conditionStatus == 'Poor' ? 'Needs major intervention.' : (p.conditionStatus == 'Condemned' ? 'Unsafe condition requiring immediate action.' : 'Condition status.'))))}"
+                            th:class="${#strings.startsWith(p.conditionStatus, 'Usable -') ? 'badge bg-success' : (#strings.startsWith(p.conditionStatus, 'Usable with Restrictions -') ? 'badge bg-warning text-dark' : (#strings.startsWith(p.conditionStatus, 'Not Usable -') ? 'badge bg-danger' : 'badge bg-secondary'))}"
+                            th:title="${#strings.startsWith(p.conditionStatus, 'Usable -') ? 'Property is currently usable.' : (#strings.startsWith(p.conditionStatus, 'Usable with Restrictions -') ? 'Property is usable with restrictions and requires intervention.' : (#strings.startsWith(p.conditionStatus, 'Not Usable -') ? 'Property is currently not usable.' : 'Condition status.'))}"
                             data-bs-toggle="tooltip" data-bs-placement="top"
                             th:text="${'Condition: ' + p.conditionStatus}"></span>
                     </div>
