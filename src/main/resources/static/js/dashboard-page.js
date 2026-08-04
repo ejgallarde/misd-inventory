@@ -414,7 +414,7 @@ $(document).ready(function () {
             return;
         }
 
-        const files = Array.from(documentInput.files || []);
+        const files = MISDCommon.getSelectedFiles(documentInput);
         if (!files.length) {
             return;
         }

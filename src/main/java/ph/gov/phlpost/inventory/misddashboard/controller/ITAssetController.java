@@ -15,6 +15,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -51,8 +52,8 @@ public class ITAssetController {
     @Value("${document.upload.allowed-extensions:pdf,jpg,jpeg,png,doc,docx,xls,xlsx}")
     private String documentUploadAllowedExtensions;
 
-    @Value("#{'${document.upload.categories.it}'.split(',')}")
-    private List<String> itDocumentUploadCategories;
+    @Value("${document.upload.categories.it}")
+    private String itDocumentUploadCategoriesCsv;
 
     @Value("${asset.workflow.maintenance-technician-job-title:Computer Maintenance Technologist}")
     private String maintenanceTechnicianJobTitle;
@@ -96,7 +97,7 @@ public class ITAssetController {
         model.addAttribute("managerNameMap", registryService.getManagerNameMap());
         model.addAttribute("documentUploadMaxSizeMb", documentUploadMaxSizeMb);
         model.addAttribute("documentUploadAllowedExtensions", documentUploadAllowedExtensions);
-        model.addAttribute("itDocumentUploadCategories", itDocumentUploadCategories.stream()
+        model.addAttribute("itDocumentUploadCategories", splitCsv(itDocumentUploadCategoriesCsv).stream()
                 .sorted(String.CASE_INSENSITIVE_ORDER)
                 .toList());
         model.addAttribute("maintenanceTechnicianJobTitle", maintenanceTechnicianJobTitle);
@@ -222,6 +223,16 @@ public class ITAssetController {
             // Fallback safety net in case of a corrupted tag
             return datePrefix + "99999";
         }
+    }
+
+    private List<String> splitCsv(String csv) {
+        if (csv == null || csv.isBlank()) {
+            return List.of();
+        }
+        return Arrays.stream(csv.split(","))
+                .map(String::trim)
+                .filter(value -> !value.isEmpty())
+                .toList();
     }
 
     @PostMapping("/assets/assign")

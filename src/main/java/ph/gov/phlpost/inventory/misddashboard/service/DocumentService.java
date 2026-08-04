@@ -39,9 +39,9 @@ public class DocumentService {
             @Value("${document.upload.max-size-mb:15}") long maxFileSizeMb,
             @Value("${document.upload.max-files:25}") int maxFileCount,
             @Value("${document.upload.allowed-extensions:pdf,jpg,jpeg,png,doc,docx,xls,xlsx}") String allowedExtensionsConfig,
-            @Value("#{'${document.upload.categories.it:Official Receipt / Invoice,Inspection Report,Acceptance Report,Serial Number Label,Photographs,Equipment Specification Sheet,Repair or Service Report,Service Report}'.split(',')}") List<String> itCategoriesConfig,
-            @Value("#{'${document.upload.categories.vehicle:Delivery Receipt,Original Receipt (OR),Certificate of Registration (CR),PMS Report,Car Insurance Policy,Stencil,TPL,Driver\'s License,Warranty Certificate}'.split(',')}") List<String> vehicleCategoriesConfig,
-            @Value("#{'${document.upload.categories.property:Title,Tax Declaration,Property Photo,Deed of Sale,Appendix 71}'.split(',')}") List<String> propertyCategoriesConfig) {
+            @Value("${document.upload.categories.it:Official Receipt / Invoice,Inspection Report,Acceptance Report,Serial Number Label,Photographs,Equipment Specification Sheet,Repair or Service Report}") String itCategoriesConfig,
+            @Value("${document.upload.categories.vehicle:Delivery Receipt,Original Receipt (OR),Certificate of Registration (CR),PMS Report,Car Insurance Policy,Stencil,TPL,Driver's License,Warranty Certificate}") String vehicleCategoriesConfig,
+            @Value("${document.upload.categories.property:Title,Tax Declaration,Property Photo,Deed of Sale,Appendix 71}") String propertyCategoriesConfig) {
         this.storageService = storageService;
         this.documentRepository = documentRepository;
         this.fleetVehicleRepository = fleetVehicleRepository;
@@ -275,8 +275,8 @@ public class DocumentService {
         }
     }
 
-    private Set<String> toCategorySet(List<String> categories) {
-        return categories.stream()
+    private Set<String> toCategorySet(String categoriesCsv) {
+        return Arrays.stream(categoriesCsv == null ? new String[0] : categoriesCsv.split(","))
                 .map(token -> token == null ? "" : token.trim())
                 .filter(token -> !token.isBlank())
                 .collect(Collectors.toUnmodifiableSet());

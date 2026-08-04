@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Comparator;
@@ -84,14 +85,14 @@ public class MainDashboardController {
         @Value("${document.upload.allowed-extensions:pdf,jpg,jpeg,png,doc,docx,xls,xlsx}")
         private String documentUploadAllowedExtensions;
 
-        @Value("#{'${document.upload.categories.it}'.split(',')}")
-        private List<String> itDocumentUploadCategories;
+        @Value("${document.upload.categories.it}")
+        private String itDocumentUploadCategoriesCsv;
 
-        @Value("#{'${document.upload.categories.vehicle}'.split(',')}")
-        private List<String> vehicleDocumentUploadCategories;
+        @Value("${document.upload.categories.vehicle}")
+        private String vehicleDocumentUploadCategoriesCsv;
 
-        @Value("#{'${document.upload.categories.property}'.split(',')}")
-        private List<String> propertyDocumentUploadCategories;
+        @Value("${document.upload.categories.property}")
+        private String propertyDocumentUploadCategoriesCsv;
 
         @Value("#{'${dropdown.asset-deployment-statuses}'.split(',')}")
         private List<String> assetDeploymentStatusOptions;
@@ -215,15 +216,17 @@ public class MainDashboardController {
                                 .toList());
                 model.addAttribute("documentUploadMaxSizeMb", documentUploadMaxSizeMb);
                 model.addAttribute("documentUploadAllowedExtensions", documentUploadAllowedExtensions);
-                model.addAttribute("itDocumentUploadCategories", itDocumentUploadCategories.stream()
+                model.addAttribute("itDocumentUploadCategories", splitCsv(itDocumentUploadCategoriesCsv).stream()
                                 .sorted(String.CASE_INSENSITIVE_ORDER)
                                 .toList());
-                model.addAttribute("vehicleDocumentUploadCategories", vehicleDocumentUploadCategories.stream()
-                                .sorted(String.CASE_INSENSITIVE_ORDER)
-                                .toList());
-                model.addAttribute("propertyDocumentUploadCategories", propertyDocumentUploadCategories.stream()
-                                .sorted(String.CASE_INSENSITIVE_ORDER)
-                                .toList());
+                model.addAttribute("vehicleDocumentUploadCategories",
+                                splitCsv(vehicleDocumentUploadCategoriesCsv).stream()
+                                                .sorted(String.CASE_INSENSITIVE_ORDER)
+                                                .toList());
+                model.addAttribute("propertyDocumentUploadCategories",
+                                splitCsv(propertyDocumentUploadCategoriesCsv).stream()
+                                                .sorted(String.CASE_INSENSITIVE_ORDER)
+                                                .toList());
                 model.addAttribute("assetDeploymentStatusOptions", assetDeploymentStatusOptions);
                 model.addAttribute("assetMaintenanceHealthStatusOptions", assetMaintenanceHealthStatusOptions);
                 model.addAttribute("assetLifecycleStatusOptions", assetLifecycleStatusOptions);
@@ -255,6 +258,16 @@ public class MainDashboardController {
                 model.addAttribute("propertyConditionStatuses", propertyConditionStatuses);
 
                 return "dashboard";
+        }
+
+        private List<String> splitCsv(String csv) {
+                if (csv == null || csv.isBlank()) {
+                        return List.of();
+                }
+                return Arrays.stream(csv.split(","))
+                                .map(String::trim)
+                                .filter(value -> !value.isEmpty())
+                                .toList();
         }
 
         @GetMapping("/api/personnel/search")

@@ -9,6 +9,7 @@ import ph.gov.phlpost.inventory.misddashboard.service.RegistryService;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Arrays;
 import java.util.Comparator;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -37,8 +38,8 @@ public class PropertiesController {
     @Value("${document.upload.allowed-extensions:pdf,jpg,jpeg,png,doc,docx,xls,xlsx}")
     private String documentUploadAllowedExtensions;
 
-    @Value("#{'${document.upload.categories.property}'.split(',')}")
-    private List<String> propertyDocumentUploadCategories;
+    @Value("${document.upload.categories.property}")
+    private String propertyDocumentUploadCategoriesCsv;
 
     @Value("#{'${dropdown.property-tax-status-update}'.split(',')}")
     private List<String> propertyTaxStatusesUpdate;
@@ -85,7 +86,7 @@ public class PropertiesController {
         model.addAttribute("employeeMap", registryService.getEmployeeNameMap());
         model.addAttribute("documentUploadMaxSizeMb", documentUploadMaxSizeMb);
         model.addAttribute("documentUploadAllowedExtensions", documentUploadAllowedExtensions);
-        model.addAttribute("propertyDocumentUploadCategories", propertyDocumentUploadCategories.stream()
+        model.addAttribute("propertyDocumentUploadCategories", splitCsv(propertyDocumentUploadCategoriesCsv).stream()
                 .sorted(String.CASE_INSENSITIVE_ORDER)
                 .toList());
         model.addAttribute("propertyTaxStatusesUpdate", propertyTaxStatusesUpdate.stream()
@@ -226,6 +227,16 @@ public class PropertiesController {
 
     private boolean isBlank(String value) {
         return value == null || value.trim().isEmpty();
+    }
+
+    private List<String> splitCsv(String csv) {
+        if (csv == null || csv.isBlank()) {
+            return List.of();
+        }
+        return Arrays.stream(csv.split(","))
+                .map(String::trim)
+                .filter(value -> !value.isEmpty())
+                .toList();
     }
 
     private String normalize(String value) {

@@ -434,14 +434,10 @@ window.MISDCommon = (function (jqueryGlobal) {
     }
 
     function setInputFiles(input, files) {
-        try {
-            const dataTransfer = new DataTransfer();
-            files.forEach(file => dataTransfer.items.add(file));
-            input.files = dataTransfer.files;
-        } catch (error) {
-            // Some browser/OS combinations can fail when rebuilding very large file lists.
-            console.warn('Unable to update input file list via DataTransfer.', error);
-        }
+        // Intentionally left as a no-op.
+        // Browser-native FileList mutation is unreliable in Firefox and can crash
+        // or hang the file picker on Windows. The app now uses the stored selection
+        // map as the source of truth for previews, validation, and submission.
     }
 
     function getFileSignature(file) {
@@ -484,8 +480,8 @@ window.MISDCommon = (function (jqueryGlobal) {
             return [];
         }
 
-        const stored = selectedFilesByInput.get(input);
-        if (stored && stored.length) {
+        if (selectedFilesByInput.has(input)) {
+            const stored = selectedFilesByInput.get(input) || [];
             return stored.slice();
         }
 
@@ -655,7 +651,7 @@ window.MISDCommon = (function (jqueryGlobal) {
                 const removeButton = item.querySelector('button');
                 removeButton.addEventListener('click', function () {
                     const updatedFiles = getSelectedFiles(input).filter((_, fileIndex) => fileIndex !== index);
-                    setSelectedFiles(input, updatedFiles, { syncNativeSelection: true });
+                    setSelectedFiles(input, updatedFiles);
                     renderDocumentPreviewBySelectors(inputSelector, previewSelector, templateSelector,
                         { mergeSelection: false, enableRemove: true });
                 });

@@ -8,6 +8,7 @@ import ph.gov.phlpost.inventory.misddashboard.service.FleetService;
 import ph.gov.phlpost.inventory.misddashboard.service.RegistryService;
 
 import java.time.Year;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -36,8 +37,8 @@ public class FleetController {
     @Value("${document.upload.allowed-extensions:pdf,jpg,jpeg,png,doc,docx,xls,xlsx}")
     private String documentUploadAllowedExtensions;
 
-    @Value("#{'${document.upload.categories.vehicle}'.split(',')}")
-    private List<String> vehicleDocumentUploadCategories;
+    @Value("${document.upload.categories.vehicle}")
+    private String vehicleDocumentUploadCategoriesCsv;
 
     @Value("#{'${dropdown.fleet-admin-legal-statuses}'.split(',')}")
     private List<String> fleetAdminLegalStatuses;
@@ -73,7 +74,7 @@ public class FleetController {
         model.addAttribute("managerNameMap", registryService.getManagerNameMap());
         model.addAttribute("documentUploadMaxSizeMb", documentUploadMaxSizeMb);
         model.addAttribute("documentUploadAllowedExtensions", documentUploadAllowedExtensions);
-        model.addAttribute("vehicleDocumentUploadCategories", vehicleDocumentUploadCategories.stream()
+        model.addAttribute("vehicleDocumentUploadCategories", splitCsv(vehicleDocumentUploadCategoriesCsv).stream()
                 .sorted(String.CASE_INSENSITIVE_ORDER)
                 .toList());
         model.addAttribute("fleetAdminLegalStatuses", fleetAdminLegalStatuses);
@@ -172,6 +173,16 @@ public class FleetController {
 
     private boolean isBlank(String value) {
         return value == null || value.trim().isEmpty();
+    }
+
+    private List<String> splitCsv(String csv) {
+        if (csv == null || csv.isBlank()) {
+            return List.of();
+        }
+        return Arrays.stream(csv.split(","))
+                .map(String::trim)
+                .filter(value -> !value.isEmpty())
+                .toList();
     }
 
     @PostMapping("/assign")
