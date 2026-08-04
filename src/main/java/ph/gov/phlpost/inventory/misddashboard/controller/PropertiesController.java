@@ -83,11 +83,18 @@ public class PropertiesController {
     @PostMapping("/add")
     public String addProperty(@ModelAttribute RealEstateProperty newProperty,
             @RequestParam(value = "titleNotAvailable", defaultValue = "false") boolean titleNotAvailable,
+            @RequestParam(value = "propertyRegistrationContext", defaultValue = "LAND") String propertyRegistrationContext,
             @RequestParam(value = "documentFiles", required = false) MultipartFile[] documentFiles,
             @RequestParam(value = "documentCategories", required = false) String[] documentCategories,
             Authentication authentication,
             RedirectAttributes redirectAttributes) {
-        String validationError = validatePropertyRegistration(newProperty, titleNotAvailable);
+        String registrationContext = normalize(propertyRegistrationContext).toUpperCase();
+        if ("LAND".equals(registrationContext)) {
+            newProperty.setPropertyType("Lot");
+        }
+
+        String validationError = validatePropertyRegistration(newProperty, titleNotAvailable,
+                propertyRegistrationContext);
         if (validationError != null) {
             redirectAttributes.addFlashAttribute("errorMessage", validationError);
             return "redirect:/";
@@ -123,7 +130,8 @@ public class PropertiesController {
         return "redirect:/";
     }
 
-    private String validatePropertyRegistration(RealEstateProperty property, boolean titleNotAvailable) {
+    private String validatePropertyRegistration(RealEstateProperty property, boolean titleNotAvailable,
+            String propertyRegistrationContext) {
         if (isBlank(property.getPropertyName())) {
             return "Property name is required.";
         }
@@ -151,10 +159,37 @@ public class PropertiesController {
         if (isBlank(property.getConditionStatus())) {
             return "Condition Status is required.";
         }
+        if (isBlank(property.getArea())) {
+            return "Area is required.";
+        }
 
         String propertyType = normalize(property.getPropertyType());
         String titleNumber = normalize(property.getTitleNumber());
         String taxDeclarationNumber = normalize(property.getTaxDeclarationNumber());
+        String surveyPlanNumber = normalize(property.getSurveyPlanNumber());
+        String registrationContext = normalize(propertyRegistrationContext).toUpperCase();
+
+        if (!registrationContext.isEmpty()) {
+            if ("LAND".equals(registrationContext) && !isLotType(propertyType)) {
+                return "Land Assets intake accepts lot properties only.";
+            }
+            if ("BUILDING_FACILITY".equals(registrationContext) && isLotType(propertyType)) {
+                return "Buildings & Facilities intake does not accept lot properties.";
+            }
+        }
+
+        if ("LAND".equals(registrationContext)) {
+            if (titleNumber.isEmpty()) {
+                return "Title Number / TCT is required for land assets.";
+            }
+            if (taxDeclarationNumber.isEmpty()) {
+                return "Tax Declaration number is required for land assets.";
+            }
+            if (surveyPlanNumber.isEmpty()) {
+                return "Survey Plan number is required for land assets.";
+            }
+            return null;
+        }
 
         if (isLotType(propertyType)) {
             if (titleNotAvailable) {
@@ -245,11 +280,14 @@ public class PropertiesController {
                                     property.getPropertyType() == null ? "" : property.getPropertyType()),
                             Map.entry("propertyName",
                                     property.getPropertyName() == null ? "" : property.getPropertyName()),
+                            Map.entry("area", property.getArea() == null ? "" : property.getArea()),
                             Map.entry("titleNumber",
                                     property.getTitleNumber() == null ? "" : property.getTitleNumber()),
                             Map.entry("taxDeclarationNumber",
                                     property.getTaxDeclarationNumber() == null ? ""
                                             : property.getTaxDeclarationNumber()),
+                            Map.entry("surveyPlanNumber",
+                                    property.getSurveyPlanNumber() == null ? "" : property.getSurveyPlanNumber()),
                             Map.entry("propertyDetails",
                                     property.getPropertyDetails() == null ? "" : property.getPropertyDetails()),
                             Map.entry("addressLine1",

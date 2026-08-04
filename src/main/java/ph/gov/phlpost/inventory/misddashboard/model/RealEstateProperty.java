@@ -19,11 +19,17 @@ public class RealEstateProperty {
     @Column(name = "PropertyName", nullable = false)
     private String propertyName;
 
+    @Column(name = "Area")
+    private String area;
+
     @Column(name = "TitleNumber", unique = true)
     private String titleNumber;
 
     @Column(name = "TaxDeclarationNumber", unique = true)
     private String taxDeclarationNumber;
+
+    @Column(name = "SurveyPlanNumber")
+    private String surveyPlanNumber;
 
     @Column(name = "PropertyDetails", columnDefinition = "TEXT")
     private String propertyDetails;
@@ -100,6 +106,14 @@ public class RealEstateProperty {
         this.propertyName = propertyName;
     }
 
+    public String getArea() {
+        return area;
+    }
+
+    public void setArea(String area) {
+        this.area = area;
+    }
+
     public String getTitleNumber() {
         return titleNumber;
     }
@@ -114,6 +128,14 @@ public class RealEstateProperty {
 
     public void setTaxDeclarationNumber(String taxDeclarationNumber) {
         this.taxDeclarationNumber = taxDeclarationNumber;
+    }
+
+    public String getSurveyPlanNumber() {
+        return surveyPlanNumber;
+    }
+
+    public void setSurveyPlanNumber(String surveyPlanNumber) {
+        this.surveyPlanNumber = surveyPlanNumber;
     }
 
     public String getPropertyDetails() {

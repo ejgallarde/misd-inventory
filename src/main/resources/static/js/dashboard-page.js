@@ -26,7 +26,11 @@ $(document).ready(function () {
             new bootstrap.Tab(triggerButton).show();
         }
     }
+
     function initDashboardTable(selector, order, emptyMessage) {
+        if (!$(selector).length) {
+            return null;
+        }
         return $(selector).DataTable(MISDCommon.buildStandardDataTableConfig({
             pageLength: 10,
             lengthMenu: [[5, 10, 25, -1], [5, 10, 25, 'All']],
@@ -43,7 +47,96 @@ $(document).ready(function () {
 
     initDashboardTable('#agingTable', [[7, 'desc']], 'No problematic IT assets found.');
     initDashboardTable('#fleetActionRequiredTable', [[0, 'asc']], 'No problematic vehicles found in the fleet.');
-    initDashboardTable('#propertiesActionRequiredTable', [[1, 'asc']], 'No properties currently require attention.');
+    initDashboardTable('#landAssetsActionRequiredTable', [[1, 'asc']], 'No land assets currently require attention.');
+    initDashboardTable('#buildingsFacilitiesActionRequiredTable', [[1, 'asc']],
+        'No buildings or facilities currently require attention.');
+
+    const PROPERTY_FORM_CONTEXT = {
+        LAND: 'LAND',
+        BUILDING_FACILITY: 'BUILDING_FACILITY'
+    };
+
+    function getNormalizedPropertyFormContext(context) {
+        return context === PROPERTY_FORM_CONTEXT.BUILDING_FACILITY
+            ? PROPERTY_FORM_CONTEXT.BUILDING_FACILITY
+            : PROPERTY_FORM_CONTEXT.LAND;
+    }
+
+    function applyPropertyFormContext(context) {
+        const normalizedContext = getNormalizedPropertyFormContext(context);
+        const propertyTypeInput = document.getElementById('propertyTypeInput');
+        const propertyTypeGroup = document.getElementById('propertyTypeGroup');
+        const propertyAreaInput = document.getElementById('propertyAreaInput');
+        const contextInput = document.getElementById('propertyRegistrationContextInput');
+        const titleEl = document.getElementById('addPropertyOffcanvasTitle');
+        const submitButton = document.getElementById('addPropertySubmitBtn');
+
+        if (contextInput) {
+            contextInput.value = normalizedContext;
+        }
+
+        if (titleEl) {
+            titleEl.textContent = normalizedContext === PROPERTY_FORM_CONTEXT.BUILDING_FACILITY
+                ? 'Add Building or Facility'
+                : 'Add Land Asset';
+        }
+
+        if (submitButton) {
+            submitButton.textContent = normalizedContext === PROPERTY_FORM_CONTEXT.BUILDING_FACILITY
+                ? 'Add Building or Facility'
+                : 'Add Land Asset';
+        }
+
+        if (propertyTypeGroup) {
+            propertyTypeGroup.classList.toggle('d-none', normalizedContext === PROPERTY_FORM_CONTEXT.LAND);
+        }
+
+        if (propertyAreaInput) {
+            propertyAreaInput.required = true;
+        }
+
+        if (!propertyTypeInput) {
+            return;
+        }
+
+        propertyTypeInput.required = normalizedContext === PROPERTY_FORM_CONTEXT.BUILDING_FACILITY;
+
+        const options = Array.from(propertyTypeInput.options);
+        const placeholderOption = options.find(option => !option.value || option.value.trim() === '');
+        options.forEach(option => {
+            if (!option.value || option.value.trim() === '') {
+                return;
+            }
+
+            const isLotType = option.value.trim().toLowerCase() === 'lot';
+            const isAllowed = normalizedContext === PROPERTY_FORM_CONTEXT.BUILDING_FACILITY ? !isLotType : isLotType;
+            option.hidden = !isAllowed;
+            option.disabled = !isAllowed;
+        });
+
+        if (placeholderOption) {
+            placeholderOption.textContent = normalizedContext === PROPERTY_FORM_CONTEXT.BUILDING_FACILITY
+                ? 'Select building/facility type'
+                : 'Select land type';
+        }
+
+        const selectedOption = propertyTypeInput.options[propertyTypeInput.selectedIndex];
+        if (!selectedOption || selectedOption.disabled) {
+            propertyTypeInput.value = '';
+        }
+
+        if (normalizedContext === PROPERTY_FORM_CONTEXT.LAND) {
+            propertyTypeInput.value = 'Lot';
+        }
+
+        updatePropertyIdentifierRules();
+    }
+
+    document.querySelectorAll('[data-property-form-context]').forEach(button => {
+        button.addEventListener('click', function () {
+            applyPropertyFormContext(this.dataset.propertyFormContext);
+        });
+    });
 
     const specOptions = [
         'Processor (CPU)', 'Memory (RAM)', 'Storage (SSD/HDD)',
@@ -112,79 +205,56 @@ $(document).ready(function () {
         const propertyTypeInput = document.getElementById('propertyTypeInput');
         const propertyIdentifierSection = document.getElementById('propertyIdentifierSection');
         const propertyTitleFieldWrap = document.getElementById('propertyTitleFieldWrap');
-        const propertyTitleNotAvailableWrap = document.getElementById('propertyTitleNotAvailableWrap');
+        const propertySurveyPlanFieldWrap = document.getElementById('propertySurveyPlanFieldWrap');
         const propertyTaxDeclarationFieldWrap = document.getElementById('propertyTaxDeclarationFieldWrap');
         const titleInput = document.getElementById('propertyTitleNumberInput');
         const taxDeclarationInput = document.getElementById('propertyTaxDeclarationNumberInput');
-        const titleNotAvailableCheckbox = document.getElementById('propertyTitleNotAvailableCheckbox');
+        const surveyPlanInput = document.getElementById('propertySurveyPlanNumberInput');
+        const contextInput = document.getElementById('propertyRegistrationContextInput');
 
         if (!propertyTypeInput || !propertyIdentifierSection || !propertyTitleFieldWrap
-            || !propertyTitleNotAvailableWrap || !propertyTaxDeclarationFieldWrap
-            || !titleInput || !taxDeclarationInput || !titleNotAvailableCheckbox) {
+            || !propertySurveyPlanFieldWrap || !propertyTaxDeclarationFieldWrap
+            || !titleInput || !taxDeclarationInput || !surveyPlanInput || !contextInput) {
             return;
         }
 
-        const propertyTypeRaw = propertyTypeInput.value || '';
-        const propertyType = propertyTypeRaw.toLowerCase();
-        const hasTypeSelection = propertyTypeRaw.trim() !== '';
-        const isLot = propertyType === 'lot';
-        const titleNotAvailable = titleNotAvailableCheckbox.checked;
+        const isLandContext = getNormalizedPropertyFormContext(contextInput.value) === PROPERTY_FORM_CONTEXT.LAND;
+        propertyIdentifierSection.classList.remove('d-none');
 
-        propertyIdentifierSection.classList.toggle('d-none', !hasTypeSelection);
-
-        if (!hasTypeSelection) {
-            titleInput.required = false;
-            titleInput.disabled = false;
-            titleInput.value = '';
-            taxDeclarationInput.required = false;
-            taxDeclarationInput.disabled = false;
-            taxDeclarationInput.value = '';
-            titleNotAvailableCheckbox.checked = false;
-            propertyTitleFieldWrap.classList.add('d-none');
-            propertyTitleNotAvailableWrap.classList.add('d-none');
-            propertyTaxDeclarationFieldWrap.classList.add('d-none');
-            return;
-        }
-
-        if (isLot) {
-            propertyTitleNotAvailableWrap.classList.remove('d-none');
-            propertyTitleFieldWrap.classList.toggle('d-none', titleNotAvailable);
-            propertyTaxDeclarationFieldWrap.classList.toggle('d-none', !titleNotAvailable);
-
-            titleInput.disabled = titleNotAvailable;
-            titleInput.required = !titleNotAvailable;
-            taxDeclarationInput.disabled = !titleNotAvailable;
-            taxDeclarationInput.required = titleNotAvailable;
-
-            if (titleNotAvailable) {
-                titleInput.value = '';
-            } else {
-                taxDeclarationInput.value = '';
-            }
-            return;
-        }
-
-        titleNotAvailableCheckbox.checked = false;
-        propertyTitleNotAvailableWrap.classList.add('d-none');
-        propertyTitleFieldWrap.classList.add('d-none');
+        propertyTitleFieldWrap.classList.toggle('d-none', !isLandContext);
+        propertySurveyPlanFieldWrap.classList.toggle('d-none', !isLandContext);
         propertyTaxDeclarationFieldWrap.classList.remove('d-none');
 
+        if (isLandContext) {
+            propertyTypeInput.value = 'Lot';
+            propertyTypeInput.disabled = true;
+            titleInput.required = true;
+            titleInput.disabled = false;
+            taxDeclarationInput.required = true;
+            taxDeclarationInput.disabled = false;
+            surveyPlanInput.required = true;
+            surveyPlanInput.disabled = false;
+            taxDeclarationInput.placeholder = 'Required for land assets';
+            return;
+        }
+
+        propertyTypeInput.disabled = false;
         titleInput.required = false;
         titleInput.disabled = true;
         titleInput.value = '';
-
         taxDeclarationInput.disabled = false;
         taxDeclarationInput.required = true;
+        taxDeclarationInput.placeholder = 'Required for building/facility assets';
+        surveyPlanInput.required = false;
+        surveyPlanInput.disabled = true;
+        surveyPlanInput.value = '';
     }
 
     const propertyTypeInput = document.getElementById('propertyTypeInput');
-    const propertyTitleNotAvailableCheckbox = document.getElementById('propertyTitleNotAvailableCheckbox');
     if (propertyTypeInput) {
         propertyTypeInput.addEventListener('change', updatePropertyIdentifierRules);
     }
-    if (propertyTitleNotAvailableCheckbox) {
-        propertyTitleNotAvailableCheckbox.addEventListener('change', updatePropertyIdentifierRules);
-    }
+    applyPropertyFormContext(PROPERTY_FORM_CONTEXT.LAND);
     updatePropertyIdentifierRules();
 
     function validateFileInputBeforeSubmit(input) {
@@ -273,6 +343,7 @@ $(document).ready(function () {
         }
 
         if (this.id === 'addPropertyOffcanvas') {
+            applyPropertyFormContext(PROPERTY_FORM_CONTEXT.LAND);
             updatePropertyIdentifierRules();
         }
 

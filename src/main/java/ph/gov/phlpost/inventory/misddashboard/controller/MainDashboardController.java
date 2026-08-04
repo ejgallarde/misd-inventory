@@ -63,6 +63,9 @@ public class MainDashboardController {
         @Value("#{'${dropdown.property-types}'.split(',')}")
         private List<String> propertyTypes;
 
+        @Value("#{'${dropdown.property-areas}'.split(',')}")
+        private List<String> propertyAreas;
+
         @Value("#{'${dropdown.property-tax-status-add}'.split(',')}")
         private List<String> propertyTaxStatusesAdd;
 
@@ -151,26 +154,48 @@ public class MainDashboardController {
                                 fleetRepo.countDisposedOrDecommissionedVehicles());
                 model.addAttribute("problematicVehicles", fleetRepo.findProblematicVehicles());
 
-                // Properties
-                model.addAttribute("totalProperties", propertyRepo.count());
-                model.addAttribute("problematicPropertiesCount", propertyRepo.countProblematicProperties());
-                model.addAttribute("totalLandArea", propertyRepo.sumTotalLandArea());
-                model.addAttribute("pendingTaxesCount", propertyRepo.countPropertiesNeedingPayment());
-                model.addAttribute("propertiesWithLegalIssues", propertyRepo.countPropertiesWithLegalIssues());
-                model.addAttribute("propertiesWithOperationalIssues",
-                                propertyRepo.countPropertiesWithOperationalIssues());
-                model.addAttribute("propertiesWithConditionIssues", propertyRepo.countPropertiesWithConditionIssues());
-                model.addAttribute("currentInventoryProperties",
-                                propertyRepo.countByOperationalStatusNot("Slated for Disposal"));
-                model.addAttribute("activeInUseProperties", propertyRepo.countByOperationalStatus("Active/In Use"));
-                model.addAttribute("vacantIdleProperties", propertyRepo.countByOperationalStatus("Vacant/Idle"));
-                model.addAttribute("coLocatedProperties", propertyRepo.countByOperationalStatus("Co-Located"));
-                model.addAttribute("leasedOutProperties", propertyRepo.countByOperationalStatus("Leased Out"));
-                model.addAttribute("underConstructionProperties",
-                                propertyRepo.countByOperationalStatus("Under Construction"));
-                model.addAttribute("slatedForDisposalProperties",
-                                propertyRepo.countByOperationalStatus("Slated for Disposal"));
-                model.addAttribute("problematicProperties", propertyRepo.findProblematicProperties());
+                // Land Assets and Buildings & Facilities
+                String lotType = "Lot";
+
+                model.addAttribute("totalLandAssets", propertyRepo.countByPropertyTypeIgnoreCase(lotType));
+                model.addAttribute("totalLandArea", propertyRepo.sumTotalLandAreaByType(lotType));
+                model.addAttribute("currentInventoryLandAssets",
+                                propertyRepo.countByTypeAndOperationalStatusNot(lotType, "Slated for Disposal"));
+                model.addAttribute("activeInUseLandAssets",
+                                propertyRepo.countByTypeAndOperationalStatus(lotType, "Active/In Use"));
+                model.addAttribute("vacantIdleLandAssets",
+                                propertyRepo.countByTypeAndOperationalStatus(lotType, "Vacant/Idle"));
+                model.addAttribute("coLocatedLandAssets",
+                                propertyRepo.countByTypeAndOperationalStatus(lotType, "Co-Located"));
+                model.addAttribute("leasedOutLandAssets",
+                                propertyRepo.countByTypeAndOperationalStatus(lotType, "Leased Out"));
+                model.addAttribute("underConstructionLandAssets",
+                                propertyRepo.countByTypeAndOperationalStatus(lotType, "Under Construction"));
+                model.addAttribute("slatedForDisposalLandAssets",
+                                propertyRepo.countByTypeAndOperationalStatus(lotType, "Slated for Disposal"));
+                model.addAttribute("problematicLandAssets",
+                                propertyRepo.findProblematicPropertiesByType(lotType));
+
+                model.addAttribute("totalBuildingFacilityAssets", propertyRepo.countByPropertyTypeExcluding(lotType));
+                model.addAttribute("currentInventoryBuildingAssets",
+                                propertyRepo.countByTypeExcludingAndOperationalStatusNot(lotType,
+                                                "Slated for Disposal"));
+                model.addAttribute("activeInUseBuildingAssets",
+                                propertyRepo.countByTypeExcludingAndOperationalStatus(lotType, "Active/In Use"));
+                model.addAttribute("vacantIdleBuildingAssets",
+                                propertyRepo.countByTypeExcludingAndOperationalStatus(lotType, "Vacant/Idle"));
+                model.addAttribute("coLocatedBuildingAssets",
+                                propertyRepo.countByTypeExcludingAndOperationalStatus(lotType, "Co-Located"));
+                model.addAttribute("leasedOutBuildingAssets",
+                                propertyRepo.countByTypeExcludingAndOperationalStatus(lotType, "Leased Out"));
+                model.addAttribute("underConstructionBuildingAssets",
+                                propertyRepo.countByTypeExcludingAndOperationalStatus(lotType,
+                                                "Under Construction"));
+                model.addAttribute("slatedForDisposalBuildingAssets",
+                                propertyRepo.countByTypeExcludingAndOperationalStatus(lotType,
+                                                "Slated for Disposal"));
+                model.addAttribute("problematicBuildingAssets",
+                                propertyRepo.findProblematicPropertiesByTypeExcluding(lotType));
 
                 // Mappings
                 model.addAttribute("employeeMap", registryService.getEmployeeNameMap());
@@ -205,6 +230,9 @@ public class MainDashboardController {
                 model.addAttribute("fleetOperationalStatuses", fleetOperationalStatuses);
                 model.addAttribute("fleetMaintenanceStatuses", fleetMaintenanceStatuses);
                 model.addAttribute("propertyTypes", propertyTypes.stream()
+                                .sorted(String.CASE_INSENSITIVE_ORDER)
+                                .toList());
+                model.addAttribute("propertyAreas", propertyAreas.stream()
                                 .sorted(String.CASE_INSENSITIVE_ORDER)
                                 .toList());
                 model.addAttribute("propertyTaxStatusesAdd", propertyTaxStatusesAdd.stream()

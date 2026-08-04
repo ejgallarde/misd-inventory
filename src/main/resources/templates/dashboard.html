@@ -57,9 +57,15 @@
                 </button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link fw-bold text-secondary" id="properties-tab" data-bs-toggle="tab"
-                    data-bs-target="#properties" type="button" role="tab">
-                    🏢 Properties & Facilities
+                <button class="nav-link fw-bold text-secondary" id="land-assets-tab" data-bs-toggle="tab"
+                    data-bs-target="#land-assets" type="button" role="tab">
+                    🌾 Land Assets
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link fw-bold text-secondary" id="buildings-facilities-tab" data-bs-toggle="tab"
+                    data-bs-target="#buildings-facilities" type="button" role="tab">
+                    🏢 Buildings & Facilities
                 </button>
             </li>
         </ul>
@@ -311,22 +317,22 @@
             </div>
 
             <!-- ========================================== -->
-            <!-- TAB 3: PROPERTIES & FACILITIES             -->
+            <!-- TAB 3: LAND ASSETS                         -->
             <!-- ========================================== -->
-            <div class="tab-pane fade" id="properties" role="tabpanel">
+            <div class="tab-pane fade" id="land-assets" role="tabpanel">
 
                 <!-- Tab Specific Actions -->
                 <div class="d-flex justify-content-end mb-3 gap-2">
                     <button class="btn btn-success shadow-sm" type="button" data-bs-toggle="offcanvas"
-                        data-bs-target="#addPropertyOffcanvas">+ Add Property</button>
+                        data-bs-target="#addPropertyOffcanvas" data-property-form-context="LAND" id="addLandAssetBtn">+
+                        Add Land Asset</button>
                 </div>
 
-                <section class="asset-portfolio mb-4" aria-labelledby="propertyPortfolioTitle">
+                <section class="asset-portfolio mb-4" aria-labelledby="landPortfolioTitle">
                     <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-end gap-2 mb-3">
                         <div>
-                            <h3 class="h5 fw-bold mb-1" id="propertyPortfolioTitle">Properties & Facilities Portfolio
-                            </h3>
-                            <p class="text-muted small mb-0">Select a card to view the properties registry, or use the
+                            <h3 class="h5 fw-bold mb-1" id="landPortfolioTitle">Land Assets Portfolio</h3>
+                            <p class="text-muted small mb-0">Select a card to view the land registry, or use the
                                 arrow button to expand a breakdown</p>
                         </div>
                     </div>
@@ -334,20 +340,19 @@
                     <div class="asset-portfolio-tree property-portfolio-tree">
                         <div class="asset-metric-row">
                             <a href="/properties" class="asset-metric asset-metric-total">
-                                <span class="asset-metric-label">Total Properties</span>
-                                <strong class="asset-metric-value" th:text="${totalProperties}">0</strong>
-                                <span class="asset-metric-context">Complete registry of properties and
-                                    facilities</span>
+                                <span class="asset-metric-label">Total Land Assets</span>
+                                <strong class="asset-metric-value" th:text="${totalLandAssets}">0</strong>
+                                <span class="asset-metric-context">Complete registry of land assets</span>
                             </a>
                             <button type="button" class="asset-portfolio-toggle" data-bs-toggle="collapse"
-                                data-bs-target="#propertyLifecycleCollapse" aria-expanded="false"
-                                aria-controls="propertyLifecycleCollapse"
+                                data-bs-target="#landLifecycleCollapse" aria-expanded="false"
+                                aria-controls="landLifecycleCollapse"
                                 aria-label="Toggle Current Inventory and Slated for Disposal breakdown">
                                 <span class="asset-portfolio-toggle-icon">&#10148;</span>
                             </button>
                         </div>
 
-                        <div class="collapse collapse-horizontal" id="propertyLifecycleCollapse">
+                        <div class="collapse collapse-horizontal" id="landLifecycleCollapse">
                             <div class="asset-portfolio-branch">
                                 <div class="asset-portfolio-branch-row">
                                     <div class="asset-current-inventory-branch property-current-inventory-branch">
@@ -355,19 +360,19 @@
                                             <a href="/properties" class="asset-metric asset-metric-current">
                                                 <span class="asset-metric-label">Current Inventory</span>
                                                 <strong class="asset-metric-value"
-                                                    th:text="${currentInventoryProperties}">0</strong>
-                                                <span class="asset-metric-context">In portfolio, excludes properties
+                                                    th:text="${currentInventoryLandAssets}">0</strong>
+                                                <span class="asset-metric-context">In portfolio, excludes land assets
                                                     slated for disposal</span>
                                             </a>
                                             <button type="button" class="asset-portfolio-toggle"
-                                                data-bs-toggle="collapse" data-bs-target="#propertyOperationsCollapse"
-                                                aria-expanded="false" aria-controls="propertyOperationsCollapse"
+                                                data-bs-toggle="collapse" data-bs-target="#landOperationsCollapse"
+                                                aria-expanded="false" aria-controls="landOperationsCollapse"
                                                 aria-label="Toggle operational views within current inventory">
                                                 <span class="asset-portfolio-toggle-icon">&#10148;</span>
                                             </button>
                                         </div>
 
-                                        <div class="collapse collapse-horizontal" id="propertyOperationsCollapse">
+                                        <div class="collapse collapse-horizontal" id="landOperationsCollapse">
                                             <div class="asset-portfolio-branch-operations">
                                                 <div class="asset-stage-label">Operational views within current
                                                     inventory</div>
@@ -375,34 +380,34 @@
                                                     <a href="/properties" class="asset-metric asset-metric-deployed">
                                                         <span class="asset-metric-label">Active / In Use</span>
                                                         <strong class="asset-metric-value"
-                                                            th:text="${activeInUseProperties}">0</strong>
+                                                            th:text="${activeInUseLandAssets}">0</strong>
                                                         <span class="asset-metric-context">Actively utilized</span>
                                                     </a>
                                                     <a href="/properties" class="asset-metric asset-metric-maintenance">
                                                         <span class="asset-metric-label">Vacant / Idle</span>
                                                         <strong class="asset-metric-value"
-                                                            th:text="${vacantIdleProperties}">0</strong>
+                                                            th:text="${vacantIdleLandAssets}">0</strong>
                                                         <span class="asset-metric-context">Needs utilization
                                                             action</span>
                                                     </a>
                                                     <a href="/properties" class="asset-metric asset-metric-deployed">
                                                         <span class="asset-metric-label">Co-Located</span>
                                                         <strong class="asset-metric-value"
-                                                            th:text="${coLocatedProperties}">0</strong>
+                                                            th:text="${coLocatedLandAssets}">0</strong>
                                                         <span class="asset-metric-context">Shared usage with another
                                                             office</span>
                                                     </a>
                                                     <a href="/properties" class="asset-metric asset-metric-deployed">
                                                         <span class="asset-metric-label">Leased Out</span>
                                                         <strong class="asset-metric-value"
-                                                            th:text="${leasedOutProperties}">0</strong>
+                                                            th:text="${leasedOutLandAssets}">0</strong>
                                                         <span class="asset-metric-context">Active through lease
                                                             arrangement</span>
                                                     </a>
                                                     <a href="/properties" class="asset-metric asset-metric-maintenance">
                                                         <span class="asset-metric-label">Under Construction</span>
                                                         <strong class="asset-metric-value"
-                                                            th:text="${underConstructionProperties}">0</strong>
+                                                            th:text="${underConstructionLandAssets}">0</strong>
                                                         <span class="asset-metric-context">Construction or upgrade
                                                             ongoing</span>
                                                     </a>
@@ -413,7 +418,7 @@
                                     <a href="/properties" class="asset-metric asset-metric-decommissioned">
                                         <span class="asset-metric-label">Slated for Disposal</span>
                                         <strong class="asset-metric-value"
-                                            th:text="${slatedForDisposalProperties}">0</strong>
+                                            th:text="${slatedForDisposalLandAssets}">0</strong>
                                         <span class="asset-metric-context">Marked for disposal</span>
                                     </a>
                                 </div>
@@ -422,72 +427,157 @@
                     </div>
                 </section>
 
-                <div class="row g-3 mb-4" style="display:grid;grid-template-columns:repeat(6,minmax(0,1fr));">
-                    <div class="col">
-                        <div class="card text-white bg-secondary mb-3 shadow-sm">
-                            <div class="card-body">
-                                <h5 class="card-title">Total Problematic</h5>
-                                <h2 class="card-text" th:text="${problematicPropertiesCount}">0</h2>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col">
-                        <div class="card text-white bg-success mb-3 shadow-sm">
-                            <div class="card-body">
-                                <h5 class="card-title">Total Land Area (sqm)</h5>
-                                <h2 class="card-text"
-                                    th:text="${#numbers.formatDecimal(totalLandArea, 1, 'COMMA', 2, 'POINT')}">0.00</h2>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col">
-                        <div class="card text-white bg-danger mb-3 shadow-sm">
-                            <div class="card-body">
-                                <h5 class="card-title">Pending Tax / Dues</h5>
-                                <h2 class="card-text" th:text="${pendingTaxesCount}">0</h2>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col">
-                        <div class="card text-white bg-warning mb-3 shadow-sm">
-                            <div class="card-body">
-                                <h5 class="card-title">Legal / Titling Issues</h5>
-                                <h2 class="card-text" th:text="${propertiesWithLegalIssues}">0</h2>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col">
-                        <div class="card text-white bg-dark mb-3 shadow-sm">
-                            <div class="card-body">
-                                <h5 class="card-title">Operational Issues</h5>
-                                <h2 class="card-text" th:text="${propertiesWithOperationalIssues}">0</h2>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col">
-                        <div class="card text-white bg-info mb-3 shadow-sm">
-                            <div class="card-body">
-                                <h5 class="card-title">Condition Issues</h5>
-                                <h2 class="card-text" th:text="${propertiesWithConditionIssues}">0</h2>
-                            </div>
-                        </div>
-                    </div>
+                <div class="mb-4 text-muted small fw-semibold"
+                    th:text="${'Total Land Area (sqm): ' + #numbers.formatDecimal(totalLandArea, 1, 'COMMA', 2, 'POINT')}">
+                    Total Land Area (sqm): 0.00
                 </div>
 
                 <div class="card shadow-sm mb-5">
-                    <a data-bs-toggle="collapse" href="#collapseProperties" role="button" aria-expanded="true"
+                    <a data-bs-toggle="collapse" href="#collapseLandAssets" role="button" aria-expanded="true"
                         class="text-decoration-none">
                         <div
                             class="card-header bg-white border-bottom-0 pt-3 pb-3 d-flex justify-content-between align-items-center">
-                            <h5 class="card-title text-danger fw-bold mb-0">Properties & Facilities Requiring
+                            <h5 class="card-title text-danger fw-bold mb-0">Land Assets Requiring
                                 Attention</h5>
                             <span class="text-muted">&#9660;</span>
                         </div>
                     </a>
-                    <div class="collapse show" id="collapseProperties">
+                    <div class="collapse show" id="collapseLandAssets">
                         <div class="card-body pt-0">
                             <div
-                                th:replace="~{fragments/properties-table :: propertiesTable('propertiesActionRequiredTable', ${problematicProperties}, false)}">
+                                th:replace="~{fragments/land-assets-table :: landAssetsTable('landAssetsActionRequiredTable', ${problematicLandAssets}, false)}">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========================================== -->
+            <!-- TAB 4: BUILDINGS & FACILITIES              -->
+            <!-- ========================================== -->
+            <div class="tab-pane fade" id="buildings-facilities" role="tabpanel">
+
+                <!-- Tab Specific Actions -->
+                <div class="d-flex justify-content-end mb-3 gap-2">
+                    <button class="btn btn-success shadow-sm" type="button" data-bs-toggle="offcanvas"
+                        data-bs-target="#addPropertyOffcanvas" data-property-form-context="BUILDING_FACILITY"
+                        id="addBuildingFacilityBtn">+ Add Building or Facility</button>
+                </div>
+
+                <section class="asset-portfolio mb-4" aria-labelledby="buildingsPortfolioTitle">
+                    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-end gap-2 mb-3">
+                        <div>
+                            <h3 class="h5 fw-bold mb-1" id="buildingsPortfolioTitle">Buildings & Facilities Portfolio
+                            </h3>
+                            <p class="text-muted small mb-0">Select a card to view the buildings and facilities
+                                registry, or use the arrow button to expand a breakdown</p>
+                        </div>
+                    </div>
+
+                    <div class="asset-portfolio-tree property-portfolio-tree">
+                        <div class="asset-metric-row">
+                            <a href="/properties" class="asset-metric asset-metric-total">
+                                <span class="asset-metric-label">Total Buildings & Facilities</span>
+                                <strong class="asset-metric-value" th:text="${totalBuildingFacilityAssets}">0</strong>
+                                <span class="asset-metric-context">Complete registry of buildings and facilities</span>
+                            </a>
+                            <button type="button" class="asset-portfolio-toggle" data-bs-toggle="collapse"
+                                data-bs-target="#buildingLifecycleCollapse" aria-expanded="false"
+                                aria-controls="buildingLifecycleCollapse"
+                                aria-label="Toggle Current Inventory and Slated for Disposal breakdown">
+                                <span class="asset-portfolio-toggle-icon">&#10148;</span>
+                            </button>
+                        </div>
+
+                        <div class="collapse collapse-horizontal" id="buildingLifecycleCollapse">
+                            <div class="asset-portfolio-branch">
+                                <div class="asset-portfolio-branch-row">
+                                    <div class="asset-current-inventory-branch property-current-inventory-branch">
+                                        <div class="asset-metric-row">
+                                            <a href="/properties" class="asset-metric asset-metric-current">
+                                                <span class="asset-metric-label">Current Inventory</span>
+                                                <strong class="asset-metric-value"
+                                                    th:text="${currentInventoryBuildingAssets}">0</strong>
+                                                <span class="asset-metric-context">In portfolio, excludes entries
+                                                    slated for disposal</span>
+                                            </a>
+                                            <button type="button" class="asset-portfolio-toggle"
+                                                data-bs-toggle="collapse" data-bs-target="#buildingOperationsCollapse"
+                                                aria-expanded="false" aria-controls="buildingOperationsCollapse"
+                                                aria-label="Toggle operational views within current inventory">
+                                                <span class="asset-portfolio-toggle-icon">&#10148;</span>
+                                            </button>
+                                        </div>
+
+                                        <div class="collapse collapse-horizontal" id="buildingOperationsCollapse">
+                                            <div class="asset-portfolio-branch-operations">
+                                                <div class="asset-stage-label">Operational views within current
+                                                    inventory</div>
+                                                <div class="asset-operational-cards property-operational-cards">
+                                                    <a href="/properties" class="asset-metric asset-metric-deployed">
+                                                        <span class="asset-metric-label">Active / In Use</span>
+                                                        <strong class="asset-metric-value"
+                                                            th:text="${activeInUseBuildingAssets}">0</strong>
+                                                        <span class="asset-metric-context">Actively utilized</span>
+                                                    </a>
+                                                    <a href="/properties" class="asset-metric asset-metric-maintenance">
+                                                        <span class="asset-metric-label">Vacant / Idle</span>
+                                                        <strong class="asset-metric-value"
+                                                            th:text="${vacantIdleBuildingAssets}">0</strong>
+                                                        <span class="asset-metric-context">Needs utilization
+                                                            action</span>
+                                                    </a>
+                                                    <a href="/properties" class="asset-metric asset-metric-deployed">
+                                                        <span class="asset-metric-label">Co-Located</span>
+                                                        <strong class="asset-metric-value"
+                                                            th:text="${coLocatedBuildingAssets}">0</strong>
+                                                        <span class="asset-metric-context">Shared usage with another
+                                                            office</span>
+                                                    </a>
+                                                    <a href="/properties" class="asset-metric asset-metric-deployed">
+                                                        <span class="asset-metric-label">Leased Out</span>
+                                                        <strong class="asset-metric-value"
+                                                            th:text="${leasedOutBuildingAssets}">0</strong>
+                                                        <span class="asset-metric-context">Active through lease
+                                                            arrangement</span>
+                                                    </a>
+                                                    <a href="/properties" class="asset-metric asset-metric-maintenance">
+                                                        <span class="asset-metric-label">Under Construction</span>
+                                                        <strong class="asset-metric-value"
+                                                            th:text="${underConstructionBuildingAssets}">0</strong>
+                                                        <span class="asset-metric-context">Construction or upgrade
+                                                            ongoing</span>
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <a href="/properties" class="asset-metric asset-metric-decommissioned">
+                                        <span class="asset-metric-label">Slated for Disposal</span>
+                                        <strong class="asset-metric-value"
+                                            th:text="${slatedForDisposalBuildingAssets}">0</strong>
+                                        <span class="asset-metric-context">Marked for disposal</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <div class="card shadow-sm mb-5">
+                    <a data-bs-toggle="collapse" href="#collapseBuildingAssets" role="button" aria-expanded="true"
+                        class="text-decoration-none">
+                        <div
+                            class="card-header bg-white border-bottom-0 pt-3 pb-3 d-flex justify-content-between align-items-center">
+                            <h5 class="card-title text-danger fw-bold mb-0">Buildings & Facilities Requiring
+                                Attention</h5>
+                            <span class="text-muted">&#9660;</span>
+                        </div>
+                    </a>
+                    <div class="collapse show" id="collapseBuildingAssets">
+                        <div class="card-body pt-0">
+                            <div
+                                th:replace="~{fragments/building-facilities-table :: buildingFacilitiesTable('buildingsFacilitiesActionRequiredTable', ${problematicBuildingAssets}, false)}">
                             </div>
                         </div>
                     </div>
@@ -757,19 +847,21 @@
     <!-- PROPERTIES: Add Property Slide-out -->
     <div class="offcanvas offcanvas-end shadow" tabindex="-1" id="addPropertyOffcanvas" style="width: 450px;">
         <div class="offcanvas-header bg-light border-bottom">
-            <h5 class="offcanvas-title">Add Property / Facility</h5>
+            <h5 class="offcanvas-title" id="addPropertyOffcanvasTitle">Add Land Asset</h5>
             <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
         </div>
         <div class="offcanvas-body">
             <form th:action="@{/properties/add}" method="post" enctype="multipart/form-data">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                <input type="hidden" id="propertyRegistrationContextInput" name="propertyRegistrationContext"
+                    value="LAND">
                 <div class="mb-3">
                     <label class="form-label fw-bold">Property Name <span class="required-indicator"
                             aria-hidden="true">*</span></label>
                     <input type="text" class="form-control" name="propertyName" placeholder="e.g. CMEC" required>
                 </div>
                 <div class="row mb-3">
-                    <div class="col-6">
+                    <div class="col-6" id="propertyTypeGroup">
                         <label class="form-label fw-bold">Type <span class="required-indicator"
                                 aria-hidden="true">*</span></label>
                         <select class="form-select" id="propertyTypeInput" name="propertyType" required>
@@ -778,27 +870,36 @@
                                 th:text="${propertyType}"></option>
                         </select>
                     </div>
-                </div>
-                <div id="propertyIdentifierSection" class="d-none">
-                    <div id="propertyTitleNotAvailableWrap" class="form-check mt-n2 mb-3 d-none">
-                        <input class="form-check-input" type="checkbox" id="propertyTitleNotAvailableCheckbox"
-                            name="titleNotAvailable" value="true">
-                        <label class="form-check-label small" for="propertyTitleNotAvailableCheckbox">
-                            Title Number is not available
-                        </label>
+                    <div class="col-6" id="propertyAreaGroup">
+                        <label class="form-label fw-bold">Area <span class="required-indicator"
+                                aria-hidden="true">*</span></label>
+                        <select class="form-select" id="propertyAreaInput" name="area" required>
+                            <option value="" selected disabled>Select area</option>
+                            <option th:each="areaOption : ${propertyAreas}" th:value="${areaOption}"
+                                th:text="${areaOption}"></option>
+                        </select>
                     </div>
-                    <div id="propertyTitleFieldWrap" class="mb-3 d-none">
-                        <label class="form-label fw-bold" id="propertyIdentifierLabel">Title No. <span
+                </div>
+                <div id="propertyIdentifierSection">
+                    <div id="propertyTitleFieldWrap" class="mb-3">
+                        <label class="form-label fw-bold" id="propertyIdentifierLabel">Title No. / TCT <span
                                 class="required-indicator" aria-hidden="true">*</span></label>
                         <input type="text" class="form-control" id="propertyTitleNumberInput" name="titleNumber"
-                            placeholder="Required for lot properties">
+                            placeholder="Required for land assets">
                     </div>
 
-                    <div id="propertyTaxDeclarationFieldWrap" class="mb-3 d-none">
+                    <div id="propertyTaxDeclarationFieldWrap" class="mb-3">
                         <label class="form-label fw-bold" id="propertyTaxDeclarationLabel">Tax Declaration No.
                             <span class="required-indicator" aria-hidden="true">*</span></label>
                         <input type="text" class="form-control" id="propertyTaxDeclarationNumberInput"
-                            name="taxDeclarationNumber" placeholder="Required for non-lot properties">
+                            name="taxDeclarationNumber" placeholder="Required for land assets">
+                    </div>
+
+                    <div id="propertySurveyPlanFieldWrap" class="mb-3">
+                        <label class="form-label fw-bold" id="propertySurveyPlanLabel">Survey Plan Number <span
+                                class="required-indicator" aria-hidden="true">*</span></label>
+                        <input type="text" class="form-control" id="propertySurveyPlanNumberInput"
+                            name="surveyPlanNumber" placeholder="Required for land assets">
                     </div>
                 </div>
                 <div class="mb-3">
@@ -911,7 +1012,8 @@
                     <ul id="propertyDocumentPreview" class="list-group list-group-flush border rounded mt-2 small"
                         aria-live="polite"></ul>
                 </div>
-                <div class="d-grid gap-2"><button type="submit" class="btn btn-success">Add Property</button></div>
+                <div class="d-grid gap-2"><button type="submit" class="btn btn-success" id="addPropertySubmitBtn">Add
+                        Land Asset</button></div>
             </form>
         </div>
     </div>
