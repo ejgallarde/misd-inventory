@@ -15,10 +15,6 @@ import org.springframework.stereotype.Component;
 @Component("assetHelper")
 public class AssetWorkflowHelper {
 
-    // -----------------------------------------------------------------------
-    // Badge CSS classes
-    // -----------------------------------------------------------------------
-
     public String deploymentBadgeClass(String status) {
         if (status == null || status.isBlank())
             return "badge bg-dark";
@@ -49,10 +45,6 @@ public class AssetWorkflowHelper {
             return "badge bg-dark";
         return "Active".equals(status) ? "badge bg-success" : "badge bg-dark";
     }
-
-    // -----------------------------------------------------------------------
-    // Tooltip text
-    // -----------------------------------------------------------------------
 
     public String deploymentTooltip(String status) {
         if (status == null)
@@ -95,22 +87,12 @@ public class AssetWorkflowHelper {
         };
     }
 
-    // -----------------------------------------------------------------------
-    // Display label
-    // -----------------------------------------------------------------------
-
-    /** Returns the display label for a deployment status. */
     public String deploymentLabel(String status) {
         if (status == null)
             return "";
         return "Deployment: " + status;
     }
 
-    // -----------------------------------------------------------------------
-    // Action predicates (used by assets.html action dropdown)
-    // -----------------------------------------------------------------------
-
-    /** Show "Actions" dropdown at all? */
     public boolean hasActions(String lifecycleStatus) {
         return !"Decommissioned / Retired".equals(lifecycleStatus)
                 && !"Disposed".equals(lifecycleStatus)

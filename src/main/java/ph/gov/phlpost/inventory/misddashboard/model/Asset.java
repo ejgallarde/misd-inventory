@@ -45,7 +45,6 @@ public class Asset {
     public Asset() {
     }
 
-    // Getters and Setters
     public String getAssetTag() {
         return assetTag;
     }

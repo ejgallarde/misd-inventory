@@ -145,7 +145,7 @@ class DocumentServiceTest {
                                 files,
                                 "IT_EQUIPMENT",
                                 "TAG-001",
-                                new String[] { "Delivery Receipt", "Inspection Report" },
+                                new String[] { "Official Receipt / Invoice", "Inspection Report" },
                                 "tester");
 
                 ArgumentCaptor<Document> docCaptor = ArgumentCaptor.forClass(Document.class);
@@ -154,7 +154,7 @@ class DocumentServiceTest {
 
                 List<Document> savedDocs = docCaptor.getAllValues();
                 assertThat(savedDocs).hasSize(2);
-                assertThat(savedDocs.get(0).getDocumentCategory()).isEqualTo("Delivery Receipt");
+                assertThat(savedDocs.get(0).getDocumentCategory()).isEqualTo("Official Receipt / Invoice");
                 assertThat(savedDocs.get(1).getDocumentCategory()).isEqualTo("Inspection Report");
                 assertThat(savedDocs.get(0).getUploadedBy()).isEqualTo("tester");
         }

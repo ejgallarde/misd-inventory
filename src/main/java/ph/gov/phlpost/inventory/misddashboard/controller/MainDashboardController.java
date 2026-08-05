@@ -8,6 +8,7 @@ import ph.gov.phlpost.inventory.misddashboard.repository.FleetVehicleRepository;
 import ph.gov.phlpost.inventory.misddashboard.repository.PersonnelRepository;
 import ph.gov.phlpost.inventory.misddashboard.repository.RealEstatePropertyRepository;
 import ph.gov.phlpost.inventory.misddashboard.service.RegistryService;
+import ph.gov.phlpost.inventory.misddashboard.util.TextUtils;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -23,7 +24,6 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Comparator;
@@ -216,15 +216,15 @@ public class MainDashboardController {
                                 .toList());
                 model.addAttribute("documentUploadMaxSizeMb", documentUploadMaxSizeMb);
                 model.addAttribute("documentUploadAllowedExtensions", documentUploadAllowedExtensions);
-                model.addAttribute("itDocumentUploadCategories", splitCsv(itDocumentUploadCategoriesCsv).stream()
+                model.addAttribute("itDocumentUploadCategories", TextUtils.splitCsv(itDocumentUploadCategoriesCsv).stream()
                                 .sorted(String.CASE_INSENSITIVE_ORDER)
                                 .toList());
                 model.addAttribute("vehicleDocumentUploadCategories",
-                                splitCsv(vehicleDocumentUploadCategoriesCsv).stream()
+                                TextUtils.splitCsv(vehicleDocumentUploadCategoriesCsv).stream()
                                                 .sorted(String.CASE_INSENSITIVE_ORDER)
                                                 .toList());
                 model.addAttribute("propertyDocumentUploadCategories",
-                                splitCsv(propertyDocumentUploadCategoriesCsv).stream()
+                                TextUtils.splitCsv(propertyDocumentUploadCategoriesCsv).stream()
                                                 .sorted(String.CASE_INSENSITIVE_ORDER)
                                                 .toList());
                 model.addAttribute("assetDeploymentStatusOptions", assetDeploymentStatusOptions);
@@ -258,16 +258,6 @@ public class MainDashboardController {
                 model.addAttribute("propertyConditionStatuses", propertyConditionStatuses);
 
                 return "dashboard";
-        }
-
-        private List<String> splitCsv(String csv) {
-                if (csv == null || csv.isBlank()) {
-                        return List.of();
-                }
-                return Arrays.stream(csv.split(","))
-                                .map(String::trim)
-                                .filter(value -> !value.isEmpty())
-                                .toList();
         }
 
         @GetMapping("/api/personnel/search")

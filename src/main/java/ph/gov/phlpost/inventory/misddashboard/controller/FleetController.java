@@ -6,9 +6,9 @@ import ph.gov.phlpost.inventory.misddashboard.service.AssetHistoryService;
 import ph.gov.phlpost.inventory.misddashboard.service.DocumentService;
 import ph.gov.phlpost.inventory.misddashboard.service.FleetService;
 import ph.gov.phlpost.inventory.misddashboard.service.RegistryService;
+import ph.gov.phlpost.inventory.misddashboard.util.TextUtils;
 
 import java.time.Year;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -74,7 +74,7 @@ public class FleetController {
         model.addAttribute("managerNameMap", registryService.getManagerNameMap());
         model.addAttribute("documentUploadMaxSizeMb", documentUploadMaxSizeMb);
         model.addAttribute("documentUploadAllowedExtensions", documentUploadAllowedExtensions);
-        model.addAttribute("vehicleDocumentUploadCategories", splitCsv(vehicleDocumentUploadCategoriesCsv).stream()
+        model.addAttribute("vehicleDocumentUploadCategories", TextUtils.splitCsv(vehicleDocumentUploadCategoriesCsv).stream()
                 .sorted(String.CASE_INSENSITIVE_ORDER)
                 .toList());
         model.addAttribute("fleetAdminLegalStatuses", fleetAdminLegalStatuses);
@@ -134,13 +134,13 @@ public class FleetController {
     }
 
     private String validateVehicleRegistration(FleetVehicle vehicle) {
-        if (isBlank(vehicle.getVehicleType())) {
+        if (TextUtils.isBlank(vehicle.getVehicleType())) {
             return "Vehicle type is required.";
         }
-        if (isBlank(vehicle.getMake())) {
+        if (TextUtils.isBlank(vehicle.getMake())) {
             return "Make is required.";
         }
-        if (isBlank(vehicle.getModel())) {
+        if (TextUtils.isBlank(vehicle.getModel())) {
             return "Model is required.";
         }
         if (vehicle.getManufactureYear() == null) {
@@ -150,39 +150,25 @@ public class FleetController {
         if (vehicle.getManufactureYear() < 1980 || vehicle.getManufactureYear() > currentYear + 1) {
             return "Manufacture year is out of allowed range.";
         }
-        if (isBlank(vehicle.getFuelType())) {
+        if (TextUtils.isBlank(vehicle.getFuelType())) {
             return "Fuel type is required.";
         }
-        if (isBlank(vehicle.getEngineNumber())) {
+        if (TextUtils.isBlank(vehicle.getEngineNumber())) {
             return "Engine number is required.";
         }
-        if (isBlank(vehicle.getChassisNumberVIN())) {
+        if (TextUtils.isBlank(vehicle.getChassisNumberVIN())) {
             return "Chassis number / VIN is required.";
         }
-        if (isBlank(vehicle.getAdminLegaltionalStatus())) {
+        if (TextUtils.isBlank(vehicle.getAdminLegaltionalStatus())) {
             return "Administrative & Legal Status is required.";
         }
-        if (isBlank(vehicle.getOperationalStatus())) {
+        if (TextUtils.isBlank(vehicle.getOperationalStatus())) {
             return "Operational & Dispatch Status is required.";
         }
-        if (isBlank(vehicle.getMaintenanceStatus())) {
+        if (TextUtils.isBlank(vehicle.getMaintenanceStatus())) {
             return "Maintenance & Health Status is required.";
         }
         return null;
-    }
-
-    private boolean isBlank(String value) {
-        return value == null || value.trim().isEmpty();
-    }
-
-    private List<String> splitCsv(String csv) {
-        if (csv == null || csv.isBlank()) {
-            return List.of();
-        }
-        return Arrays.stream(csv.split(","))
-                .map(String::trim)
-                .filter(value -> !value.isEmpty())
-                .toList();
     }
 
     @PostMapping("/assign")
@@ -316,31 +302,21 @@ public class FleetController {
     @GetMapping("/{id}")
     public ResponseEntity<Map<String, Object>> getVehicleDetails(@PathVariable Integer id) {
         try {
-            // Review vehicle status (deprecation, registration expiry) and update if
-            // needed,
-            // then return the updated vehicle
             FleetVehicle vehicle = fleetService.reviewAndUpdateVehicleStatus(id);
 
             String assignedDriverId = vehicle.getAssignedDriverID();
-            String assignedDriverName = assignedDriverId == null || assignedDriverId.isBlank()
-                    ? "Unassigned"
-                    : registryService.getEmployeeNameMap().getOrDefault(assignedDriverId, assignedDriverId);
+            String assignedDriverName = registryService.resolveDisplayName(assignedDriverId);
             String assignedDriverManagerName = assignedDriverId == null || assignedDriverId.isBlank()
                     ? "N/A"
                     : registryService.getManagerNameByEmployeeId(assignedDriverId);
 
-            // Check if fully depreciated for frontend styling
             boolean isFullyDepreciated = false;
             if (vehicle.getCost() != null && vehicle.getAcquisitionYear() != null) {
-                try {
-                    double cost = Double.parseDouble(vehicle.getCost().replaceAll("[^0-9.]", ""));
-                    int acqYear = vehicle.getAcquisitionYear();
-                    if (cost > 0 && acqYear > 0) {
-                        int yearsUsed = java.time.Year.now().getValue() - acqYear;
-                        isFullyDepreciated = yearsUsed >= 10;
-                    }
-                } catch (NumberFormatException e) {
-                    // Ignore
+                double cost = TextUtils.parseLenientDouble(vehicle.getCost());
+                int acqYear = vehicle.getAcquisitionYear();
+                if (cost > 0 && acqYear > 0) {
+                    int yearsUsed = java.time.Year.now().getValue() - acqYear;
+                    isFullyDepreciated = yearsUsed >= 10;
                 }
             }
 

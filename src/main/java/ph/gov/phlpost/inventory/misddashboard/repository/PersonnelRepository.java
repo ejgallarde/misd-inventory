@@ -13,7 +13,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface PersonnelRepository extends JpaRepository<Personnel, String> {
-        // Spring Data JPA + Cacheable
         @Cacheable("allPersonnel")
         @EntityGraph(attributePaths = "baseLocation")
         List<Personnel> findAll();

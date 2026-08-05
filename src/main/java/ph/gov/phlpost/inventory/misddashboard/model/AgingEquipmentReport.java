@@ -10,7 +10,6 @@ import java.time.LocalDate;
 @Table(name = "vw_agingequipment") // Kept for native query result mapping compatibility.
 public class AgingEquipmentReport {
 
-    // JPA requires a primary key, so we use the unique AssetTag
     @Id
     @Column(name = "AssetTag")
     private String assetTag;
@@ -39,11 +38,9 @@ public class AgingEquipmentReport {
     @Column(name = "LifecycleStatus")
     private String lifecycleStatus;
 
-    // --- Empty Constructor required by JPA ---
     public AgingEquipmentReport() {
     }
 
-    // --- Getters ---
     public String getAssetTag() {
         return assetTag;
     }

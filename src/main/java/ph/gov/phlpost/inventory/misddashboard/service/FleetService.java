@@ -2,6 +2,7 @@ package ph.gov.phlpost.inventory.misddashboard.service;
 
 import ph.gov.phlpost.inventory.misddashboard.model.FleetVehicle;
 import ph.gov.phlpost.inventory.misddashboard.repository.FleetVehicleRepository;
+import ph.gov.phlpost.inventory.misddashboard.util.TextUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -151,13 +152,13 @@ public class FleetService {
         vehicle.setRemarks(remarks);
 
         // Lock-once fields: only applied when the current database value is blank
-        if (isBlank(vehicle.getPlateNumber()) && !isBlank(plateNumber)) {
+        if (TextUtils.isBlank(vehicle.getPlateNumber()) && !TextUtils.isBlank(plateNumber)) {
             vehicle.setPlateNumber(plateNumber);
         }
-        if (isBlank(vehicle.getMake()) && !isBlank(make)) {
+        if (TextUtils.isBlank(vehicle.getMake()) && !TextUtils.isBlank(make)) {
             vehicle.setMake(make);
         }
-        if (isBlank(vehicle.getModel()) && !isBlank(model)) {
+        if (TextUtils.isBlank(vehicle.getModel()) && !TextUtils.isBlank(model)) {
             vehicle.setModel(model);
         }
         if (vehicle.getManufactureYear() == null && manufactureYear != null) {
@@ -166,27 +167,23 @@ public class FleetService {
         if (vehicle.getAcquisitionYear() == null && acquisitionYear != null) {
             vehicle.setAcquisitionYear(acquisitionYear);
         }
-        if (isBlank(vehicle.getBodyNumber()) && !isBlank(bodyNumber)) {
+        if (TextUtils.isBlank(vehicle.getBodyNumber()) && !TextUtils.isBlank(bodyNumber)) {
             vehicle.setBodyNumber(bodyNumber);
         }
-        if (isBlank(vehicle.getFuelType()) && !isBlank(fuelType)) {
+        if (TextUtils.isBlank(vehicle.getFuelType()) && !TextUtils.isBlank(fuelType)) {
             vehicle.setFuelType(fuelType);
         }
-        if (isBlank(vehicle.getEngineNumber()) && !isBlank(engineNumber)) {
+        if (TextUtils.isBlank(vehicle.getEngineNumber()) && !TextUtils.isBlank(engineNumber)) {
             vehicle.setEngineNumber(engineNumber);
         }
-        if (isBlank(vehicle.getChassisNumberVIN()) && !isBlank(chassisNumberVIN)) {
+        if (TextUtils.isBlank(vehicle.getChassisNumberVIN()) && !TextUtils.isBlank(chassisNumberVIN)) {
             vehicle.setChassisNumberVIN(chassisNumberVIN);
         }
-        if (isBlank(vehicle.getCost()) && !isBlank(cost)) {
+        if (TextUtils.isBlank(vehicle.getCost()) && !TextUtils.isBlank(cost)) {
             vehicle.setCost(cost);
         }
 
         fleetRepo.save(vehicle);
-    }
-
-    private boolean isBlank(String value) {
-        return value == null || value.trim().isEmpty();
     }
 
     @Transactional
@@ -198,12 +195,12 @@ public class FleetService {
 
         // Check if fully depreciated; if so, update maintenance status
         if (vehicle.getCost() != null && vehicle.getAcquisitionYear() != null) {
-            double cost = parseDouble(vehicle.getCost());
+            double cost = TextUtils.parseLenientDouble(vehicle.getCost());
             int acqYear = vehicle.getAcquisitionYear();
             if (cost > 0 && acqYear > 0) {
                 int yearsUsed = java.time.Year.now().getValue() - acqYear;
                 if (yearsUsed >= 10) {
-                    if (!isBlank(vehicle.getMaintenanceStatus()) &&
+                    if (!TextUtils.isBlank(vehicle.getMaintenanceStatus()) &&
                             !vehicle.getMaintenanceStatus().equals("Beyond Economic Repair (BER)")) {
                         vehicle.setMaintenanceStatus("Beyond Economic Repair (BER)");
                         updated = true;
@@ -215,7 +212,7 @@ public class FleetService {
         // Check if registration is expired; if so, update admin/legal status
         if (vehicle.getRegistrationExpiry() != null) {
             if (vehicle.getRegistrationExpiry().isBefore(LocalDate.now())) {
-                if (!isBlank(vehicle.getAdminLegaltionalStatus()) &&
+                if (!TextUtils.isBlank(vehicle.getAdminLegaltionalStatus()) &&
                         !vehicle.getAdminLegaltionalStatus().equals("Registration Expired")) {
                     vehicle.setAdminLegaltionalStatus("Registration Expired");
                     updated = true;
@@ -230,49 +227,4 @@ public class FleetService {
         return vehicle;
     }
 
-    @Transactional
-    public void updateVehicleStatusIfNeeded(FleetVehicle vehicle) {
-        boolean updated = false;
-
-        // Check if fully depreciated; if so, update maintenance status
-        if (vehicle.getCost() != null && vehicle.getAcquisitionYear() != null) {
-            double cost = parseDouble(vehicle.getCost());
-            int acqYear = vehicle.getAcquisitionYear();
-            if (cost > 0 && acqYear > 0) {
-                int yearsUsed = java.time.Year.now().getValue() - acqYear;
-                if (yearsUsed >= 10) {
-                    if (!isBlank(vehicle.getMaintenanceStatus()) &&
-                            !vehicle.getMaintenanceStatus().equals("Beyond Economic Repair (BER)")) {
-                        vehicle.setMaintenanceStatus("Beyond Economic Repair (BER)");
-                        updated = true;
-                    }
-                }
-            }
-        }
-
-        // Check if registration is expired; if so, update admin/legal status
-        if (vehicle.getRegistrationExpiry() != null) {
-            if (vehicle.getRegistrationExpiry().isBefore(LocalDate.now())) {
-                if (!isBlank(vehicle.getAdminLegaltionalStatus()) &&
-                        !vehicle.getAdminLegaltionalStatus().equals("Registration Expired")) {
-                    vehicle.setAdminLegaltionalStatus("Registration Expired");
-                    updated = true;
-                }
-            }
-        }
-
-        if (updated) {
-            fleetRepo.save(vehicle);
-        }
-    }
-
-    private double parseDouble(String value) {
-        if (value == null || value.trim().isEmpty())
-            return 0;
-        try {
-            return Double.parseDouble(value.replaceAll("[^0-9.]", ""));
-        } catch (NumberFormatException e) {
-            return 0;
-        }
-    }
 }

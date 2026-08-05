@@ -26,7 +26,6 @@ public class EquipmentCatalog {
 
     public EquipmentCatalog() {}
 
-    // Getters and Setters are required for form binding
     public Integer getCatalogID() { return catalogID; }
     public void setCatalogID(Integer catalogID) { this.catalogID = catalogID; }
 

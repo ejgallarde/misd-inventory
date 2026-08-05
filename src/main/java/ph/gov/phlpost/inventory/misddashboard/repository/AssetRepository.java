@@ -9,7 +9,6 @@ import java.util.Optional;
 
 public interface AssetRepository extends JpaRepository<Asset, String> {
 
-    // Add this inside your AssetRepository interface
     Optional<Asset> findTopByAssetTagStartingWithOrderByAssetTagDesc(String prefix);
 
     @Query(value = "SELECT asset.* FROM Assets asset " +

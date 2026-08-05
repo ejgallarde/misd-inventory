@@ -38,14 +38,7 @@ public class DocumentStorageService {
     }
 
     /**
-     * Uploads a file to either local filesystem or MinIO, depending on
-     * storage.mode.
-     *
-     * @param file      The uploaded Multipart file from the controller
-     * @param assetType e.g., "vehicles", "it-equipment", "properties"
-     * @param entityId  The unique identifier of the asset (e.g., PlateNumber or
-     *                  AssetTag)
-     * @return The generated storage key/path persisted in the database
+     * Uploads a file to either local filesystem or MinIO, depending on storage.mode.
      */
     public String uploadDocument(MultipartFile file, String assetType, String entityId) throws IOException {
         if (file.isEmpty()) {

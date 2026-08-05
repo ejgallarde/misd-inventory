@@ -115,6 +115,13 @@ public class RegistryService {
         return managerNames;
     }
 
+    public String resolveDisplayName(String employeeId) {
+        if (employeeId == null || employeeId.isBlank()) {
+            return "Unassigned";
+        }
+        return getEmployeeNameMap().getOrDefault(employeeId, employeeId);
+    }
+
     public String getManagerNameByEmployeeId(String employeeId) {
         if (employeeId == null || employeeId.isBlank()) {
             return "No Manager";

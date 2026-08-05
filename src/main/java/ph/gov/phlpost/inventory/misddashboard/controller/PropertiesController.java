@@ -6,10 +6,10 @@ import ph.gov.phlpost.inventory.misddashboard.service.AssetHistoryService;
 import ph.gov.phlpost.inventory.misddashboard.service.AuditLogService;
 import ph.gov.phlpost.inventory.misddashboard.service.DocumentService;
 import ph.gov.phlpost.inventory.misddashboard.service.RegistryService;
+import ph.gov.phlpost.inventory.misddashboard.util.TextUtils;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Arrays;
 import java.util.Comparator;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -68,7 +68,7 @@ public class PropertiesController {
     public String viewAllProperties(Model model) {
         List<RealEstateProperty> allProperties = propertyRepo.findAll().stream()
                 .sorted(Comparator.comparing(
-                        property -> normalize(property.getPropertyName()),
+                        property -> TextUtils.normalizeBlank(property.getPropertyName()),
                         String.CASE_INSENSITIVE_ORDER))
                 .toList();
 
@@ -86,7 +86,7 @@ public class PropertiesController {
         model.addAttribute("employeeMap", registryService.getEmployeeNameMap());
         model.addAttribute("documentUploadMaxSizeMb", documentUploadMaxSizeMb);
         model.addAttribute("documentUploadAllowedExtensions", documentUploadAllowedExtensions);
-        model.addAttribute("propertyDocumentUploadCategories", splitCsv(propertyDocumentUploadCategoriesCsv).stream()
+        model.addAttribute("propertyDocumentUploadCategories", TextUtils.splitCsv(propertyDocumentUploadCategoriesCsv).stream()
                 .sorted(String.CASE_INSENSITIVE_ORDER)
                 .toList());
         model.addAttribute("propertyTaxStatusesUpdate", propertyTaxStatusesUpdate.stream()
@@ -106,7 +106,7 @@ public class PropertiesController {
             @RequestParam(value = "documentCategories", required = false) String[] documentCategories,
             Authentication authentication,
             RedirectAttributes redirectAttributes) {
-        String registrationContext = normalize(propertyRegistrationContext).toUpperCase();
+        String registrationContext = TextUtils.normalizeBlank(propertyRegistrationContext).toUpperCase();
         if ("LAND".equals(registrationContext)) {
             newProperty.setPropertyType("Lot");
             newProperty.setFloorAreaSqm(null);
@@ -151,39 +151,39 @@ public class PropertiesController {
 
     private String validatePropertyRegistration(RealEstateProperty property, boolean titleNotAvailable,
             String propertyRegistrationContext) {
-        if (isBlank(property.getPropertyName())) {
+        if (TextUtils.isBlank(property.getPropertyName())) {
             return "Property name is required.";
         }
-        if (isBlank(property.getPropertyType())) {
+        if (TextUtils.isBlank(property.getPropertyType())) {
             return "Property type is required.";
         }
-        if (isBlank(property.getAddressLine1())) {
+        if (TextUtils.isBlank(property.getAddressLine1())) {
             return "Address Line 1 is required.";
         }
-        if (isBlank(property.getProvince())) {
+        if (TextUtils.isBlank(property.getProvince())) {
             return "Province is required.";
         }
-        if (isBlank(property.getCity())) {
+        if (TextUtils.isBlank(property.getCity())) {
             return "City / Municipality is required.";
         }
-        if (isBlank(property.getBarangay())) {
+        if (TextUtils.isBlank(property.getBarangay())) {
             return "Barangay is required.";
         }
-        if (isBlank(property.getOperationalStatus())) {
+        if (TextUtils.isBlank(property.getOperationalStatus())) {
             return "Operational & Utilization Status is required.";
         }
-        if (isBlank(property.getConditionStatus())) {
+        if (TextUtils.isBlank(property.getConditionStatus())) {
             return "Condition Status is required.";
         }
-        if (isBlank(property.getArea())) {
+        if (TextUtils.isBlank(property.getArea())) {
             return "Area is required.";
         }
 
-        String propertyType = normalize(property.getPropertyType());
-        String titleNumber = normalize(property.getTitleNumber());
-        String taxDeclarationNumber = normalize(property.getTaxDeclarationNumber());
-        String surveyPlanNumber = normalize(property.getSurveyPlanNumber());
-        String registrationContext = normalize(propertyRegistrationContext).toUpperCase();
+        String propertyType = TextUtils.normalizeBlank(property.getPropertyType());
+        String titleNumber = TextUtils.normalizeBlank(property.getTitleNumber());
+        String taxDeclarationNumber = TextUtils.normalizeBlank(property.getTaxDeclarationNumber());
+        String surveyPlanNumber = TextUtils.normalizeBlank(property.getSurveyPlanNumber());
+        String registrationContext = TextUtils.normalizeBlank(propertyRegistrationContext).toUpperCase();
 
         if (!registrationContext.isEmpty()) {
             if ("LAND".equals(registrationContext) && !isLotType(propertyType)) {
@@ -195,7 +195,7 @@ public class PropertiesController {
         }
 
         if ("LAND".equals(registrationContext)) {
-            if (isBlank(property.getLegalTitlingStatus())) {
+            if (TextUtils.isBlank(property.getLegalTitlingStatus())) {
                 return "Legal & Titling Status is required for land assets.";
             }
             if (titleNumber.isEmpty()) {
@@ -223,24 +223,6 @@ public class PropertiesController {
         }
 
         return null;
-    }
-
-    private boolean isBlank(String value) {
-        return value == null || value.trim().isEmpty();
-    }
-
-    private List<String> splitCsv(String csv) {
-        if (csv == null || csv.isBlank()) {
-            return List.of();
-        }
-        return Arrays.stream(csv.split(","))
-                .map(String::trim)
-                .filter(value -> !value.isEmpty())
-                .toList();
-    }
-
-    private String normalize(String value) {
-        return value == null ? "" : value.trim();
     }
 
     private boolean isLotType(String propertyType) {
@@ -299,9 +281,7 @@ public class PropertiesController {
         return propertyRepo.findById(id)
                 .map(property -> {
                     String custodianId = property.getCustodianID();
-                    String custodianName = custodianId == null || custodianId.isBlank()
-                            ? "Unassigned"
-                            : registryService.getEmployeeNameMap().getOrDefault(custodianId, custodianId);
+                    String custodianName = registryService.resolveDisplayName(custodianId);
 
                     Map<String, Object> response = Map.ofEntries(
                             Map.entry("propertyID", property.getPropertyID()),

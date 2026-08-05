@@ -10,12 +10,12 @@ import ph.gov.phlpost.inventory.misddashboard.service.DocumentService;
 import ph.gov.phlpost.inventory.misddashboard.service.AssetHistoryService;
 import ph.gov.phlpost.inventory.misddashboard.service.ITAssetService;
 import ph.gov.phlpost.inventory.misddashboard.service.RegistryService;
+import ph.gov.phlpost.inventory.misddashboard.util.TextUtils;
 
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -36,6 +36,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Controller
 public class ITAssetController {
+
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(ITAssetController.class);
 
     private final AssetRepository assetRepo;
     private final EquipmentCatalogRepository catalogRepo;
@@ -97,7 +99,7 @@ public class ITAssetController {
         model.addAttribute("managerNameMap", registryService.getManagerNameMap());
         model.addAttribute("documentUploadMaxSizeMb", documentUploadMaxSizeMb);
         model.addAttribute("documentUploadAllowedExtensions", documentUploadAllowedExtensions);
-        model.addAttribute("itDocumentUploadCategories", splitCsv(itDocumentUploadCategoriesCsv).stream()
+        model.addAttribute("itDocumentUploadCategories", TextUtils.splitCsv(itDocumentUploadCategoriesCsv).stream()
                 .sorted(String.CASE_INSENSITIVE_ORDER)
                 .toList());
         model.addAttribute("maintenanceTechnicianJobTitle", maintenanceTechnicianJobTitle);
@@ -114,7 +116,7 @@ public class ITAssetController {
     public String addCatalog(@ModelAttribute EquipmentCatalog newCatalog, RedirectAttributes redirectAttributes) {
         catalogRepo.save(newCatalog);
         redirectAttributes.addFlashAttribute("successMessage", "Catalog updated.");
-        return "redirect:/";
+        return "redirect:/assets";
     }
 
     @PostMapping("/assets/receive")
@@ -126,40 +128,33 @@ public class ITAssetController {
             Authentication authentication,
             RedirectAttributes redirectAttributes) {
 
-        // 1. Setup the Date Prefix (e.g., PPC-2026-07-15-)
         LocalDate today = LocalDate.now();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         String datePrefix = "PPC-" + today.format(formatter) + "-";
 
-        // 2. Loop through the quantity and save each asset
         List<String> createdAssetTags = new ArrayList<>();
 
         for (int i = 0; i < quantity; i++) {
             Asset newAsset = new Asset();
 
-            // Copy standard fields
             newAsset.setCatalogID(baseAsset.getCatalogID());
             newAsset.setPurchaseDate(baseAsset.getPurchaseDate());
             newAsset.setPurchasePrice(baseAsset.getPurchasePrice());
             newAsset.setRemarks(baseAsset.getRemarks());
 
-            // Apply Business Rules for initial receipt
             newAsset.setDeploymentStatus("In Storage");
             newAsset.setMaintenanceHealthStatus("Operational");
             newAsset.setLifecycleStatus("Procured / Pre-Deployment");
             newAsset.setCurrentOwnerID(null);
 
-            // Handle Tag and Serial Logic
             if (quantity == 1) {
                 newAsset.setSerialNumber(baseAsset.getSerialNumber());
-                // Use manual tag if provided, otherwise auto-generate
                 if (baseAsset.getAssetTag() != null && !baseAsset.getAssetTag().trim().isEmpty()) {
                     newAsset.setAssetTag(baseAsset.getAssetTag().trim());
                 } else {
                     newAsset.setAssetTag(generateNextAssetTag(datePrefix));
                 }
             } else {
-                // Bulk Rules: Disable serial number, force auto-generation
                 newAsset.setSerialNumber(null);
                 newAsset.setAssetTag(generateNextAssetTag(datePrefix));
             }
@@ -170,7 +165,6 @@ public class ITAssetController {
             createdAssetTags.add(newAsset.getAssetTag());
         }
 
-        // 3. Attach documents to ALL created assets
         if (documentService.hasFiles(documentFiles) && !createdAssetTags.isEmpty()) {
             String uploadedBy = authentication != null ? authentication.getName() : "SystemUser";
             try {
@@ -188,51 +182,36 @@ public class ITAssetController {
                             "Successfully received " + quantity
                                     + " asset(s) into storage. Documents attached to all asset tags: "
                                     + String.join(", ", createdAssetTags) + ".");
-                    return "redirect:/";
+                    return "redirect:/assets";
                 }
             } catch (Exception e) {
                 redirectAttributes.addFlashAttribute("errorMessage",
                         "Assets were saved, but document upload failed: " + e.getMessage());
-                return "redirect:/";
+                return "redirect:/assets";
             }
         }
 
         redirectAttributes.addFlashAttribute("successMessage",
                 "Successfully received " + quantity + " asset(s) into storage.");
-        return "redirect:/"; // Update this to redirect to your assets page if preferred
+        return "redirect:/assets";
     }
 
-    /**
-     * Helper method to query the database for today's highest tag and increment by
-     * 1.
-     */
     private synchronized String generateNextAssetTag(String datePrefix) {
         Optional<Asset> lastAsset = assetRepo.findTopByAssetTagStartingWithOrderByAssetTagDesc(datePrefix);
 
         if (lastAsset.isEmpty() || lastAsset.get().getAssetTag() == null) {
-            return datePrefix + "00001"; // First asset of the day
+            return datePrefix + "00001";
         }
 
         try {
-            // Extract the last 5 digits and increment
             String lastTag = lastAsset.get().getAssetTag();
             String sequenceStr = lastTag.substring(datePrefix.length());
             int sequence = Integer.parseInt(sequenceStr);
             return datePrefix + String.format("%05d", sequence + 1);
         } catch (Exception e) {
-            // Fallback safety net in case of a corrupted tag
+            log.warn("Failed to increment asset tag sequence for prefix '{}', falling back to 99999", datePrefix, e);
             return datePrefix + "99999";
         }
-    }
-
-    private List<String> splitCsv(String csv) {
-        if (csv == null || csv.isBlank()) {
-            return List.of();
-        }
-        return Arrays.stream(csv.split(","))
-                .map(String::trim)
-                .filter(value -> !value.isEmpty())
-                .toList();
     }
 
     @PostMapping("/assets/assign")
@@ -397,9 +376,9 @@ public class ITAssetController {
     }
 
     private void applyStatusTransitions(Asset asset) {
-        String deployment = normalizeBlank(asset.getDeploymentStatus());
-        String maintenance = normalizeBlank(asset.getMaintenanceHealthStatus());
-        String lifecycle = normalizeBlank(asset.getLifecycleStatus());
+        String deployment = TextUtils.normalizeBlank(asset.getDeploymentStatus());
+        String maintenance = TextUtils.normalizeBlank(asset.getMaintenanceHealthStatus());
+        String lifecycle = TextUtils.normalizeBlank(asset.getLifecycleStatus());
 
         // BER always implies end of life.
         if ("Beyond Economic Repair (BER)".equals(maintenance)) {
@@ -426,8 +405,8 @@ public class ITAssetController {
     }
 
     private String buildFullName(Personnel personnel) {
-        String lastName = normalizeBlank(personnel.getLastName());
-        String firstName = normalizeBlank(personnel.getFirstName());
+        String lastName = TextUtils.normalizeBlank(personnel.getLastName());
+        String firstName = TextUtils.normalizeBlank(personnel.getFirstName());
 
         if (lastName.isBlank() && firstName.isBlank()) {
             return null;
@@ -444,16 +423,12 @@ public class ITAssetController {
         return firstName + " " + lastName;
     }
 
-    private String normalizeBlank(String value) {
-        return value == null ? "" : value.trim();
-    }
-
     private String resolveManagerId(Personnel personnel) {
         if (personnel == null) {
             return null;
         }
 
-        String managerId = normalizeBlank(personnel.getManagerID());
+        String managerId = TextUtils.normalizeBlank(personnel.getManagerID());
         return managerId.isBlank() ? null : managerId;
     }
 
@@ -481,6 +456,7 @@ public class ITAssetController {
             JsonNode jsonNode = objectMapper.readTree(specifications);
             return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(jsonNode);
         } catch (Exception ex) {
+            log.warn("Failed to pretty-print catalog specifications JSON, returning raw value", ex);
             return specifications;
         }
     }

@@ -73,9 +73,7 @@
         <!-- TAB CONTENT -->
         <div class="tab-content" id="assetTabsContent">
 
-            <!-- ========================================== -->
-            <!-- TAB 1: IT EQUIPMENT                        -->
-            <!-- ========================================== -->
+            <!-- Tab: IT Equipment -->
             <div class="tab-pane fade show active" id="it-equipment" role="tabpanel">
 
                 <!-- Tab Specific Actions -->
@@ -190,9 +188,7 @@
                 </div>
             </div>
 
-            <!-- ========================================== -->
-            <!-- TAB 2: FLEET MANAGEMENT                    -->
-            <!-- ========================================== -->
+            <!-- Tab: Fleet Management -->
             <div class="tab-pane fade" id="fleet" role="tabpanel">
 
                 <!-- Tab Specific Actions -->
@@ -316,9 +312,7 @@
                 </div>
             </div>
 
-            <!-- ========================================== -->
-            <!-- TAB 3: LAND ASSETS                         -->
-            <!-- ========================================== -->
+            <!-- Tab: Land Assets -->
             <div class="tab-pane fade" id="land-assets" role="tabpanel">
 
                 <!-- Tab Specific Actions -->
@@ -452,9 +446,7 @@
                 </div>
             </div>
 
-            <!-- ========================================== -->
-            <!-- TAB 4: BUILDINGS & FACILITIES              -->
-            <!-- ========================================== -->
+            <!-- Tab: Buildings & Facilities -->
             <div class="tab-pane fade" id="buildings-facilities" role="tabpanel">
 
                 <!-- Tab Specific Actions -->
@@ -589,9 +581,7 @@
 
     <div th:replace="~{fragments/components :: appFooter}"></div>
 
-    <!-- ========================================== -->
-    <!-- SLIDE OUT PANELS (OFFCANVAS)               -->
-    <!-- ========================================== -->
+    <!-- Slide-out panels (offcanvas) -->
 
     <!-- IT: Add to Catalog Slide-out -->
     <div class="offcanvas offcanvas-end shadow" tabindex="-1" id="addCatalogOffcanvas" style="width: 450px;">
@@ -658,7 +648,6 @@
                     </select>
                 </div>
 
-                <!-- NEW: Quantity Field -->
                 <div class="mb-3">
                     <label class="form-label fw-bold text-muted small text-uppercase">Quantity Received <span
                             class="required-indicator" aria-hidden="true">*</span></label>
@@ -674,7 +663,6 @@
                 </div>
 
                 <div class="mb-3">
-                    <!-- RENAMED: Serial Number -->
                     <label class="form-label fw-bold text-muted small text-uppercase">Serial Number</label>
                     <input type="text" class="form-control" id="receiveSerialNumber" name="serialNumber">
                 </div>
@@ -691,7 +679,6 @@
                     </div>
                 </div>
 
-                <!-- NEW: Remarks Field -->
                 <div class="mb-3">
                     <label class="form-label fw-bold text-muted small text-uppercase">Remarks</label>
                     <textarea class="form-control" name="remarks" rows="2"

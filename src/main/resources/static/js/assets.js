@@ -2,28 +2,6 @@ $(document).ready(function () {
     const clearAssetFiltersBtn = document.getElementById('clearAssetFiltersBtn');
     const tableStateKey = 'assetsTableState';
 
-    function formatCurrency(value) {
-        if (!value || value === 'N/A') {
-            return 'N/A';
-        }
-        try {
-            const numValue = typeof value === 'string'
-                ? parseFloat(value.replace(/[^0-9.]/g, ''))
-                : parseFloat(value);
-            if (Number.isNaN(numValue)) {
-                return 'N/A';
-            }
-            return new Intl.NumberFormat('en-PH', {
-                style: 'currency',
-                currency: 'PHP',
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-            }).format(numValue);
-        } catch (e) {
-            return value || 'N/A';
-        }
-    }
-
     MISDCommon.initPageUI({
         themeToggleId: 'themeToggleBtn',
         successToastId: 'successToast',
@@ -220,55 +198,6 @@ $(document).ready(function () {
         return MISDCommon.escapeHtml(value == null || value === '' ? 'N/A' : String(value));
     }
 
-    function formatSpecificationValue(value) {
-        if (value == null || value === '') {
-            return 'N/A';
-        }
-
-        if (Array.isArray(value)) {
-            return value.map(item => item == null ? '' : String(item)).filter(Boolean).join(', ') || 'N/A';
-        }
-
-        if (typeof value === 'object') {
-            return JSON.stringify(value);
-        }
-
-        return String(value);
-    }
-
-    function renderSpecifications(specifications) {
-        if (!specifications) {
-            return '<div class="text-muted">N/A</div>';
-        }
-
-        let parsed = specifications;
-        if (typeof specifications === 'string') {
-            try {
-                parsed = JSON.parse(specifications);
-            } catch (error) {
-                return `<div class="mt-2 small">${MISDCommon.escapeHtml(specifications)}</div>`;
-            }
-        }
-
-        if (!parsed || Array.isArray(parsed) || typeof parsed !== 'object') {
-            return `<div class="mt-2 small">${MISDCommon.escapeHtml(formatSpecificationValue(parsed))}</div>`;
-        }
-
-        const entries = Object.entries(parsed);
-        if (!entries.length) {
-            return '<div class="text-muted">N/A</div>';
-        }
-
-        const rows = entries.map(([key, value]) => {
-            return `<li class="d-flex justify-content-between gap-2 py-1 border-bottom">
-                        <span class="fw-semibold">${MISDCommon.escapeHtml(key)}</span>
-                        <span class="text-end">${MISDCommon.escapeHtml(formatSpecificationValue(value))}</span>
-                    </li>`;
-        }).join('');
-
-        return `<ul class="list-unstyled mb-0 mt-2">${rows}</ul>`;
-    }
-
     function renderCatalogSummary(data) {
         const specHtml = MISDCommon.renderCatalogSpecifications(data.catalogSpecifications);
 
@@ -461,7 +390,6 @@ $(document).ready(function () {
             loadAssetDocuments(data.assetTag);
             resetDetailPanelScroll();
 
-            // Show the slideout
             // Show the slideout (prevents backdrop stacking bug)
             const detailPanel = bootstrap.Offcanvas.getOrCreateInstance(document.getElementById('itDetailOffcanvas'));
             detailPanel.show();

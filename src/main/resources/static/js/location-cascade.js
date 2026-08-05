@@ -231,47 +231,6 @@
             return loadProvinces();
         }
 
-        function loadWithSelection(selection) {
-            const state = selection || {};
-            return loadProvinces().then(function () {
-                const provinceSelected = selectOptionByValue(provinceSelect, state.province);
-                if (!provinceSelected) {
-                    resetDependents();
-                    if (state.zipCode) {
-                        zipInput.value = state.zipCode;
-                    }
-                    return;
-                }
-
-                const provinceCode = getSelectedCode(provinceSelect);
-                if (!provinceCode) {
-                    return;
-                }
-
-                return loadCities(provinceCode).then(function () {
-                    const citySelected = selectOptionByValue(citySelect, state.city);
-                    if (!citySelected) {
-                        if (state.zipCode) {
-                            zipInput.value = state.zipCode;
-                        }
-                        return;
-                    }
-
-                    const cityCode = getSelectedCode(citySelect);
-                    if (!cityCode) {
-                        return;
-                    }
-
-                    return loadBarangays(cityCode).then(function () {
-                        selectOptionByValue(barangaySelect, state.barangay);
-                        if (state.zipCode && !zipInput.value) {
-                            zipInput.value = state.zipCode;
-                        }
-                    });
-                });
-            });
-        }
-
         provinceSelect.addEventListener('change', function () {
             const provinceCode = getSelectedCode(provinceSelect);
             if (!provinceCode) {
@@ -292,7 +251,6 @@
 
         return {
             initializeEmpty: initializeEmpty,
-            loadWithSelection: loadWithSelection,
             resetDependents: resetDependents
         };
     }

@@ -13,39 +13,6 @@ $(document).ready(function () {
         return numberValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
 
-    function formatCurrency(value) {
-        if (!value || value === 'N/A') {
-            return 'N/A';
-        }
-        try {
-            const numValue = typeof value === 'string'
-                ? parseFloat(value.replace(/[^0-9.]/g, ''))
-                : parseFloat(value);
-            if (Number.isNaN(numValue)) {
-                return 'N/A';
-            }
-            return new Intl.NumberFormat('en-PH', {
-                style: 'currency',
-                currency: 'PHP',
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-            }).format(numValue);
-        } catch (e) {
-            return value || 'N/A';
-        }
-    }
-
-    function formatDate(value) {
-        if (!value) {
-            return 'N/A';
-        }
-        const parsed = new Date(value);
-        if (Number.isNaN(parsed.getTime())) {
-            return value;
-        }
-        return parsed.toLocaleDateString();
-    }
-
     const propertyDocumentConfig = {
         refType: 'PROPERTY',
         bodySelector: '#propertyDocumentsTableBody',
@@ -79,40 +46,6 @@ $(document).ready(function () {
         $('#enablePropertyEditBtn').toggleClass('d-none', enabled);
         $('#savePropertyEditBtn, #cancelPropertyEditBtn').toggleClass('d-none', !enabled);
         $('.property-field').prop('disabled', !enabled);
-    }
-
-    function showInlineSuccessToast(message) {
-        let container = document.querySelector('.toast-container');
-        if (!container) {
-            container = document.createElement('div');
-            container.className = 'toast-container position-fixed top-0 end-0 p-3';
-            container.style.zIndex = '1055';
-            document.body.appendChild(container);
-        }
-
-        let toastEl = document.getElementById('propertyInlineSuccessToast');
-        if (!toastEl) {
-            toastEl = document.createElement('div');
-            toastEl.id = 'propertyInlineSuccessToast';
-            toastEl.className = 'toast align-items-center text-bg-success border-0';
-            toastEl.setAttribute('role', 'alert');
-            toastEl.setAttribute('aria-live', 'assertive');
-            toastEl.setAttribute('aria-atomic', 'true');
-            toastEl.innerHTML = `
-                <div class="d-flex">
-                    <div class="toast-body fw-bold"></div>
-                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-                </div>
-            `;
-            container.appendChild(toastEl);
-        }
-
-        const body = toastEl.querySelector('.toast-body');
-        if (body) {
-            body.textContent = message;
-        }
-
-        MISDCommon.showToast('propertyInlineSuccessToast', 1800);
     }
 
     function statusBadgeHtml(value, variant = 'secondary') {
@@ -348,11 +281,11 @@ $(document).ready(function () {
             $('#propertyDetailCity').text(data.city || 'N/A');
             $('#propertyDetailBarangay').text(data.barangay || 'N/A');
             $('#propertyDetailZipCode').text(data.zipCode || 'N/A');
-            $('#propertyDetailAcquisitionDate').text(formatDate(data.acquisitionDate));
+            $('#propertyDetailAcquisitionDate').text(MISDCommon.formatDate(data.acquisitionDate));
             $('#propertyDetailLotArea').text(formatDecimal(data.lotAreaSqm));
             $('#propertyDetailFloorArea').text(formatDecimal(data.floorAreaSqm));
             $('#propertyDetailPropertyDetails').text(data.propertyDetails || 'N/A');
-            $('#propertyDetailAssessedValue').text(formatCurrency(data.assessedValue));
+            $('#propertyDetailAssessedValue').text(MISDCommon.formatPesoCurrency(data.assessedValue));
             $('#propertyDetailTaxStatus').text(data.propertyTaxStatus || 'N/A');
             $('#propertyDetailLegalTitlingStatus').html(statusBadgeHtml(data.legalTitlingStatus, 'neutral'));
             $('#propertyDetailOperationalStatus').html(statusBadgeHtml(data.operationalStatus, 'operational'));
@@ -403,7 +336,7 @@ $(document).ready(function () {
             contentType: 'application/json',
             data: JSON.stringify(payload),
             success: function () {
-                showInlineSuccessToast('Property updated successfully.');
+                MISDCommon.showInlineSuccessToast('property', 'Property updated successfully.');
                 setTimeout(function () {
                     location.reload();
                 }, 900);

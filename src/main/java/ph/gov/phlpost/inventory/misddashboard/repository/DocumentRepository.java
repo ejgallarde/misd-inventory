@@ -8,7 +8,4 @@ import java.util.List;
 public interface DocumentRepository extends JpaRepository<Document, Integer> {
 
     List<Document> findByReferenceTypeAndReferenceId(String referenceType, String referenceId);
-
-    List<Document> findByReferenceTypeAndReferenceIdAndDocumentCategory(
-            String referenceType, String referenceId, String documentCategory);
 }

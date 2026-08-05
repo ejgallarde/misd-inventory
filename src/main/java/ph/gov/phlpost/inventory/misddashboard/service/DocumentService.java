@@ -100,27 +100,6 @@ public class DocumentService {
     public void uploadAndSaveDocuments(MultipartFile[] files,
             String referenceType,
             String referenceId,
-            String documentCategory,
-            String uploadedBy) throws IOException {
-
-        if (!hasFiles(files)) {
-            return;
-        }
-
-        String normalizedCategory = normalizeCategory(documentCategory);
-        if (normalizedCategory == null) {
-            throw new IllegalArgumentException("Document category is required for document upload.");
-        }
-
-        validateCategoryForReferenceType(referenceType, normalizedCategory);
-
-        uploadAndSaveDocuments(files, referenceType, referenceId, repeatCategory(files, normalizedCategory),
-                uploadedBy);
-    }
-
-    public void uploadAndSaveDocuments(MultipartFile[] files,
-            String referenceType,
-            String referenceId,
             String[] documentCategories,
             String uploadedBy) throws IOException {
 
@@ -157,6 +136,8 @@ public class DocumentService {
         validateFile(file);
 
         String normalizedReferenceType = normalizeReferenceType(referenceType);
+        String storageFolder = toStorageFolder(normalizedReferenceType);
+
         String normalizedReferenceId = referenceId == null ? "" : referenceId.trim();
         if (normalizedReferenceId.isEmpty()) {
             throw new IllegalArgumentException("Reference ID is required for document upload.");
@@ -174,8 +155,7 @@ public class DocumentService {
                 : uploadedBy.trim();
 
         String storageEntityId = resolveStorageEntityId(normalizedReferenceType, normalizedReferenceId);
-        String objectKey = storageService.uploadDocument(file, toStorageFolder(normalizedReferenceType),
-                storageEntityId);
+        String objectKey = storageService.uploadDocument(file, storageFolder, storageEntityId);
 
         Document document = new Document();
         document.setReferenceType(normalizedReferenceType);
@@ -230,20 +210,6 @@ public class DocumentService {
             throw new IllegalArgumentException(
                     "Each uploaded file must have a document category selected.");
         }
-    }
-
-    private String[] repeatCategory(MultipartFile[] files, String category) {
-        if (!hasFiles(files)) {
-            return new String[0];
-        }
-
-        int fileCount = (int) Arrays.stream(files)
-                .filter(file -> file != null && !file.isEmpty())
-                .count();
-
-        String[] repeated = new String[fileCount];
-        Arrays.fill(repeated, category);
-        return repeated;
     }
 
     private String normalizeCategory(String documentCategory) {

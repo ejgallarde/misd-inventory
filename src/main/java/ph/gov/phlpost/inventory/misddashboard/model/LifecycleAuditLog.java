@@ -30,7 +30,6 @@ public class LifecycleAuditLog {
     public LifecycleAuditLog() {
     }
 
-    // --- Getters and Setters ---
     public Integer getLogID() {
         return logID;
     }

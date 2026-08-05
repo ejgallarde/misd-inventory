@@ -128,6 +128,52 @@ window.MISDCommon = (function (jqueryGlobal) {
         }).format(numericValue);
     }
 
+    function showInlineSuccessToast(idPrefix, message) {
+        let container = document.querySelector('.toast-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.className = 'toast-container position-fixed top-0 end-0 p-3';
+            container.style.zIndex = '1055';
+            document.body.appendChild(container);
+        }
+
+        const toastId = `${idPrefix}InlineSuccessToast`;
+        let toastEl = document.getElementById(toastId);
+        if (!toastEl) {
+            toastEl = document.createElement('div');
+            toastEl.id = toastId;
+            toastEl.className = 'toast align-items-center text-bg-success border-0';
+            toastEl.setAttribute('role', 'alert');
+            toastEl.setAttribute('aria-live', 'assertive');
+            toastEl.setAttribute('aria-atomic', 'true');
+            toastEl.innerHTML = `
+                <div class="d-flex">
+                    <div class="toast-body fw-bold"></div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            `;
+            container.appendChild(toastEl);
+        }
+
+        const body = toastEl.querySelector('.toast-body');
+        if (body) {
+            body.textContent = message;
+        }
+
+        showToast(toastId, 1800);
+    }
+
+    function formatDate(value) {
+        if (!value) {
+            return 'N/A';
+        }
+        const parsed = new Date(value);
+        if (Number.isNaN(parsed.getTime())) {
+            return value;
+        }
+        return parsed.toLocaleDateString();
+    }
+
     function computeStraightLineValuation(originalValue, referenceValue, usefulLifeYears = 10, residualRate = 0.10) {
         if (originalValue == null || referenceValue == null || referenceValue === '') {
             return null;
@@ -433,13 +479,6 @@ window.MISDCommon = (function (jqueryGlobal) {
         });
     }
 
-    function setInputFiles(input, files) {
-        // Intentionally left as a no-op.
-        // Browser-native FileList mutation is unreliable in Firefox and can crash
-        // or hang the file picker on Windows. The app now uses the stored selection
-        // map as the source of truth for previews, validation, and submission.
-    }
-
     function getFileSignature(file) {
         return [file.name, file.size, file.lastModified, file.type].join('::');
     }
@@ -488,12 +527,10 @@ window.MISDCommon = (function (jqueryGlobal) {
         return Array.from(input.files || []);
     }
 
-    function setSelectedFiles(input, files, options = {}) {
+    function setSelectedFiles(input, files) {
         if (!input) {
             return;
         }
-
-        const { syncNativeSelection = false } = options;
 
         const normalizedFiles = dedupeFiles(Array.from(files || []));
         const existingFiles = selectedFilesByInput.get(input) || [];
@@ -503,9 +540,6 @@ window.MISDCommon = (function (jqueryGlobal) {
         }
 
         selectedFilesByInput.set(input, normalizedFiles);
-        if (syncNativeSelection) {
-            setInputFiles(input, normalizedFiles);
-        }
     }
 
     function prepareMultiFileSelection(input) {
@@ -1247,28 +1281,18 @@ window.MISDCommon = (function (jqueryGlobal) {
         bindClick: bindClick,
         bindModalShow: bindModalShow,
         populateModalFields: populateModalFields,
-        formatBytes: formatBytes,
-        formatUploadDate: formatUploadDate,
         escapeHtml: escapeHtml,
         printDocument: printDocument,
-        getUploadConstraints: getUploadConstraints,
-        getFileValidationResults: getFileValidationResults,
-        setInputFiles: setInputFiles,
         getSelectedFiles: getSelectedFiles,
-        prepareMultiFileSelection: prepareMultiFileSelection,
         clearSelectedFiles: clearSelectedFiles,
-        showUploadError: showUploadError,
-        clearUploadError: clearUploadError,
         validateFileInputBySize: validateFileInputBySize,
         renderDocumentPreviewBySelectors: renderDocumentPreviewBySelectors,
-        buildDataTableExportButtons: buildDataTableExportButtons,
         buildStandardDataTableConfig: buildStandardDataTableConfig,
         clearDataTableFilters: clearDataTableFilters,
         attachDataTableClearButton: attachDataTableClearButton,
         getDataTableState: getDataTableState,
         syncDataTableStateToSessionAndUrl: syncDataTableStateToSessionAndUrl,
         restoreDataTableStateFromSessionAndUrl: restoreDataTableStateFromSessionAndUrl,
-        renderDocumentsTable: renderDocumentsTable,
         loadDocumentsForReference: loadDocumentsForReference,
         deleteDocumentById: deleteDocumentById,
         getDocumentUploadSelection: getDocumentUploadSelection,
@@ -1277,6 +1301,8 @@ window.MISDCommon = (function (jqueryGlobal) {
         appendDataTableStateToFormAction: appendDataTableStateToFormAction,
         renderCatalogSpecifications: renderCatalogSpecifications,
         formatPesoCurrency: formatPesoCurrency,
+        formatDate: formatDate,
+        showInlineSuccessToast: showInlineSuccessToast,
         computeStraightLineValuation: computeStraightLineValuation
     };
 })(window.jQuery);

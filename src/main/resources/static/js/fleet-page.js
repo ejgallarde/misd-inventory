@@ -2,17 +2,6 @@ $(document).ready(function () {
     let currentFleetReferenceId = null;
     let currentFleetData = null;
 
-    function formatDate(value) {
-        if (!value) {
-            return 'N/A';
-        }
-        const parsed = new Date(value);
-        if (Number.isNaN(parsed.getTime())) {
-            return value;
-        }
-        return parsed.toLocaleDateString();
-    }
-
     function formatDateInput(value) {
         if (!value) {
             return '';
@@ -25,28 +14,6 @@ $(document).ready(function () {
             return '';
         }
         return parsed.toISOString().split('T')[0];
-    }
-
-    function formatCurrency(value) {
-        if (!value || value === 'N/A') {
-            return 'N/A';
-        }
-        try {
-            const numValue = typeof value === 'string'
-                ? parseFloat(value.replace(/[^0-9.]/g, ''))
-                : parseFloat(value);
-            if (Number.isNaN(numValue)) {
-                return 'N/A';
-            }
-            return new Intl.NumberFormat('en-PH', {
-                style: 'currency',
-                currency: 'PHP',
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-            }).format(numValue);
-        } catch (e) {
-            return value || 'N/A';
-        }
     }
 
     const fleetDocumentConfig = {
@@ -103,54 +70,6 @@ $(document).ready(function () {
             const $input = $('[data-lockonce-input="' + field + '"]');
             $input.toggleClass('d-none', !isBlank).prop('disabled', !isBlank);
         });
-    }
-
-    function computeCurrentValuation(costStr, acquisitionYear) {
-        if (!costStr || !acquisitionYear) return null;
-        const cost = parseFloat(String(costStr).replace(/[^0-9.]/g, ''));
-        const acqYear = parseInt(acquisitionYear, 10);
-        if (isNaN(cost) || cost <= 0 || isNaN(acqYear) || acqYear <= 0) return null;
-        const currentYear = new Date().getFullYear();
-        const yearsUsed = Math.max(0, currentYear - acqYear);
-        // COA Circular 2003-007 / GAM: Transportation Equipment
-        // Useful life: 10 yrs, Residual value: 10%, Method: Straight-line
-        // Annual depreciation rate = (1 - 0.10) / 10 = 9%
-        const depFactor = Math.min(0.09 * yearsUsed, 0.90);
-        return cost * (1 - depFactor);
-    }
-
-    function showInlineSuccessToast(message) {
-        let container = document.querySelector('.toast-container');
-        if (!container) {
-            container = document.createElement('div');
-            container.className = 'toast-container position-fixed top-0 end-0 p-3';
-            container.style.zIndex = '1055';
-            document.body.appendChild(container);
-        }
-
-        let toastEl = document.getElementById('fleetInlineSuccessToast');
-        if (!toastEl) {
-            toastEl = document.createElement('div');
-            toastEl.id = 'fleetInlineSuccessToast';
-            toastEl.className = 'toast align-items-center text-bg-success border-0';
-            toastEl.setAttribute('role', 'alert');
-            toastEl.setAttribute('aria-live', 'assertive');
-            toastEl.setAttribute('aria-atomic', 'true');
-            toastEl.innerHTML = `
-                <div class="d-flex">
-                    <div class="toast-body fw-bold"></div>
-                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-                </div>
-            `;
-            container.appendChild(toastEl);
-        }
-
-        const body = toastEl.querySelector('.toast-body');
-        if (body) {
-            body.textContent = message;
-        }
-
-        MISDCommon.showToast('fleetInlineSuccessToast', 1800);
     }
 
     function fillFleetEditFields(data) {
@@ -432,9 +351,9 @@ $(document).ready(function () {
             $('#fleetDetailChassisVin').text(data.chassisNumberVIN || 'N/A');
             $('#fleetDetailDriver').text(data.assignedDriverName || 'Unassigned');
             $('#fleetDetailDriverManager').text(data.assignedDriverManagerName || 'N/A');
-            $('#fleetDetailRegExpiry').text(formatDate(data.registrationExpiry));
-            $('#fleetDetailInsuranceExpiry').text(formatDate(data.insuranceExpiry));
-            $('#fleetDetailCost').text(formatCurrency(data.cost));
+            $('#fleetDetailRegExpiry').text(MISDCommon.formatDate(data.registrationExpiry));
+            $('#fleetDetailInsuranceExpiry').text(MISDCommon.formatDate(data.insuranceExpiry));
+            $('#fleetDetailCost').text(MISDCommon.formatPesoCurrency(data.cost));
 
             const valuation = MISDCommon.computeStraightLineValuation(data.cost, data.acquisitionYear);
             const $valuationElement = $('#fleetDetailCurrentValuation');
@@ -497,7 +416,7 @@ $(document).ready(function () {
             contentType: 'application/json',
             data: JSON.stringify(payload),
             success: function () {
-                showInlineSuccessToast('Fleet vehicle updated successfully.');
+                MISDCommon.showInlineSuccessToast('fleet', 'Fleet vehicle updated successfully.');
                 setTimeout(function () {
                     location.reload();
                 }, 900);

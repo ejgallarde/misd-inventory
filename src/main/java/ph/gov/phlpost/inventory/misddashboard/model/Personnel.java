@@ -41,7 +41,6 @@ public class Personnel {
     public Personnel() {
     }
 
-    // Getters
     public String getEmployeeID() {
         return employeeID;
     }
