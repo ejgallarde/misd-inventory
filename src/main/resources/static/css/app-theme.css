@@ -221,7 +221,8 @@ body[data-theme="dark"] .navbar-dark .dropdown-toggle {
 }
 
 .asset-table-row,
-.fleet-table-row {
+.fleet-table-row,
+.property-table-row {
     cursor: pointer;
 }
 
@@ -230,8 +231,31 @@ body[data-theme="dark"] .navbar-dark .dropdown-toggle {
 .asset-table-row a,
 .fleet-table-row .dropdown-menu,
 .fleet-table-row button,
-.fleet-table-row a {
-    cursor: auto;
+.fleet-table-row a,
+.property-table-row .dropdown-menu,
+.property-table-row button,
+.property-table-row a {
+    cursor: pointer;
+}
+
+/* Identifier-column links (Asset Tag, Vehicle ID/Plate No., Land Title, Tax
+   Declaration No.) stay a plain blue with no hover/focus color shift or
+   underline, since the whole row is already clickable. */
+a.asset-detail-link,
+a.fleet-detail-link,
+a.property-detail-link {
+    color: var(--app-accent);
+    text-decoration: none;
+}
+
+a.asset-detail-link:hover,
+a.asset-detail-link:focus,
+a.fleet-detail-link:hover,
+a.fleet-detail-link:focus,
+a.property-detail-link:hover,
+a.property-detail-link:focus {
+    color: var(--app-accent);
+    text-decoration: none;
 }
 
 .asset-category-info {

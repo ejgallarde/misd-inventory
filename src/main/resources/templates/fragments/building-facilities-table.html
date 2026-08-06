@@ -18,14 +18,14 @@
             </tr>
         </thead>
         <tbody>
-            <tr th:each="p : ${properties}">
-                <td class="fw-bold"
-                    th:text="${p.taxDeclarationNumber != null and !#strings.isEmpty(p.taxDeclarationNumber) ? p.taxDeclarationNumber : (p.titleNumber != null and !#strings.isEmpty(p.titleNumber) ? p.titleNumber : 'N/A')}">
-                </td>
+            <tr th:each="p : ${properties}" class="property-table-row" th:data-property-id="${p.propertyID}">
                 <td>
                     <a href="#" class="text-decoration-none fw-bold property-detail-link"
                         th:data-property-id="${p.propertyID}"
-                        th:text="${p.propertyName != null and !#strings.isEmpty(p.propertyName) ? p.propertyName : 'Unnamed Property'}"></a>
+                        th:text="${p.taxDeclarationNumber != null and !#strings.isEmpty(p.taxDeclarationNumber) ? p.taxDeclarationNumber : (p.titleNumber != null and !#strings.isEmpty(p.titleNumber) ? p.titleNumber : 'N/A')}"></a>
+                </td>
+                <td
+                    th:text="${p.propertyName != null and !#strings.isEmpty(p.propertyName) ? p.propertyName : 'Unnamed Property'}">
                 </td>
                 <td th:text="${p.propertyType != null and !#strings.isEmpty(p.propertyType) ? p.propertyType : 'N/A'}">
                 </td>
@@ -59,7 +59,7 @@
                             th:text="${'Condition: ' + p.conditionStatus}"></span>
                     </div>
                 </td>
-                <td>
+                <td class="property-actions-cell">
                     <div th:if="${workflowActions}" class="dropdown">
                         <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
                             data-bs-toggle="dropdown" aria-expanded="false">

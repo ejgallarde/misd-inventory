@@ -65,7 +65,7 @@ public class PropertiesController {
     }
 
     @GetMapping
-    public String viewAllProperties(Model model) {
+    public String viewAllProperties(Model model, @RequestParam(required = false) String type) {
         List<RealEstateProperty> allProperties = propertyRepo.findAll().stream()
                 .sorted(Comparator.comparing(
                         property -> TextUtils.normalizeBlank(property.getPropertyName()),
@@ -80,15 +80,20 @@ public class PropertiesController {
                 .filter(property -> !isLotType(property.getPropertyType()))
                 .toList();
 
+        String propertyView = "land".equalsIgnoreCase(type) ? "land"
+                : "building".equalsIgnoreCase(type) ? "building" : null;
+
         model.addAttribute("allProperties", allProperties);
         model.addAttribute("landProperties", landProperties);
         model.addAttribute("buildingFacilityProperties", buildingFacilityProperties);
+        model.addAttribute("propertyView", propertyView);
         model.addAttribute("employeeMap", registryService.getEmployeeNameMap());
         model.addAttribute("documentUploadMaxSizeMb", documentUploadMaxSizeMb);
         model.addAttribute("documentUploadAllowedExtensions", documentUploadAllowedExtensions);
-        model.addAttribute("propertyDocumentUploadCategories", TextUtils.splitCsv(propertyDocumentUploadCategoriesCsv).stream()
-                .sorted(String.CASE_INSENSITIVE_ORDER)
-                .toList());
+        model.addAttribute("propertyDocumentUploadCategories",
+                TextUtils.splitCsv(propertyDocumentUploadCategoriesCsv).stream()
+                        .sorted(String.CASE_INSENSITIVE_ORDER)
+                        .toList());
         model.addAttribute("propertyTaxStatusesUpdate", propertyTaxStatusesUpdate.stream()
                 .sorted(String.CASE_INSENSITIVE_ORDER)
                 .toList());

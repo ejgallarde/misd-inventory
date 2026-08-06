@@ -47,7 +47,7 @@ $(document).ready(function () {
 
     initDashboardTable('#agingTable', [[7, 'desc']], 'No problematic IT assets found.');
     initDashboardTable('#fleetActionRequiredTable', [[0, 'asc']], 'No problematic vehicles found in the fleet.');
-    initDashboardTable('#landAssetsActionRequiredTable', [[1, 'asc']], 'No land assets currently require attention.');
+    initDashboardTable('#landAssetsActionRequiredTable', [[2, 'asc']], 'No land assets currently require attention.');
     initDashboardTable('#buildingsFacilitiesActionRequiredTable', [[1, 'asc']],
         'No buildings or facilities currently require attention.');
 

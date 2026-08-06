@@ -3,6 +3,7 @@ window.MISDCommon = (function (jqueryGlobal) {
     const selectedFilesByInput = new WeakMap();
     let assetTableInteractionsInitialized = false;
     let fleetTableInteractionsInitialized = false;
+    let propertyTableInteractionsInitialized = false;
 
     function applyTheme(theme, toggleButton, storageKey = 'misd-theme') {
         document.body.setAttribute('data-theme', theme);
@@ -70,6 +71,7 @@ window.MISDCommon = (function (jqueryGlobal) {
 
         initAssetTableInteractions();
         initFleetTableInteractions();
+        initPropertyTableInteractions();
     }
 
     function formatCatalogSpecificationValue(value) {
@@ -292,6 +294,23 @@ window.MISDCommon = (function (jqueryGlobal) {
                     return renderFleetTypePopover(element);
                 }
             });
+        });
+    }
+
+    function initPropertyTableInteractions() {
+        if (!$ || propertyTableInteractionsInitialized) {
+            return;
+        }
+        propertyTableInteractionsInitialized = true;
+
+        $(document).on('click', '.property-table-row', function (event) {
+            if ($(event.target).closest('a, button, input, select, textarea, [data-bs-toggle], .property-actions-cell').length) {
+                return;
+            }
+            if (window.getSelection && window.getSelection().toString()) {
+                return;
+            }
+            $(this).find('.property-detail-link').first().trigger('click');
         });
     }
 

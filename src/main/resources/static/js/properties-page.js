@@ -119,7 +119,7 @@ $(document).ready(function () {
 
     setPropertyEditMode(false);
 
-    function initPropertiesDataTable(selector, clearButtonId) {
+    function initPropertiesDataTable(selector, clearButtonId, order) {
         if (!$(selector).length) {
             return null;
         }
@@ -127,7 +127,7 @@ $(document).ready(function () {
         const table = $(selector).DataTable(MISDCommon.buildStandardDataTableConfig({
             pageLength: 10,
             lengthMenu: [[10, 25, 50, -1], [10, 25, 50, 'All']],
-            order: [[1, 'asc']]
+            order: order || [[1, 'asc']]
         }));
 
         MISDCommon.attachDataTableClearButton({
@@ -143,7 +143,7 @@ $(document).ready(function () {
     }
 
     if (hasPropertiesRegistry) {
-        initPropertiesDataTable('#landPropertiesTable', 'clearLandPropertyFiltersBtn');
+        initPropertiesDataTable('#landPropertiesTable', 'clearLandPropertyFiltersBtn', [[2, 'asc']]);
         initPropertiesDataTable('#buildingFacilitiesTable', 'clearBuildingPropertyFiltersBtn');
     }
 

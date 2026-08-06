@@ -333,7 +333,7 @@
 
                     <div class="asset-portfolio-tree property-portfolio-tree">
                         <div class="asset-metric-row">
-                            <a href="/properties" class="asset-metric asset-metric-total">
+                            <a href="/properties?type=land" class="asset-metric asset-metric-total">
                                 <span class="asset-metric-label">Total Land Assets</span>
                                 <strong class="asset-metric-value" th:text="${totalLandAssets}">0</strong>
                                 <span class="asset-metric-context">Complete registry of land assets</span>
@@ -351,7 +351,7 @@
                                 <div class="asset-portfolio-branch-row">
                                     <div class="asset-current-inventory-branch property-current-inventory-branch">
                                         <div class="asset-metric-row">
-                                            <a href="/properties" class="asset-metric asset-metric-current">
+                                            <a href="/properties?type=land" class="asset-metric asset-metric-current">
                                                 <span class="asset-metric-label">Current Inventory</span>
                                                 <strong class="asset-metric-value"
                                                     th:text="${currentInventoryLandAssets}">0</strong>
@@ -371,34 +371,39 @@
                                                 <div class="asset-stage-label">Operational views within current
                                                     inventory</div>
                                                 <div class="asset-operational-cards property-operational-cards">
-                                                    <a href="/properties" class="asset-metric asset-metric-deployed">
+                                                    <a href="/properties?type=land"
+                                                        class="asset-metric asset-metric-deployed">
                                                         <span class="asset-metric-label">Active / In Use</span>
                                                         <strong class="asset-metric-value"
                                                             th:text="${activeInUseLandAssets}">0</strong>
                                                         <span class="asset-metric-context">Actively utilized</span>
                                                     </a>
-                                                    <a href="/properties" class="asset-metric asset-metric-maintenance">
+                                                    <a href="/properties?type=land"
+                                                        class="asset-metric asset-metric-maintenance">
                                                         <span class="asset-metric-label">Vacant / Idle</span>
                                                         <strong class="asset-metric-value"
                                                             th:text="${vacantIdleLandAssets}">0</strong>
                                                         <span class="asset-metric-context">Needs utilization
                                                             action</span>
                                                     </a>
-                                                    <a href="/properties" class="asset-metric asset-metric-deployed">
+                                                    <a href="/properties?type=land"
+                                                        class="asset-metric asset-metric-deployed">
                                                         <span class="asset-metric-label">Co-Located</span>
                                                         <strong class="asset-metric-value"
                                                             th:text="${coLocatedLandAssets}">0</strong>
                                                         <span class="asset-metric-context">Shared usage with another
                                                             office</span>
                                                     </a>
-                                                    <a href="/properties" class="asset-metric asset-metric-deployed">
+                                                    <a href="/properties?type=land"
+                                                        class="asset-metric asset-metric-deployed">
                                                         <span class="asset-metric-label">Leased Out</span>
                                                         <strong class="asset-metric-value"
                                                             th:text="${leasedOutLandAssets}">0</strong>
                                                         <span class="asset-metric-context">Active through lease
                                                             arrangement</span>
                                                     </a>
-                                                    <a href="/properties" class="asset-metric asset-metric-maintenance">
+                                                    <a href="/properties?type=land"
+                                                        class="asset-metric asset-metric-maintenance">
                                                         <span class="asset-metric-label">Under Construction</span>
                                                         <strong class="asset-metric-value"
                                                             th:text="${underConstructionLandAssets}">0</strong>
@@ -409,7 +414,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <a href="/properties" class="asset-metric asset-metric-decommissioned">
+                                    <a href="/properties?type=land" class="asset-metric asset-metric-decommissioned">
                                         <span class="asset-metric-label">Slated for Disposal</span>
                                         <strong class="asset-metric-value"
                                             th:text="${slatedForDisposalLandAssets}">0</strong>
@@ -468,7 +473,7 @@
 
                     <div class="asset-portfolio-tree property-portfolio-tree">
                         <div class="asset-metric-row">
-                            <a href="/properties" class="asset-metric asset-metric-total">
+                            <a href="/properties?type=building" class="asset-metric asset-metric-total">
                                 <span class="asset-metric-label">Total Buildings & Facilities</span>
                                 <strong class="asset-metric-value" th:text="${totalBuildingFacilityAssets}">0</strong>
                                 <span class="asset-metric-context">Complete registry of buildings and facilities</span>
@@ -486,7 +491,8 @@
                                 <div class="asset-portfolio-branch-row">
                                     <div class="asset-current-inventory-branch property-current-inventory-branch">
                                         <div class="asset-metric-row">
-                                            <a href="/properties" class="asset-metric asset-metric-current">
+                                            <a href="/properties?type=building"
+                                                class="asset-metric asset-metric-current">
                                                 <span class="asset-metric-label">Current Inventory</span>
                                                 <strong class="asset-metric-value"
                                                     th:text="${currentInventoryBuildingAssets}">0</strong>
@@ -506,34 +512,39 @@
                                                 <div class="asset-stage-label">Operational views within current
                                                     inventory</div>
                                                 <div class="asset-operational-cards property-operational-cards">
-                                                    <a href="/properties" class="asset-metric asset-metric-deployed">
+                                                    <a href="/properties?type=building"
+                                                        class="asset-metric asset-metric-deployed">
                                                         <span class="asset-metric-label">Active / In Use</span>
                                                         <strong class="asset-metric-value"
                                                             th:text="${activeInUseBuildingAssets}">0</strong>
                                                         <span class="asset-metric-context">Actively utilized</span>
                                                     </a>
-                                                    <a href="/properties" class="asset-metric asset-metric-maintenance">
+                                                    <a href="/properties?type=building"
+                                                        class="asset-metric asset-metric-maintenance">
                                                         <span class="asset-metric-label">Vacant / Idle</span>
                                                         <strong class="asset-metric-value"
                                                             th:text="${vacantIdleBuildingAssets}">0</strong>
                                                         <span class="asset-metric-context">Needs utilization
                                                             action</span>
                                                     </a>
-                                                    <a href="/properties" class="asset-metric asset-metric-deployed">
+                                                    <a href="/properties?type=building"
+                                                        class="asset-metric asset-metric-deployed">
                                                         <span class="asset-metric-label">Co-Located</span>
                                                         <strong class="asset-metric-value"
                                                             th:text="${coLocatedBuildingAssets}">0</strong>
                                                         <span class="asset-metric-context">Shared usage with another
                                                             office</span>
                                                     </a>
-                                                    <a href="/properties" class="asset-metric asset-metric-deployed">
+                                                    <a href="/properties?type=building"
+                                                        class="asset-metric asset-metric-deployed">
                                                         <span class="asset-metric-label">Leased Out</span>
                                                         <strong class="asset-metric-value"
                                                             th:text="${leasedOutBuildingAssets}">0</strong>
                                                         <span class="asset-metric-context">Active through lease
                                                             arrangement</span>
                                                     </a>
-                                                    <a href="/properties" class="asset-metric asset-metric-maintenance">
+                                                    <a href="/properties?type=building"
+                                                        class="asset-metric asset-metric-maintenance">
                                                         <span class="asset-metric-label">Under Construction</span>
                                                         <strong class="asset-metric-value"
                                                             th:text="${underConstructionBuildingAssets}">0</strong>
@@ -544,7 +555,8 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <a href="/properties" class="asset-metric asset-metric-decommissioned">
+                                    <a href="/properties?type=building"
+                                        class="asset-metric asset-metric-decommissioned">
                                         <span class="asset-metric-label">Slated for Disposal</span>
                                         <strong class="asset-metric-value"
                                             th:text="${slatedForDisposalBuildingAssets}">0</strong>
