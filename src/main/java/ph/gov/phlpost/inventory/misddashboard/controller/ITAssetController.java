@@ -116,7 +116,7 @@ public class ITAssetController {
     public String addCatalog(@ModelAttribute EquipmentCatalog newCatalog, RedirectAttributes redirectAttributes) {
         catalogRepo.save(newCatalog);
         redirectAttributes.addFlashAttribute("successMessage", "Catalog updated.");
-        return "redirect:/assets";
+        return "redirect:/";
     }
 
     @PostMapping("/assets/receive")
@@ -182,18 +182,18 @@ public class ITAssetController {
                             "Successfully received " + quantity
                                     + " asset(s) into storage. Documents attached to all asset tags: "
                                     + String.join(", ", createdAssetTags) + ".");
-                    return "redirect:/assets";
+                    return "redirect:/";
                 }
             } catch (Exception e) {
                 redirectAttributes.addFlashAttribute("errorMessage",
                         "Assets were saved, but document upload failed: " + e.getMessage());
-                return "redirect:/assets";
+                return "redirect:/";
             }
         }
 
         redirectAttributes.addFlashAttribute("successMessage",
                 "Successfully received " + quantity + " asset(s) into storage.");
-        return "redirect:/assets";
+        return "redirect:/";
     }
 
     private synchronized String generateNextAssetTag(String datePrefix) {

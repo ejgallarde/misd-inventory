@@ -1,5 +1,6 @@
 package ph.gov.phlpost.inventory.misddashboard.controller;
 
+import ph.gov.phlpost.inventory.misddashboard.model.EquipmentCatalog;
 import ph.gov.phlpost.inventory.misddashboard.model.Personnel;
 import ph.gov.phlpost.inventory.misddashboard.repository.DashboardRepository;
 import ph.gov.phlpost.inventory.misddashboard.repository.AssetRepository;
@@ -142,6 +143,7 @@ public class MainDashboardController {
                 model.addAttribute("underMaintenanceAssets", dashboardRepo.countUnderMaintenanceAssets());
                 model.addAttribute("decommissionedRetiredAssets", dashboardRepo.countDecommissionedRetiredAssets());
                 model.addAttribute("catalogItems", catalogRepo.findAll());
+                model.addAttribute("catalogItemsByCategory", groupCatalogItemsByCategory(catalogRepo.findAll()));
 
                 // Fleet
                 model.addAttribute("totalVehicles", fleetRepo.count());
@@ -216,9 +218,10 @@ public class MainDashboardController {
                                 .toList());
                 model.addAttribute("documentUploadMaxSizeMb", documentUploadMaxSizeMb);
                 model.addAttribute("documentUploadAllowedExtensions", documentUploadAllowedExtensions);
-                model.addAttribute("itDocumentUploadCategories", TextUtils.splitCsv(itDocumentUploadCategoriesCsv).stream()
-                                .sorted(String.CASE_INSENSITIVE_ORDER)
-                                .toList());
+                model.addAttribute("itDocumentUploadCategories",
+                                TextUtils.splitCsv(itDocumentUploadCategoriesCsv).stream()
+                                                .sorted(String.CASE_INSENSITIVE_ORDER)
+                                                .toList());
                 model.addAttribute("vehicleDocumentUploadCategories",
                                 TextUtils.splitCsv(vehicleDocumentUploadCategoriesCsv).stream()
                                                 .sorted(String.CASE_INSENSITIVE_ORDER)
@@ -285,5 +288,23 @@ public class MainDashboardController {
                 response.put("results", items);
                 response.put("pagination", Collections.singletonMap("more", results.hasNext()));
                 return response;
+        }
+
+        private Map<String, List<EquipmentCatalog>> groupCatalogItemsByCategory(List<EquipmentCatalog> catalogItems) {
+                return catalogItems.stream()
+                                .sorted(Comparator
+                                                .comparing((EquipmentCatalog item) -> item.getManufacturer() == null
+                                                                ? ""
+                                                                : item.getManufacturer(),
+                                                                String.CASE_INSENSITIVE_ORDER)
+                                                .thenComparing(item -> item.getModelName() == null ? ""
+                                                                : item.getModelName(),
+                                                                String.CASE_INSENSITIVE_ORDER))
+                                .collect(Collectors.groupingBy(
+                                                item -> item.getCategory() == null || item.getCategory().isBlank()
+                                                                ? "Uncategorized"
+                                                                : item.getCategory(),
+                                                java.util.TreeMap::new,
+                                                Collectors.toList()));
         }
 }

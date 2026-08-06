@@ -51,7 +51,8 @@
                 <td
                     th:text="${vehicle.insuranceExpiry != null ? #temporals.format(vehicle.insuranceExpiry, 'MMM d, yyyy') : 'N/A'}">
                 </td>
-                <td
+                <td th:classappend="${vehicle.registrationExpiry != null and !vehicle.registrationExpiry.isBefore(T(java.time.LocalDate).now()) and !vehicle.registrationExpiry.isAfter(T(java.time.LocalDate).now().plusDays(30))} ? 'text-danger fw-bold' : ''"
+                    th:title="${vehicle.registrationExpiry != null and !vehicle.registrationExpiry.isBefore(T(java.time.LocalDate).now()) and !vehicle.registrationExpiry.isAfter(T(java.time.LocalDate).now().plusDays(30))} ? 'Registration expires within 30 days' : null"
                     th:text="${vehicle.registrationExpiry != null ? #temporals.format(vehicle.registrationExpiry, 'MMM d, yyyy') : 'N/A'}">
                 </td>
                 <td

@@ -651,12 +651,14 @@
                 <div class="mb-3">
                     <label class="form-label fw-bold text-muted small text-uppercase">Equipment Model <span
                             class="required-indicator" aria-hidden="true">*</span></label>
-                    <select class="form-select" name="catalogID" required>
+                    <select class="form-select" name="catalogID" id="receiveCatalogSelect" required>
                         <option value="" disabled selected>Select from Catalog...</option>
-                        <!-- Populate from the catalogMap already available on the dashboard -->
-                        <option th:each="entry : ${catalogMap}" th:value="${entry.key}"
-                            th:text="${entry.value.manufacturer + ' - ' + entry.value.modelName}">
-                        </option>
+                        <!-- Grouped by Category so equipment models are easier to locate -->
+                        <optgroup th:each="categoryEntry : ${catalogItemsByCategory}" th:label="${categoryEntry.key}">
+                            <option th:each="item : ${categoryEntry.value}" th:value="${item.catalogID}"
+                                th:text="${item.manufacturer + ' - ' + item.modelName}">
+                            </option>
+                        </optgroup>
                     </select>
                 </div>
 
@@ -728,7 +730,7 @@
             <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
         </div>
         <div class="offcanvas-body">
-            <form th:action="@{/fleet/add}" method="post" enctype="multipart/form-data">
+            <form th:action="@{/fleet/add}" method="post" id="addVehicleForm" enctype="multipart/form-data">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                 <div class="row mb-3">
                     <div class="col-6"><label class="form-label fw-bold">Plate Number</label><input type="text"
@@ -850,7 +852,7 @@
             <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
         </div>
         <div class="offcanvas-body">
-            <form th:action="@{/properties/add}" method="post" enctype="multipart/form-data">
+            <form th:action="@{/properties/add}" method="post" id="addPropertyForm" enctype="multipart/form-data">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                 <input type="hidden" id="propertyRegistrationContextInput" name="propertyRegistrationContext"
                     value="LAND">

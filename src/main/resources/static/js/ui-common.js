@@ -1292,6 +1292,73 @@ window.MISDCommon = (function (jqueryGlobal) {
         formElement.setAttribute('action', `${actionUrl.pathname}${actionUrl.search}`);
     }
 
+    function getFormDraftFields(form) {
+        return Array.from(form.elements).filter(function (element) {
+            return element.name
+                && !element.classList.contains('js-document-upload-input')
+                && !['file', 'submit', 'button', 'reset'].includes(element.type)
+                && !/csrf/i.test(element.name);
+        });
+    }
+
+    function saveFormDraft(form, storageKey) {
+        if (!form || !storageKey) {
+            return;
+        }
+
+        const data = {};
+        getFormDraftFields(form).forEach(function (element) {
+            data[element.name] = (element.type === 'checkbox' || element.type === 'radio')
+                ? element.checked
+                : element.value;
+        });
+
+        try {
+            sessionStorage.setItem(storageKey, JSON.stringify(data));
+        } catch (e) {
+            // Ignore storage quota/serialization errors; draft persistence is best-effort.
+        }
+    }
+
+    function restoreFormDraft(form, storageKey) {
+        if (!form || !storageKey) {
+            return false;
+        }
+
+        const raw = sessionStorage.getItem(storageKey);
+        if (!raw) {
+            return false;
+        }
+
+        let data;
+        try {
+            data = JSON.parse(raw);
+        } catch (e) {
+            return false;
+        }
+
+        let restored = false;
+        getFormDraftFields(form).forEach(function (element) {
+            if (!(element.name in data)) {
+                return;
+            }
+            if (element.type === 'checkbox' || element.type === 'radio') {
+                element.checked = Boolean(data[element.name]);
+            } else {
+                element.value = data[element.name];
+            }
+            restored = true;
+        });
+
+        return restored;
+    }
+
+    function clearFormDraft(storageKey) {
+        if (storageKey) {
+            sessionStorage.removeItem(storageKey);
+        }
+    }
+
     return {
         setupThemeToggle: setupThemeToggle,
         showToast: showToast,
@@ -1322,6 +1389,9 @@ window.MISDCommon = (function (jqueryGlobal) {
         formatPesoCurrency: formatPesoCurrency,
         formatDate: formatDate,
         showInlineSuccessToast: showInlineSuccessToast,
-        computeStraightLineValuation: computeStraightLineValuation
+        computeStraightLineValuation: computeStraightLineValuation,
+        saveFormDraft: saveFormDraft,
+        restoreFormDraft: restoreFormDraft,
+        clearFormDraft: clearFormDraft
     };
 })(window.jQuery);

@@ -427,17 +427,9 @@ $(document).ready(function () {
         }
     });
 
+    // Accidental close (click-out, Esc, backdrop, X button) must retain typed values.
+    // Drafts are only cleared after a successful transaction, a tab switch, or opening a detail/card view.
     $('#receiveAssetOffcanvas, #addVehicleOffcanvas, #addPropertyOffcanvas').on('hidden.bs.offcanvas', function () {
-        const form = this.querySelector('form');
-        if (form) {
-            form.reset();
-        }
-
-        if (this.id === 'addPropertyOffcanvas') {
-            applyPropertyFormContext(PROPERTY_FORM_CONTEXT.LAND);
-            updatePropertyIdentifierRules();
-        }
-
         $(this).find('.js-document-upload-input').each(function () {
             MISDCommon.clearSelectedFiles(this);
             renderDocumentPreview(this, { mergeSelection: false, enableRemove: true });
@@ -464,12 +456,74 @@ $(document).ready(function () {
         renderDocumentPreview(propertyInput, { mergeSelection: false, enableRemove: true });
     });
 
-    $('#receiveAssetOffcanvas').on('hidden.bs.offcanvas', function () {
-        $('#receiveAssetForm')[0].reset();
-        $('#receiveAssetTag').prop('disabled', false).attr('placeholder', 'Leave blank to auto-generate');
-        $('#receiveSerialNumber').prop('disabled', false).attr('placeholder', '');
-    });
-
     const today = new Date().toISOString().split('T')[0];
     $('input[name="purchaseDate"]').val(today);
+
+    // --- Add-asset form draft persistence (Receive Asset, Register Vehicle, Add Property) ---
+    const FORM_DRAFT_KEYS = {
+        receiveAssetForm: 'misd-dashboard-draft-receive-asset',
+        addVehicleForm: 'misd-dashboard-draft-add-vehicle',
+        addPropertyForm: 'misd-dashboard-draft-add-property'
+    };
+
+    function clearAllFormDrafts() {
+        Object.values(FORM_DRAFT_KEYS).forEach(function (storageKey) {
+            MISDCommon.clearFormDraft(storageKey);
+        });
+    }
+
+    function resetDraftForms() {
+        Object.keys(FORM_DRAFT_KEYS).forEach(function (formId) {
+            const form = document.getElementById(formId);
+            if (form) {
+                form.reset();
+            }
+        });
+
+        $('#receiveAssetTag').prop('disabled', false).attr('placeholder', 'Leave blank to auto-generate');
+        $('#receiveSerialNumber').prop('disabled', false).attr('placeholder', '');
+        applyPropertyFormContext(PROPERTY_FORM_CONTEXT.LAND);
+        updatePropertyIdentifierRules();
+    }
+
+    // A completed transaction renders the flash-driven success toast on the next page load.
+    if (document.getElementById('successToast')) {
+        clearAllFormDrafts();
+    } else {
+        Object.entries(FORM_DRAFT_KEYS).forEach(function (entry) {
+            const form = document.getElementById(entry[0]);
+            if (form) {
+                MISDCommon.restoreFormDraft(form, entry[1]);
+            }
+        });
+
+        const propertyContextInput = document.getElementById('propertyRegistrationContextInput');
+        applyPropertyFormContext(propertyContextInput ? propertyContextInput.value : PROPERTY_FORM_CONTEXT.LAND);
+        updatePropertyIdentifierRules();
+        $('#receiveQuantity').trigger('input');
+    }
+
+    Object.entries(FORM_DRAFT_KEYS).forEach(function (entry) {
+        const form = document.getElementById(entry[0]);
+        if (!form) {
+            return;
+        }
+        const persistDraft = function () {
+            MISDCommon.saveFormDraft(form, entry[1]);
+        };
+        form.addEventListener('input', persistDraft);
+        form.addEventListener('change', persistDraft);
+    });
+
+    // A real user-initiated tab change (not the programmatic restore-on-load) counts as leaving the workflow.
+    $('#assetTabs button[data-bs-toggle="tab"]').on('click', function () {
+        clearAllFormDrafts();
+        resetDraftForms();
+    });
+
+    // Opening any detail/"card view" offcanvas also clears in-progress add-asset drafts.
+    $('#itDetailOffcanvas, #fleetDetailOffcanvas, #propertyDetailOffcanvas').on('shown.bs.offcanvas', function () {
+        clearAllFormDrafts();
+        resetDraftForms();
+    });
 });
