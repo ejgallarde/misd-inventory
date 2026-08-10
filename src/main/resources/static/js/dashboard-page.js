@@ -427,13 +427,34 @@ $(document).ready(function () {
         }
     });
 
-    // Accidental close (click-out, Esc, backdrop, X button) must retain typed values.
-    // Drafts are only cleared after a successful transaction, a tab switch, or opening a detail/card view.
+    // Closing an add-asset offcanvas with unsaved changes prompts for confirmation before clearing it.
+    const ADD_ASSET_FORM_IDS = {
+        receiveAssetOffcanvas: 'receiveAssetForm',
+        addVehicleOffcanvas: 'addVehicleForm',
+        addPropertyOffcanvas: 'addPropertyForm'
+    };
+    const formPristineSnapshots = new WeakMap();
+    let pendingExitOffcanvasEl = null;
+
     $('#receiveAssetOffcanvas, #addVehicleOffcanvas, #addPropertyOffcanvas').on('hidden.bs.offcanvas', function () {
+        this.dataset.forceClose = 'false';
+        const form = document.getElementById(ADD_ASSET_FORM_IDS[this.id]);
+        if (form) {
+            form.reset();
+            formPristineSnapshots.delete(form);
+        }
         $(this).find('.js-document-upload-input').each(function () {
             MISDCommon.clearSelectedFiles(this);
             renderDocumentPreview(this, { mergeSelection: false, enableRemove: true });
         });
+        if (this.id === 'addPropertyOffcanvas') {
+            applyPropertyFormContext(PROPERTY_FORM_CONTEXT.LAND);
+            updatePropertyIdentifierRules();
+        }
+        if (this.id === 'receiveAssetOffcanvas') {
+            $('#receiveAssetTag').prop('disabled', false).attr('placeholder', 'Leave blank to auto-generate');
+            $('#receiveSerialNumber').prop('disabled', false).attr('placeholder', '');
+        }
     });
 
     $('#receiveAssetOffcanvas').on('shown.bs.offcanvas', function () {
@@ -459,71 +480,66 @@ $(document).ready(function () {
     const today = new Date().toISOString().split('T')[0];
     $('input[name="purchaseDate"]').val(today);
 
-    // --- Add-asset form draft persistence (Receive Asset, Register Vehicle, Add Property) ---
-    const FORM_DRAFT_KEYS = {
-        receiveAssetForm: 'misd-dashboard-draft-receive-asset',
-        addVehicleForm: 'misd-dashboard-draft-add-vehicle',
-        addPropertyForm: 'misd-dashboard-draft-add-property'
-    };
-
-    function clearAllFormDrafts() {
-        Object.values(FORM_DRAFT_KEYS).forEach(function (storageKey) {
-            MISDCommon.clearFormDraft(storageKey);
-        });
-    }
-
-    function resetDraftForms() {
-        Object.keys(FORM_DRAFT_KEYS).forEach(function (formId) {
-            const form = document.getElementById(formId);
-            if (form) {
-                form.reset();
+    // --- Confirm-before-exit for add-asset offcanvases (Receive Asset, Register Vehicle, Add Property) ---
+    function serializeFormState(form) {
+        const state = {};
+        Array.from(form.elements).forEach(function (element) {
+            if (!element.name || ['submit', 'button', 'reset'].includes(element.type)
+                || /csrf/i.test(element.name)) {
+                return;
+            }
+            if (element.type === 'checkbox' || element.type === 'radio') {
+                state[element.name] = element.checked;
+            } else if (element.type === 'file') {
+                state[element.name] = MISDCommon.getSelectedFiles(element)
+                    .map(function (file) { return file.name + ':' + file.size; })
+                    .join('|');
+            } else {
+                state[element.name] = element.value;
             }
         });
-
-        $('#receiveAssetTag').prop('disabled', false).attr('placeholder', 'Leave blank to auto-generate');
-        $('#receiveSerialNumber').prop('disabled', false).attr('placeholder', '');
-        applyPropertyFormContext(PROPERTY_FORM_CONTEXT.LAND);
-        updatePropertyIdentifierRules();
+        return JSON.stringify(state);
     }
 
-    // A completed transaction renders the flash-driven success toast on the next page load.
-    if (document.getElementById('successToast')) {
-        clearAllFormDrafts();
-    } else {
-        Object.entries(FORM_DRAFT_KEYS).forEach(function (entry) {
-            const form = document.getElementById(entry[0]);
-            if (form) {
-                MISDCommon.restoreFormDraft(form, entry[1]);
-            }
-        });
-
-        const propertyContextInput = document.getElementById('propertyRegistrationContextInput');
-        applyPropertyFormContext(propertyContextInput ? propertyContextInput.value : PROPERTY_FORM_CONTEXT.LAND);
-        updatePropertyIdentifierRules();
-        $('#receiveQuantity').trigger('input');
+    function captureFormSnapshot(offcanvasEl) {
+        const form = document.getElementById(ADD_ASSET_FORM_IDS[offcanvasEl.id]);
+        if (form) {
+            formPristineSnapshots.set(form, serializeFormState(form));
+        }
     }
 
-    Object.entries(FORM_DRAFT_KEYS).forEach(function (entry) {
-        const form = document.getElementById(entry[0]);
-        if (!form) {
+    function isFormDirty(offcanvasEl) {
+        const form = document.getElementById(ADD_ASSET_FORM_IDS[offcanvasEl.id]);
+        const baseline = form && formPristineSnapshots.get(form);
+        return baseline !== undefined && serializeFormState(form) !== baseline;
+    }
+
+    $('#receiveAssetOffcanvas, #addVehicleOffcanvas, #addPropertyOffcanvas').on('shown.bs.offcanvas', function () {
+        captureFormSnapshot(this);
+    });
+
+    $('#receiveAssetOffcanvas, #addVehicleOffcanvas, #addPropertyOffcanvas').on('hide.bs.offcanvas', function (event) {
+        if (this.dataset.forceClose === 'true') {
             return;
         }
-        const persistDraft = function () {
-            MISDCommon.saveFormDraft(form, entry[1]);
-        };
-        form.addEventListener('input', persistDraft);
-        form.addEventListener('change', persistDraft);
+        if (isFormDirty(this)) {
+            event.preventDefault();
+            pendingExitOffcanvasEl = this;
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('unsavedChangesModal')).show();
+        }
     });
 
-    // A real user-initiated tab change (not the programmatic restore-on-load) counts as leaving the workflow.
-    $('#assetTabs button[data-bs-toggle="tab"]').on('click', function () {
-        clearAllFormDrafts();
-        resetDraftForms();
+    document.getElementById('unsavedChangesContinueBtn').addEventListener('click', function () {
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('unsavedChangesModal')).hide();
+        pendingExitOffcanvasEl = null;
     });
 
-    // Opening any detail/"card view" offcanvas also clears in-progress add-asset drafts.
-    $('#itDetailOffcanvas, #fleetDetailOffcanvas, #propertyDetailOffcanvas').on('shown.bs.offcanvas', function () {
-        clearAllFormDrafts();
-        resetDraftForms();
+    document.getElementById('unsavedChangesExitBtn').addEventListener('click', function () {
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('unsavedChangesModal')).hide();
+        if (pendingExitOffcanvasEl) {
+            pendingExitOffcanvasEl.dataset.forceClose = 'true';
+            bootstrap.Offcanvas.getOrCreateInstance(pendingExitOffcanvasEl).hide();
+            pendingExitOffcanvasEl = null;
+        }
     });
 });

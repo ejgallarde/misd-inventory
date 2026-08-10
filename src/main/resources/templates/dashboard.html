@@ -1023,6 +1023,26 @@
         </div>
     </div>
 
+    <!-- Unsaved Changes Confirmation Modal -->
+    <div class="modal fade" id="unsavedChangesModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static"
+        data-bs-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Unsaved Changes</h5>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-0">You have unsaved changes that will be lost. Proceed with exit?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" id="unsavedChangesContinueBtn">Continue
+                        Editing</button>
+                    <button type="button" class="btn btn-danger" id="unsavedChangesExitBtn">Exit</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div th:replace="~{fragments/asset-detail :: assetDetailOffcanvas}"></div>
     <div th:replace="~{fragments/fleet-detail :: fleetDetailOffcanvas}"></div>
     <div th:replace="~{fragments/properties-detail :: propertyDetailOffcanvas}"></div>

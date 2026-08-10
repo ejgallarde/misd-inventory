@@ -137,6 +137,14 @@ body[data-theme="dark"] .navbar-dark .dropdown-toggle {
     color: #fff !important;
 }
 
+.table td.text-danger {
+    color: #dc3545 !important;
+}
+
+body[data-theme="dark"] .table td.text-danger {
+    color: #ff8b98 !important;
+}
+
 .table thead th,
 .table-dark th,
 .table-dark td,
