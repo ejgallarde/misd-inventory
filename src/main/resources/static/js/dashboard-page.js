@@ -45,6 +45,11 @@ $(document).ready(function () {
         }));
     }
 
+    const titleNotAvailableCheckbox = document.getElementById('propertyTitleNotAvailable');
+    if (titleNotAvailableCheckbox) {
+        titleNotAvailableCheckbox.addEventListener('change', applyTitleNotAvailableState);
+    }
+
     initDashboardTable('#agingTable', [[7, 'desc']], 'No problematic IT assets found.');
     initDashboardTable('#fleetActionRequiredTable', [[0, 'asc']], 'No problematic vehicles found in the fleet.');
     initDashboardTable('#landAssetsActionRequiredTable', [[2, 'asc']], 'No land assets currently require attention.');
@@ -83,6 +88,25 @@ $(document).ready(function () {
             option.textContent = areaValue;
             propertyAreaInput.appendChild(option);
         });
+    }
+
+    /**
+     * Keeps the Title Number field in step with the "no title on record"
+     * checkbox. The server clears the submitted title when the box is ticked, so
+     * the field is emptied and locked here to match.
+     */
+    function applyTitleNotAvailableState() {
+        const checkbox = document.getElementById('propertyTitleNotAvailable');
+        const titleInput = document.getElementById('propertyTitleNumberInput');
+        if (!checkbox || !titleInput) {
+            return;
+        }
+
+        const unavailable = checkbox.checked && !checkbox.disabled;
+        titleInput.disabled = unavailable;
+        if (unavailable) {
+            titleInput.value = '';
+        }
     }
 
     function applyPropertyFormContext(context) {
@@ -151,6 +175,21 @@ $(document).ready(function () {
 
         if (propertyLegalTitlingStatusGroup) {
             propertyLegalTitlingStatusGroup.classList.toggle('d-none', isBuildingContext);
+        }
+
+        // "No title on record" applies to buildings and facilities only; a land
+        // asset always requires a Title Number / TCT.
+        const titleNotAvailableWrap = document.getElementById('propertyTitleNotAvailableWrap');
+        const titleNotAvailableInput = document.getElementById('propertyTitleNotAvailable');
+        if (titleNotAvailableWrap) {
+            titleNotAvailableWrap.classList.toggle('d-none', !isBuildingContext);
+        }
+        if (titleNotAvailableInput) {
+            titleNotAvailableInput.disabled = !isBuildingContext;
+            if (!isBuildingContext) {
+                titleNotAvailableInput.checked = false;
+            }
+            applyTitleNotAvailableState();
         }
 
         if (propertyLegalTitlingStatusInput) {

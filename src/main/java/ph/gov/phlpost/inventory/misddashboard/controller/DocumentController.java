@@ -4,6 +4,7 @@ import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.InvalidMediaTypeException;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -94,22 +95,28 @@ public class DocumentController {
             Document document = documentService.findDocumentById(documentId)
                     .orElseThrow(() -> new IllegalArgumentException("Document not found."));
 
-            InputStream contentStream = documentService.readDocumentContent(document);
-            InputStreamResource resource = new InputStreamResource(contentStream);
-
             String filename = (document.getFileName() == null || document.getFileName().isBlank())
                     ? "document"
                     : document.getFileName();
-            String contentType = (document.getContentType() == null || document.getContentType().isBlank())
-                    ? MediaType.APPLICATION_OCTET_STREAM_VALUE
-                    : document.getContentType();
+
+            // Resolved before the content stream is opened. The stored content
+            // type comes verbatim from the browser upload, and parseMediaType
+            // throws InvalidMediaTypeException — a subclass of
+            // IllegalArgumentException — on a malformed one. Opening the stream
+            // first meant that exception was caught below as "not found",
+            // returning 404 for a document that exists while leaking the open
+            // handle. An unparseable type now falls back instead.
+            MediaType mediaType = resolveMediaType(document.getContentType());
+
+            InputStream contentStream = documentService.readDocumentContent(document);
+            InputStreamResource resource = new InputStreamResource(contentStream);
 
             ContentDisposition disposition = asAttachment
                     ? ContentDisposition.attachment().filename(filename).build()
                     : ContentDisposition.inline().filename(filename).build();
 
             ResponseEntity.BodyBuilder builder = ResponseEntity.ok()
-                    .contentType(MediaType.parseMediaType(contentType))
+                    .contentType(mediaType)
                     .header(HttpHeaders.CONTENT_DISPOSITION, disposition.toString());
 
             if (document.getFileSize() != null && document.getFileSize() >= 0) {
@@ -121,6 +128,17 @@ public class DocumentController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         } catch (IOException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    private static MediaType resolveMediaType(String storedContentType) {
+        if (storedContentType == null || storedContentType.isBlank()) {
+            return MediaType.APPLICATION_OCTET_STREAM;
+        }
+        try {
+            return MediaType.parseMediaType(storedContentType);
+        } catch (InvalidMediaTypeException ex) {
+            return MediaType.APPLICATION_OCTET_STREAM;
         }
     }
 

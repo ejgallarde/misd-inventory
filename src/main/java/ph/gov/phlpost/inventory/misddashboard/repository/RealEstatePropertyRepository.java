@@ -44,21 +44,7 @@ public interface RealEstatePropertyRepository extends JpaRepository<RealEstatePr
         long countByTypeExcludingAndOperationalStatus(@Param("propertyType") String propertyType,
                         @Param("status") String status);
 
-        @Query(value = "SELECT COUNT(*) FROM RealEstateProperties WHERE " +
-                        "UPPER(COALESCE(PropertyType, '')) = UPPER(:propertyType) AND (" +
-                        "PropertyTaxStatus IN ('Pending', 'Overdue', 'Unpaid') " +
-                        "OR LegalTitlingStatus IN ('For Titling/Processing', 'Under Litigation/Dispute', 'No Title') " +
-                        "OR OperationalStatus IS NULL OR OperationalStatus <> 'Active/In Use' " +
-                        "OR ConditionStatus IN ('Fair', 'Poor', 'Condemned'))", nativeQuery = true)
-        long countProblematicPropertiesByType(@Param("propertyType") String propertyType);
 
-        @Query(value = "SELECT COUNT(*) FROM RealEstateProperties WHERE " +
-                        "UPPER(COALESCE(PropertyType, '')) <> UPPER(:propertyType) AND (" +
-                        "PropertyTaxStatus IN ('Pending', 'Overdue', 'Unpaid') " +
-                        "OR LegalTitlingStatus IN ('For Titling/Processing', 'Under Litigation/Dispute', 'No Title') " +
-                        "OR OperationalStatus IS NULL OR OperationalStatus <> 'Active/In Use' " +
-                        "OR ConditionStatus IN ('Fair', 'Poor', 'Condemned'))", nativeQuery = true)
-        long countProblematicPropertiesByTypeExcluding(@Param("propertyType") String propertyType);
 
         @Query(value = "SELECT * FROM RealEstateProperties WHERE " +
                         "UPPER(COALESCE(PropertyType, '')) = UPPER(:propertyType) AND (" +

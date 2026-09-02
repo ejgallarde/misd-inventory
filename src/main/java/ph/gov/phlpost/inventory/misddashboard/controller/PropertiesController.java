@@ -41,7 +41,7 @@ public class PropertiesController {
     @Value("${document.upload.categories.property}")
     private String propertyDocumentUploadCategoriesCsv;
 
-    @Value("#{'${dropdown.property-tax-status-update}'.split(',')}")
+    @Value("#{'${dropdown.property-tax-statuses}'.split(',')}")
     private List<String> propertyTaxStatusesUpdate;
 
     @Value("#{'${dropdown.property-legal-titling-statuses}'.split(',')}")
@@ -234,14 +234,24 @@ public class PropertiesController {
         return propertyType != null && propertyType.equalsIgnoreCase("Lot");
     }
 
+    /**
+     * Audit reference for a property: always the immutable primary key.
+     *
+     * <p>
+     * This previously preferred the title number and fell back to the ID, so a
+     * property registered without a title logged its early history under
+     * "PROP-{id}" and then silently moved to the title number once one was
+     * recorded — orphaning everything written before that point. Existing rows
+     * are moved onto this key by db/migration_2026-09-01_blank-to-null.sql.
+     */
     private String resolveReferenceId(RealEstateProperty property) {
-        return property.getTitleNumber() != null ? property.getTitleNumber() : "PROP-" + property.getPropertyID();
+        return "PROP-" + property.getPropertyID();
     }
 
     @PostMapping("/assign-custodian")
     @Transactional
     public String assignCustodian(@RequestParam Integer propertyID, @RequestParam String employeeID,
-            @RequestParam String conditionNotes, RedirectAttributes redirectAttributes) {
+            @RequestParam(required = false) String conditionNotes, RedirectAttributes redirectAttributes) {
         RealEstateProperty property = propertyRepo.findById(propertyID).orElse(null);
         if (property != null) {
             property.setCustodianID(employeeID);
@@ -258,7 +268,7 @@ public class PropertiesController {
     @PostMapping("/update-tax")
     @Transactional
     public String updatePropertyTax(@RequestParam Integer propertyID, @RequestParam String taxStatus,
-            @RequestParam String conditionNotes, RedirectAttributes redirectAttributes) {
+            @RequestParam(required = false) String conditionNotes, RedirectAttributes redirectAttributes) {
         RealEstateProperty property = propertyRepo.findById(propertyID).orElse(null);
         if (property != null) {
             property.setPropertyTaxStatus(taxStatus);
@@ -337,14 +347,20 @@ public class PropertiesController {
     }
 
     @PostMapping("/update")
-    public ResponseEntity<String> updateProperty(@RequestBody RealEstateProperty updatedProp) {
+    @Transactional
+    public ResponseEntity<String> updateProperty(@RequestBody RealEstateProperty updatedProp,
+            Authentication authentication) {
         Integer propertyId = updatedProp.getPropertyID();
         if (propertyId == null) {
             return ResponseEntity.badRequest().body("Property ID is required.");
         }
 
+        String performedBy = authentication != null ? authentication.getName() : "SYSTEM";
+
         return propertyRepo.findById(propertyId)
                 .map(existing -> {
+                    String previousStatuses = statusSummary(existing);
+
                     existing.setAssessedValue(updatedProp.getAssessedValue());
                     existing.setPropertyTaxStatus(updatedProp.getPropertyTaxStatus());
                     existing.setLegalTitlingStatus(updatedProp.getLegalTitlingStatus());
@@ -355,8 +371,30 @@ public class PropertiesController {
                     existing.setFloorAreaSqm(updatedProp.getFloorAreaSqm());
                     existing.setPropertyDetails(updatedProp.getPropertyDetails());
                     propertyRepo.save(existing);
+
+                    // Edits made here previously left no audit entry, while the
+                    // Update Tax modal did — so the history tab showed only part
+                    // of what had actually changed.
+                    String currentStatuses = statusSummary(existing);
+                    String actionType = previousStatuses.equals(currentStatuses)
+                            ? "Property Details Updated"
+                            : "Property Status Updated";
+                    auditService.logLifecycleEvent(resolveReferenceId(existing), performedBy, actionType,
+                            previousStatuses + " -> " + currentStatuses);
+
                     return ResponseEntity.ok("Property updated successfully");
                 })
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    private String statusSummary(RealEstateProperty property) {
+        return "Tax: " + displayValue(property.getPropertyTaxStatus())
+                + "; Legal: " + displayValue(property.getLegalTitlingStatus())
+                + "; Operational: " + displayValue(property.getOperationalStatus())
+                + "; Condition: " + displayValue(property.getConditionStatus());
+    }
+
+    private String displayValue(String value) {
+        return TextUtils.isBlank(value) ? "None" : value;
     }
 }

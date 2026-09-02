@@ -6,6 +6,7 @@ import ph.gov.phlpost.inventory.misddashboard.model.PersonnelBaseLocation;
 import ph.gov.phlpost.inventory.misddashboard.repository.EquipmentCatalogRepository;
 import ph.gov.phlpost.inventory.misddashboard.repository.PersonnelRepository;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
@@ -30,7 +31,15 @@ public class RegistryService {
         this.supplierOwnerId = supplierOwnerId;
     }
 
-    // Caches the employee list for 1 hour (or until app restart)
+    /*
+     * These maps are cached for the life of the process.
+     *
+     * There is no cache provider on the classpath, so Spring uses a plain
+     * ConcurrentMapCache, which has no TTL — an earlier comment here claimed a
+     * one-hour expiry that never existed. Personnel changes made directly in the
+     * database therefore do not appear until the caches are evicted; call
+     * evictReferenceDataCaches() after any change to the Personnel table.
+     */
     @Cacheable("employeeMap")
     public Map<String, String> getEmployeeNameMap() {
         Map<String, String> employeeNames = personnelRepository.findAll().stream()
@@ -113,6 +122,17 @@ public class RegistryService {
                         LinkedHashMap::new));
         managerNames.put(supplierOwnerId, "No Manager");
         return managerNames;
+    }
+
+    /**
+     * Drops every cached personnel-derived map so the next lookup re-reads the
+     * database. Without this, a new hire, a transfer, or a manager change is
+     * invisible until the application restarts.
+     */
+    @CacheEvict(cacheNames = { "allPersonnel", "employeeMap", "departmentMap", "divisionMap",
+            "personnelLocationMap", "managerNameMap" }, allEntries = true)
+    public void evictReferenceDataCaches() {
+        // Annotation-driven; the body is intentionally empty.
     }
 
     public String resolveDisplayName(String employeeId) {

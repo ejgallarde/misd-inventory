@@ -1,6 +1,7 @@
 package ph.gov.phlpost.inventory.misddashboard.model;
 
 import jakarta.persistence.*;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Entity
@@ -58,7 +59,7 @@ public class FleetVehicle {
     private String maintenanceStatus;
 
     @Column(name = "Cost")
-    private String cost;
+    private BigDecimal cost;
 
     @Column(name = "AcquisitionYear")
     private Integer acquisitionYear;
@@ -202,11 +203,11 @@ public class FleetVehicle {
         this.bodyNumber = bodyNumber;
     }
 
-    public String getCost() {
+    public BigDecimal getCost() {
         return cost;
     }
 
-    public void setCost(String cost) {
+    public void setCost(BigDecimal cost) {
         this.cost = cost;
     }
 

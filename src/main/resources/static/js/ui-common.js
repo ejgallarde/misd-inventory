@@ -731,6 +731,73 @@ window.MISDCommon = (function (jqueryGlobal) {
         });
     }
 
+
+    /**
+     * Serializes a form to a plain object for a JSON request body, mapping any
+     * blank value to null rather than "".
+     *
+     * Several optional columns are UNIQUE (Assets.SerialNumber) or carry a
+     * foreign key (Assets.CurrentOwnerID); an empty string fails both, so
+     * clearing a field used to make the save 500 and lose the whole edit.
+     * Jackson never sees the server-side blank-to-null binder, so the payload
+     * has to be clean before it leaves the page.
+     */
+    function serializeFormToPayload(formSelector) {
+        const payload = {};
+
+        if (!$) {
+            return payload;
+        }
+
+        $(formSelector).serializeArray().forEach(function (field) {
+            const value = typeof field.value === 'string' ? field.value.trim() : field.value;
+            payload[field.name] = value === '' ? null : value;
+        });
+
+        return payload;
+    }
+
+    /**
+     * Strips grouping separators, currency symbols and stray spaces from a money
+     * input so it reaches the server as a plain decimal. FleetVehicles.Cost is a
+     * DECIMAL column and MySQL runs in STRICT_TRANS_TABLES, so "1,500,000.00"
+     * is a hard error rather than something the database rounds off.
+     * Returns null for a blank input and leaves anything it cannot confidently
+     * normalize untouched, so the server still validates rather than the page
+     * silently rewriting what someone typed.
+     */
+    function normalizeDecimalInput(rawValue) {
+        if (rawValue === null || rawValue === undefined) {
+            return null;
+        }
+
+        const trimmed = String(rawValue).trim();
+        if (trimmed === '') {
+            return null;
+        }
+
+        const stripped = trimmed.replace(/[\s,₱$]/g, '');
+        return /^-?\d+(\.\d+)?$/.test(stripped) ? stripped : trimmed;
+    }
+
+    function bindDecimalInputNormalizer(selector) {
+        if (!$) {
+            return;
+        }
+
+        $(document).on('blur', selector, function () {
+            const normalized = normalizeDecimalInput(this.value);
+            this.value = normalized === null ? '' : normalized;
+        });
+
+        $(document).on('submit', 'form', function () {
+            $(this).find(selector).each(function () {
+                const normalized = normalizeDecimalInput(this.value);
+                this.value = normalized === null ? '' : normalized;
+            });
+        });
+    }
+
     function updateUrlSearchParams(mutateParams) {
         const params = new URLSearchParams(window.location.search);
         mutateParams(params);
@@ -1322,6 +1389,9 @@ window.MISDCommon = (function (jqueryGlobal) {
         formatPesoCurrency: formatPesoCurrency,
         formatDate: formatDate,
         showInlineSuccessToast: showInlineSuccessToast,
-        computeStraightLineValuation: computeStraightLineValuation
+        computeStraightLineValuation: computeStraightLineValuation,
+        serializeFormToPayload: serializeFormToPayload,
+        normalizeDecimalInput: normalizeDecimalInput,
+        bindDecimalInputNormalizer: bindDecimalInputNormalizer
     };
 })(window.jQuery);

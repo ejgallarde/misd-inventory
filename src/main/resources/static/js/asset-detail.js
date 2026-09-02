@@ -19,6 +19,21 @@
     let currentAssetTag = '';
     let serialNumberEditable = false;
 
+    /*
+     * Shared entry point for the pages that host this panel.
+     *
+     * assets.js previously carried its own copy of everything below. The two
+     * drifted: only this one filled in the Current Valuation field, so the
+     * straight-line figure rendered on the dashboard tab and was blank on
+     * /assets. Declared outside init() so a host script can reach it regardless
+     * of which ready handler runs first.
+     *
+     *   open(assetTag)  - open the panel on a given asset (used for deep links)
+     *   onBeforeSave    - optional hook a host page sets to persist its own
+     *                     state before the save request goes out
+     */
+    window.MISDAssetDetail = window.MISDAssetDetail || {};
+
     function escapeValue(value) {
         return MISDCommon.escapeHtml(value == null || value === '' ? 'N/A' : String(value));
     }
@@ -153,9 +168,14 @@
             return;
         }
 
+        if (typeof window.MISDAssetDetail.onBeforeSave === 'function') {
+            window.MISDAssetDetail.onBeforeSave();
+        }
+
         $('.it-field').prop('disabled', false);
-        const payload = {};
-        $('#itEditForm').serializeArray().forEach(field => payload[field.name] = field.value);
+        // Blank fields must post as null, not "" — SerialNumber is UNIQUE and
+        // CurrentOwnerID is a foreign key, and both reject an empty string.
+        const payload = MISDCommon.serializeFormToPayload('#itEditForm');
         lockForm();
 
         $.ajax({
@@ -164,8 +184,8 @@
             contentType: 'application/json',
             data: JSON.stringify(payload),
             success: function () { uploadDocuments(uploadSelection); },
-            error: function () {
-                alert('Failed to save changes. Please check server logs.');
+            error: function (xhr) {
+                alert(xhr?.responseJSON?.error || 'Failed to save changes. Please check server logs.');
                 load(currentAssetTag);
             }
         });
@@ -175,6 +195,8 @@
         if (!document.querySelector(panelSelector)) {
             return;
         }
+
+        window.MISDAssetDetail.open = load;
 
         MISDCommon.bindClick('.asset-detail-link', function (link, event) {
             event.preventDefault();

@@ -14,10 +14,7 @@ import ph.gov.phlpost.inventory.misddashboard.util.TextUtils;
 
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.web.util.UriUtils;
 
@@ -31,8 +28,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 @Controller
 public class ITAssetController {
@@ -46,7 +43,7 @@ public class ITAssetController {
     private final RegistryService registryService;
     private final DocumentService documentService;
     private final AssetHistoryService assetHistoryService;
-    private final ObjectMapper objectMapper;
+    private final JsonMapper jsonMapper;
 
     @Value("${document.upload.max-size-mb:15}")
     private int documentUploadMaxSizeMb;
@@ -75,7 +72,7 @@ public class ITAssetController {
             DocumentService documentService,
             AssetHistoryService assetHistoryService,
             PersonnelRepository personnelRepo,
-            ObjectMapper objectMapper) {
+            JsonMapper jsonMapper) {
         this.assetRepo = assetRepo;
         this.catalogRepo = catalogRepo;
         this.assetService = assetService;
@@ -83,7 +80,7 @@ public class ITAssetController {
         this.documentService = documentService;
         this.assetHistoryService = assetHistoryService;
         this.personnelRepo = personnelRepo;
-        this.objectMapper = objectMapper;
+        this.jsonMapper = jsonMapper;
     }
 
     @GetMapping("/assets")
@@ -128,44 +125,23 @@ public class ITAssetController {
             Authentication authentication,
             RedirectAttributes redirectAttributes) {
 
-        LocalDate today = LocalDate.now();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        String datePrefix = "PPC-" + today.format(formatter) + "-";
+        String performedBy = authentication != null ? authentication.getName() : "SYSTEM";
+        List<String> createdAssetTags;
 
-        List<String> createdAssetTags = new ArrayList<>();
-
-        for (int i = 0; i < quantity; i++) {
-            Asset newAsset = new Asset();
-
-            newAsset.setCatalogID(baseAsset.getCatalogID());
-            newAsset.setPurchaseDate(baseAsset.getPurchaseDate());
-            newAsset.setPurchasePrice(baseAsset.getPurchasePrice());
-            newAsset.setRemarks(baseAsset.getRemarks());
-
-            newAsset.setDeploymentStatus("In Storage");
-            newAsset.setMaintenanceHealthStatus("Operational");
-            newAsset.setLifecycleStatus("Procured / Pre-Deployment");
-            newAsset.setCurrentOwnerID(null);
-
-            if (quantity == 1) {
-                newAsset.setSerialNumber(baseAsset.getSerialNumber());
-                if (baseAsset.getAssetTag() != null && !baseAsset.getAssetTag().trim().isEmpty()) {
-                    newAsset.setAssetTag(baseAsset.getAssetTag().trim());
-                } else {
-                    newAsset.setAssetTag(generateNextAssetTag(datePrefix));
-                }
-            } else {
-                newAsset.setSerialNumber(null);
-                newAsset.setAssetTag(generateNextAssetTag(datePrefix));
-            }
-
-            assetRepo.save(newAsset);
-            String performedBy = authentication != null ? authentication.getName() : "SYSTEM";
-            assetService.recordReceived(newAsset, performedBy);
-            createdAssetTags.add(newAsset.getAssetTag());
+        // Creation and its audit entries are one transaction in the service, so a
+        // failure part-way through a batch leaves no partial receipt behind.
+        try {
+            createdAssetTags = assetService.receiveAssets(baseAsset, quantity, performedBy);
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+            return "redirect:/";
         }
 
-        if (documentService.hasFiles(documentFiles) && !createdAssetTags.isEmpty()) {
+        String successMessage = "Successfully received " + createdAssetTags.size() + " asset(s) into storage.";
+
+        // Document storage is deliberately outside that transaction: it writes to
+        // the filesystem or MinIO, which a rollback could not undo anyway.
+        if (documentService.hasFiles(documentFiles)) {
             String uploadedBy = authentication != null ? authentication.getName() : "SystemUser";
             try {
                 for (String assetTag : createdAssetTags) {
@@ -176,13 +152,9 @@ public class ITAssetController {
                             documentCategories,
                             uploadedBy);
                 }
-
-                if (quantity > 1) {
-                    redirectAttributes.addFlashAttribute("successMessage",
-                            "Successfully received " + quantity
-                                    + " asset(s) into storage. Documents attached to all asset tags: "
-                                    + String.join(", ", createdAssetTags) + ".");
-                    return "redirect:/";
+                if (createdAssetTags.size() > 1) {
+                    successMessage += " Documents attached to all asset tags: "
+                            + String.join(", ", createdAssetTags) + ".";
                 }
             } catch (Exception e) {
                 redirectAttributes.addFlashAttribute("errorMessage",
@@ -191,32 +163,13 @@ public class ITAssetController {
             }
         }
 
-        redirectAttributes.addFlashAttribute("successMessage",
-                "Successfully received " + quantity + " asset(s) into storage.");
+        redirectAttributes.addFlashAttribute("successMessage", successMessage);
         return "redirect:/";
-    }
-
-    private synchronized String generateNextAssetTag(String datePrefix) {
-        Optional<Asset> lastAsset = assetRepo.findTopByAssetTagStartingWithOrderByAssetTagDesc(datePrefix);
-
-        if (lastAsset.isEmpty() || lastAsset.get().getAssetTag() == null) {
-            return datePrefix + "00001";
-        }
-
-        try {
-            String lastTag = lastAsset.get().getAssetTag();
-            String sequenceStr = lastTag.substring(datePrefix.length());
-            int sequence = Integer.parseInt(sequenceStr);
-            return datePrefix + String.format("%05d", sequence + 1);
-        } catch (Exception e) {
-            log.warn("Failed to increment asset tag sequence for prefix '{}', falling back to 99999", datePrefix, e);
-            return datePrefix + "99999";
-        }
     }
 
     @PostMapping("/assets/assign")
     public String assignAsset(@RequestParam String assetTag, @RequestParam String employeeID,
-            @RequestParam String conditionNotes, @RequestParam(value = "search", required = false) String search,
+            @RequestParam(required = false) String conditionNotes, @RequestParam(value = "search", required = false) String search,
             @RequestParam(value = "page", required = false) Integer page, RedirectAttributes redirectAttributes) {
         try {
             assetService.assignAsset(assetTag, employeeID, conditionNotes);
@@ -228,7 +181,7 @@ public class ITAssetController {
     }
 
     @PostMapping("/assets/return")
-    public String returnAsset(@RequestParam String assetTag, @RequestParam String conditionNotes,
+    public String returnAsset(@RequestParam String assetTag, @RequestParam(required = false) String conditionNotes,
             @RequestParam(value = "search", required = false) String search,
             @RequestParam(value = "page", required = false) Integer page, RedirectAttributes redirectAttributes) {
         try {
@@ -241,7 +194,7 @@ public class ITAssetController {
     }
 
     @PostMapping("/assets/unserviceable")
-    public String markUnserviceable(@RequestParam String assetTag, @RequestParam String conditionNotes,
+    public String markUnserviceable(@RequestParam String assetTag, @RequestParam(required = false) String conditionNotes,
             @RequestParam(value = "search", required = false) String search,
             @RequestParam(value = "page", required = false) Integer page, RedirectAttributes redirectAttributes) {
         try {
@@ -254,7 +207,7 @@ public class ITAssetController {
     }
 
     @PostMapping("/assets/warranty")
-    public String markForWarranty(@RequestParam String assetTag, @RequestParam String conditionNotes,
+    public String markForWarranty(@RequestParam String assetTag, @RequestParam(required = false) String conditionNotes,
             @RequestParam(value = "search", required = false) String search,
             @RequestParam(value = "page", required = false) Integer page, RedirectAttributes redirectAttributes) {
         try {
@@ -268,7 +221,7 @@ public class ITAssetController {
 
     @PostMapping("/assets/misd-maintenance")
     public String sendForMisdMaintenance(@RequestParam String assetTag, @RequestParam String technicianID,
-            @RequestParam String conditionNotes, @RequestParam(value = "search", required = false) String search,
+            @RequestParam(required = false) String conditionNotes, @RequestParam(value = "search", required = false) String search,
             @RequestParam(value = "page", required = false) Integer page, RedirectAttributes redirectAttributes) {
         try {
             assetService.sendForMisdMaintenance(assetTag, technicianID, conditionNotes);
@@ -280,7 +233,7 @@ public class ITAssetController {
     }
 
     @PostMapping("/assets/repaired")
-    public String markAssetRepaired(@RequestParam String assetTag, @RequestParam String conditionNotes,
+    public String markAssetRepaired(@RequestParam String assetTag, @RequestParam(required = false) String conditionNotes,
             @RequestParam(value = "search", required = false) String search,
             @RequestParam(value = "page", required = false) Integer page, RedirectAttributes redirectAttributes) {
         try {
@@ -293,7 +246,7 @@ public class ITAssetController {
     }
 
     @PostMapping("/assets/retire")
-    public String retireAsset(@RequestParam String assetTag, @RequestParam String conditionNotes,
+    public String retireAsset(@RequestParam String assetTag, @RequestParam(required = false) String conditionNotes,
             @RequestParam(value = "search", required = false) String search,
             @RequestParam(value = "page", required = false) Integer page, RedirectAttributes redirectAttributes) {
         try {
@@ -341,10 +294,34 @@ public class ITAssetController {
 
     @PostMapping("/assets/update")
     public ResponseEntity<String> updateITAsset(@RequestBody Asset updatedAsset, Authentication authentication) {
+        normalizeBlankOptionalFields(updatedAsset);
         applyStatusTransitions(updatedAsset);
         String performedBy = authentication != null ? authentication.getName() : "SYSTEM";
         assetService.updateAsset(updatedAsset, performedBy);
         return ResponseEntity.ok("Asset updated successfully");
+    }
+
+    /**
+     * The detail slideout serializes its whole form, so cleared fields arrive as
+     * empty strings rather than nulls — and Jackson bypasses the global
+     * {@code StringTrimmerEditor} that handles this for form posts.
+     *
+     * <p>
+     * Both columns below reject an empty string: SerialNumber is UNIQUE (so the
+     * second blank one collides) and CurrentOwnerID is a foreign key to
+     * Personnel (which has no employee with an empty ID). Leaving them as ""
+     * failed the save and discarded the user's entire edit.
+     */
+    private void normalizeBlankOptionalFields(Asset asset) {
+        if (TextUtils.normalizeBlank(asset.getSerialNumber()).isEmpty()) {
+            asset.setSerialNumber(null);
+        }
+        if (TextUtils.normalizeBlank(asset.getCurrentOwnerID()).isEmpty()) {
+            asset.setCurrentOwnerID(null);
+        }
+        if (TextUtils.normalizeBlank(asset.getRemarks()).isEmpty()) {
+            asset.setRemarks(null);
+        }
     }
 
     private AssetDetailResponse toAssetDetailResponse(Asset asset) {
@@ -453,8 +430,8 @@ public class ITAssetController {
         }
 
         try {
-            JsonNode jsonNode = objectMapper.readTree(specifications);
-            return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(jsonNode);
+            JsonNode jsonNode = jsonMapper.readTree(specifications);
+            return jsonMapper.writerWithDefaultPrettyPrinter().writeValueAsString(jsonNode);
         } catch (Exception ex) {
             log.warn("Failed to pretty-print catalog specifications JSON, returning raw value", ex);
             return specifications;

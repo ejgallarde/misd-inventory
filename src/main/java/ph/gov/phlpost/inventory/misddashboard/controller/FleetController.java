@@ -173,23 +173,10 @@ public class FleetController {
 
     @PostMapping("/assign")
     public String assignVehicle(@RequestParam Integer vehicleID, @RequestParam String employeeID,
-            @RequestParam String conditionNotes, RedirectAttributes redirectAttributes) {
+            @RequestParam(required = false) String conditionNotes, RedirectAttributes redirectAttributes) {
         try {
             fleetService.assignVehicle(vehicleID, employeeID, conditionNotes);
             redirectAttributes.addFlashAttribute("successMessage", "Success! Vehicle assigned.");
-        } catch (IllegalArgumentException e) {
-            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
-        }
-        return "redirect:/fleet";
-    }
-
-    @PostMapping("/{vehicleID}/return-to-motorpool")
-    public String returnToMotorpool(@PathVariable Integer vehicleID,
-            @RequestParam(required = false) String conditionNotes,
-            RedirectAttributes redirectAttributes) {
-        try {
-            fleetService.returnVehicle(vehicleID, conditionNotes);
-            redirectAttributes.addFlashAttribute("successMessage", "Vehicle returned to motorpool.");
         } catch (IllegalArgumentException e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }
@@ -261,8 +248,14 @@ public class FleetController {
         return "redirect:/fleet";
     }
 
+    /**
+     * Returns a vehicle to the motorpool. Replaces the notes-less
+     * {@code /{vehicleID}/return-to-motorpool} variant that did the same thing:
+     * the Actions dropdown now opens the Return modal so a return records its
+     * condition notes like every other fleet action.
+     */
     @PostMapping("/return")
-    public String returnVehicle(@RequestParam Integer vehicleID, @RequestParam String conditionNotes,
+    public String returnVehicle(@RequestParam Integer vehicleID, @RequestParam(required = false) String conditionNotes,
             RedirectAttributes redirectAttributes) {
         try {
             fleetService.returnVehicle(vehicleID, conditionNotes);
@@ -274,7 +267,7 @@ public class FleetController {
     }
 
     @PostMapping("/retire")
-    public String retireVehicle(@RequestParam Integer vehicleID, @RequestParam String conditionNotes,
+    public String retireVehicle(@RequestParam Integer vehicleID, @RequestParam(required = false) String conditionNotes,
             RedirectAttributes redirectAttributes) {
         try {
             fleetService.retireVehicle(vehicleID, conditionNotes);
@@ -288,37 +281,28 @@ public class FleetController {
     @GetMapping("/{id}/history")
     @ResponseBody
     public ResponseEntity<List<AssetHistoryService.AssetHistoryEntry>> getVehicleHistory(@PathVariable Integer id) {
+        // Resolved the same way FleetService writes it, so a vehicle registered
+        // without a plate number still shows the history logged against its ID
+        // instead of silently reporting that it has none.
         return fleetRepo.findById(id)
-                .map(vehicle -> vehicle.getPlateNumber())
-                .map(plateNumber -> plateNumber.trim())
-                .filter(plateNumber -> !plateNumber.isEmpty())
+                .map(FleetService::auditReferenceId)
                 .map(assetHistoryService::getHistory)
                 .map(ResponseEntity::ok)
-                .orElseGet(() -> fleetRepo.existsById(id)
-                        ? ResponseEntity.ok(List.of())
-                        : ResponseEntity.notFound().build());
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Map<String, Object>> getVehicleDetails(@PathVariable Integer id) {
         try {
-            FleetVehicle vehicle = fleetService.reviewAndUpdateVehicleStatus(id);
+            // Read-only: opening the detail panel must not change the record.
+            FleetVehicle vehicle = fleetService.findVehicle(id);
+            FleetService.VehicleStatusFlags statusFlags = FleetService.deriveStatusFlags(vehicle);
 
             String assignedDriverId = vehicle.getAssignedDriverID();
             String assignedDriverName = registryService.resolveDisplayName(assignedDriverId);
             String assignedDriverManagerName = assignedDriverId == null || assignedDriverId.isBlank()
                     ? "N/A"
                     : registryService.getManagerNameByEmployeeId(assignedDriverId);
-
-            boolean isFullyDepreciated = false;
-            if (vehicle.getCost() != null && vehicle.getAcquisitionYear() != null) {
-                double cost = TextUtils.parseLenientDouble(vehicle.getCost());
-                int acqYear = vehicle.getAcquisitionYear();
-                if (cost > 0 && acqYear > 0) {
-                    int yearsUsed = java.time.Year.now().getValue() - acqYear;
-                    isFullyDepreciated = yearsUsed >= 10;
-                }
-            }
 
             Map<String, Object> response = Map.ofEntries(
                     Map.entry("vehicleID", vehicle.getVehicleID()),
@@ -350,7 +334,8 @@ public class FleetController {
                     Map.entry("cost", vehicle.getCost() == null ? "" : vehicle.getCost()),
                     Map.entry("acquisitionYear",
                             vehicle.getAcquisitionYear() == null ? "" : vehicle.getAcquisitionYear()),
-                    Map.entry("isFullyDepreciated", isFullyDepreciated),
+                    Map.entry("isFullyDepreciated", statusFlags.fullyDepreciated()),
+                    Map.entry("isRegistrationExpired", statusFlags.registrationExpired()),
                     Map.entry("remarks", vehicle.getRemarks() == null ? "" : vehicle.getRemarks()));
             return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
@@ -359,30 +344,15 @@ public class FleetController {
     }
 
     @PostMapping("/update")
-    public ResponseEntity<String> updateVehicle(@RequestBody FleetVehicle updatedVehicle) {
+    public ResponseEntity<String> updateVehicle(@RequestBody FleetVehicle updatedVehicle,
+            Authentication authentication) {
         Integer vehicleId = updatedVehicle.getVehicleID();
         if (vehicleId == null || !fleetRepo.existsById(vehicleId)) {
             return ResponseEntity.notFound().build();
         }
 
-        fleetService.updateVehicleDetails(
-                vehicleId,
-                updatedVehicle.getRegistrationExpiry(),
-                updatedVehicle.getInsuranceExpiry(),
-                updatedVehicle.getAdminLegaltionalStatus(),
-                updatedVehicle.getOperationalStatus(),
-                updatedVehicle.getMaintenanceStatus(),
-                updatedVehicle.getRemarks(),
-                updatedVehicle.getPlateNumber(),
-                updatedVehicle.getMake(),
-                updatedVehicle.getModel(),
-                updatedVehicle.getManufactureYear(),
-                updatedVehicle.getAcquisitionYear(),
-                updatedVehicle.getBodyNumber(),
-                updatedVehicle.getFuelType(),
-                updatedVehicle.getEngineNumber(),
-                updatedVehicle.getChassisNumberVIN(),
-                updatedVehicle.getCost());
+        String performedBy = authentication != null ? authentication.getName() : "SYSTEM";
+        fleetService.updateVehicleDetails(updatedVehicle, performedBy);
         return ResponseEntity.ok("Fleet vehicle details updated successfully");
     }
 }

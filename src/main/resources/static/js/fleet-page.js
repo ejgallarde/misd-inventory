@@ -110,7 +110,7 @@ $(document).ready(function () {
             fuelType: $('#editFleetFuelType').val() || null,
             engineNumber: $('#editFleetEngineNumber').val() || null,
             chassisNumberVIN: $('#editFleetChassisVin').val() || null,
-            cost: $('#editFleetCost').val() || null,
+            cost: MISDCommon.normalizeDecimalInput($('#editFleetCost').val()),
             // Always-editable fields
             registrationExpiry: $('#editFleetRegistrationExpiry').val() || null,
             insuranceExpiry: $('#editFleetInsuranceExpiry').val() || null,
@@ -134,6 +134,11 @@ $(document).ready(function () {
     document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function (element) {
         bootstrap.Tooltip.getOrCreateInstance(element);
     });
+
+    // FleetVehicles.Cost is a DECIMAL column on a server running in strict mode,
+    // so grouped input like "1,500,000.00" has to be flattened before it is sent.
+    // Covers the detail panel and the Register Vehicle form on the dashboard.
+    MISDCommon.bindDecimalInputNormalizer('#editFleetCost, input[name="cost"]');
 
     setFleetEditMode(false);
 
@@ -352,6 +357,9 @@ $(document).ready(function () {
             $('#fleetDetailDriver').text(data.assignedDriverName || 'Unassigned');
             $('#fleetDetailDriverManager').text(data.assignedDriverManagerName || 'N/A');
             $('#fleetDetailRegExpiry').text(MISDCommon.formatDate(data.registrationExpiry));
+            // The detail endpoint no longer rewrites the legal status when a
+            // registration has lapsed; it reports the fact and the panel shows it.
+            $('#fleetDetailRegExpiredNote').toggleClass('d-none', !data.isRegistrationExpired);
             $('#fleetDetailInsuranceExpiry').text(MISDCommon.formatDate(data.insuranceExpiry));
             $('#fleetDetailCost').text(MISDCommon.formatPesoCurrency(data.cost));
 
@@ -359,8 +367,7 @@ $(document).ready(function () {
             const $valuationElement = $('#fleetDetailCurrentValuation');
             if (valuation !== null) {
                 const formatted = MISDCommon.formatPesoCurrency(valuation);
-                const yearsUsed = Math.max(0, new Date().getFullYear() - parseInt(data.acquisitionYear, 10));
-                const note = yearsUsed >= 10 ? ' (fully depreciated — residual value only)' : '';
+                const note = data.isFullyDepreciated ? ' (fully depreciated — residual value only)' : '';
                 $valuationElement.text(formatted + note);
                 // Apply red styling if fully depreciated
                 if (data.isFullyDepreciated) {
@@ -421,8 +428,8 @@ $(document).ready(function () {
                     location.reload();
                 }, 900);
             },
-            error: function () {
-                alert('Failed to save vehicle changes.');
+            error: function (xhr) {
+                alert(xhr?.responseJSON?.error || 'Failed to save vehicle changes.');
             }
         });
     });

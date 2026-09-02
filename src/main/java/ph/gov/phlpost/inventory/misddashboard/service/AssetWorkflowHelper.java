@@ -43,7 +43,13 @@ public class AssetWorkflowHelper {
     public String lifecycleBadgeClass(String status) {
         if (status == null || status.isBlank())
             return "badge bg-dark";
-        return "Active".equals(status) ? "badge bg-success" : "badge bg-dark";
+        return switch (status) {
+            case "Active" -> "badge bg-success";
+            case "Procured / Pre-Deployment" -> "badge bg-primary";
+            case "Inactive" -> "badge bg-warning text-dark";
+            case "End of Life (EOL)" -> "badge bg-danger";
+            default -> "badge bg-dark";
+        };
     }
 
     public String deploymentTooltip(String status) {
@@ -79,6 +85,7 @@ public class AssetWorkflowHelper {
         return switch (status) {
             case "Procured / Pre-Deployment" -> "Procured and preparing for use.";
             case "Active" -> "Currently in active service.";
+            case "Inactive" -> "Temporarily out of service, typically under repair.";
             case "End of Life (EOL)" -> "Reached end-of-life and needs disposition planning.";
             case "Decommissioned / Retired" -> "Removed from active service.";
             case "Disposed" -> "Disposed from inventory.";

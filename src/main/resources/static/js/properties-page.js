@@ -341,8 +341,8 @@ $(document).ready(function () {
                     location.reload();
                 }, 900);
             },
-            error: function () {
-                alert('Failed to save property changes.');
+            error: function (xhr) {
+                alert(xhr?.responseJSON?.error || 'Failed to save property changes.');
             }
         });
     });

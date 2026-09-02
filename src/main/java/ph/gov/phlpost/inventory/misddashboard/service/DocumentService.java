@@ -1,6 +1,7 @@
 package ph.gov.phlpost.inventory.misddashboard.service;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -85,16 +86,28 @@ public class DocumentService {
         return storageService.readDocument(document.getMinioObjectKey());
     }
 
+    /**
+     * Removes the database record first, then the stored bytes.
+     *
+     * <p>
+     * The order used to be reversed, so a failure to delete the row left a
+     * document listed in the UI whose file was already gone — its view and
+     * download links broken, with no way to clear the entry. Deleting the row
+     * first means the worst case is an orphaned file taking up space, which is
+     * recoverable; an orphaned row is not.
+     */
+    @Transactional
     public void deleteDocumentById(Integer documentId) throws IOException {
         Document document = documentRepository.findById(documentId)
                 .orElseThrow(() -> new IllegalArgumentException("Document not found."));
 
         String objectKey = document.getMinioObjectKey();
+        documentRepository.delete(document);
+        documentRepository.flush();
+
         if (objectKey != null && !objectKey.isBlank()) {
             storageService.deleteDocument(objectKey);
         }
-
-        documentRepository.delete(document);
     }
 
     public void uploadAndSaveDocuments(MultipartFile[] files,

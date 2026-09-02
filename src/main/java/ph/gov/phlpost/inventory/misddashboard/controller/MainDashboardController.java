@@ -68,7 +68,7 @@ public class MainDashboardController {
         @Value("#{'${dropdown.property-areas}'.split(',')}")
         private List<String> propertyAreas;
 
-        @Value("#{'${dropdown.property-tax-status-add}'.split(',')}")
+        @Value("#{'${dropdown.property-tax-statuses}'.split(',')}")
         private List<String> propertyTaxStatusesAdd;
 
         @Value("#{'${dropdown.property-legal-titling-statuses}'.split(',')}")

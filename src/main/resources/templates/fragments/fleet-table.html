@@ -91,12 +91,9 @@
                                     th:data-plate="${vehicle.plateNumber}">Assign Driver (Accountable Owner)</a>
                             </li>
                             <li th:if="${@fleetHelper.canReturnToMotorpool(vehicle.operationalStatus)}">
-                                <form
-                                    th:action="@{/fleet/{vehicleID}/return-to-motorpool(vehicleID=${vehicle.vehicleID})}"
-                                    method="post" class="m-0">
-                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                                    <button type="submit" class="dropdown-item text-start">Return to Motorpool</button>
-                                </form>
+                                <a class="dropdown-item action-btn" href="#" data-bs-toggle="modal"
+                                    data-bs-target="#returnModal" th:data-id="${vehicle.vehicleID}"
+                                    th:data-plate="${vehicle.plateNumber}">Return to Motorpool</a>
                             </li>
                             <li th:if="${@fleetHelper.hasActions(vehicle.adminLegaltionalStatus)}">
                                 <hr class="dropdown-divider">
@@ -141,6 +138,12 @@
                             </li>
                             <li>
                                 <hr class="dropdown-divider">
+                            </li>
+                            <li>
+                                <a class="dropdown-item text-danger action-btn fw-bold" href="#"
+                                    data-bs-toggle="modal" data-bs-target="#retireModal"
+                                    th:data-id="${vehicle.vehicleID}"
+                                    th:data-plate="${vehicle.plateNumber}">Dispose / Retire</a>
                             </li>
                             <li>
                                 <a class="dropdown-item action-btn fleet-history-action" href="#" data-bs-toggle="modal"

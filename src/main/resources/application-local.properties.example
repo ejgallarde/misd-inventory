@@ -1,0 +1,17 @@
+# Copy to application-local.properties and fill in. That file is gitignored.
+# Every name here can equally be supplied as an environment variable.
+#
+# The application will not start until these resolve — that is deliberate, so a
+# deployment cannot silently come up on development credentials.
+
+MISD_DB_USERNAME=
+MISD_DB_PASSWORD=
+
+MISD_MINIO_ACCESS_KEY=
+MISD_MINIO_SECRET_KEY=
+
+# Absolute path to the document store, e.g. D:/misd or /srv/misd
+MISD_STORAGE_ROOT=
+
+# Demo-mode sign-in password (app.security.demo-mode=true). Change it.
+MISD_DEMO_USER_PASSWORD=

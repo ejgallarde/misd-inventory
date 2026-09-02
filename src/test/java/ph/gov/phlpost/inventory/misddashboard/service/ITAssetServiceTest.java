@@ -45,7 +45,8 @@ class ITAssetServiceTest {
                 personnelRepository,
                 auditLogService,
                 "SUPPLIER",
-                "Computer Maintenance Technologist");
+                "Computer Maintenance Technologist",
+                100);
     }
 
     @Test
@@ -137,6 +138,76 @@ class ITAssetServiceTest {
                 org.mockito.ArgumentMatchers.eq("Marked Unserviceable"),
                 org.mockito.ArgumentMatchers.contains("Health: Beyond Economic Repair (BER)"));
         assertThat(asset.getLifecycleStatus()).isEqualTo("End of Life (EOL)");
+    }
+
+    @Test
+    void markUnserviceableReleasesTheAssetFromItsHolder() {
+        // An asset declared beyond repair used to stay "Deployed" and accountable
+        // to its holder, and isUnserviceable then hid every action that could
+        // have corrected that.
+        Asset asset = asset("TAG-BER-DEPLOYED");
+        asset.setCurrentOwnerID("EMP-9");
+        asset.setDeploymentStatus("Deployed");
+        asset.setMaintenanceHealthStatus("Degraded");
+        asset.setLifecycleStatus("Active");
+        when(assetRepository.findById("TAG-BER-DEPLOYED")).thenReturn(Optional.of(asset));
+        when(personnelRepository.existsById("EMP-9")).thenReturn(true);
+
+        service.updateLifecycle("TAG-BER-DEPLOYED", "Unserviceable", "Marked Unserviceable", "Water damage");
+
+        assertThat(asset.getCurrentOwnerID()).isNull();
+        assertThat(asset.getDeploymentStatus()).isEqualTo("Unavailable");
+        assertThat(asset.getMaintenanceHealthStatus()).isEqualTo("Beyond Economic Repair (BER)");
+        verify(auditLogService).logAssignment("TAG-BER-DEPLOYED", "EMP-9", "Returned - Unserviceable", "Water damage");
+    }
+
+    @Test
+    void receiveAssetsRejectsAQuantityBelowOne() {
+        // The form's min="1" is client-side only.
+        assertThatThrownBy(() -> service.receiveAssets(new Asset(), 0, "tester"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("at least 1");
+    }
+
+    @Test
+    void receiveAssetsRejectsAQuantityAboveTheConfiguredCeiling() {
+        assertThatThrownBy(() -> service.receiveAssets(new Asset(), 101, "tester"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("maximum of 100");
+    }
+
+    @Test
+    void receivingASingleUnitKeepsItsSerialNumberAndGeneratesATag() {
+        Asset submitted = new Asset();
+        submitted.setCatalogID(19);
+        submitted.setSerialNumber("SN-12345");
+        when(assetRepository.findTopByAssetTagStartingWithOrderByAssetTagDesc(
+                org.mockito.ArgumentMatchers.anyString())).thenReturn(Optional.empty());
+
+        java.util.List<String> tags = service.receiveAssets(submitted, 1, "tester");
+
+        assertThat(tags).hasSize(1);
+        assertThat(tags.get(0)).endsWith("00001");
+        verify(assetRepository).saveAndFlush(org.mockito.ArgumentMatchers.argThat(
+                saved -> "SN-12345".equals(saved.getSerialNumber())
+                        && "In Storage".equals(saved.getDeploymentStatus())
+                        && saved.getCurrentOwnerID() == null));
+    }
+
+    @Test
+    void receivingMultipleUnitsLeavesSerialNumbersUnsetSoTheyDoNotCollide() {
+        // SerialNumber is UNIQUE; one submitted value cannot belong to three units.
+        Asset submitted = new Asset();
+        submitted.setCatalogID(19);
+        submitted.setSerialNumber("SN-12345");
+        when(assetRepository.findTopByAssetTagStartingWithOrderByAssetTagDesc(
+                org.mockito.ArgumentMatchers.anyString())).thenReturn(Optional.empty());
+
+        java.util.List<String> tags = service.receiveAssets(submitted, 3, "tester");
+
+        assertThat(tags).hasSize(3);
+        verify(assetRepository, org.mockito.Mockito.times(3)).saveAndFlush(
+                org.mockito.ArgumentMatchers.argThat(saved -> saved.getSerialNumber() == null));
     }
 
     @Test

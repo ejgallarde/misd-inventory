@@ -54,23 +54,43 @@ class FleetControllerTest {
                 "Lifecycle", "Vehicle Returned", "MOTORPOOL", "Returned in good condition");
 
         when(fleetRepo.findById(17)).thenReturn(Optional.of(vehicle));
-        when(assetHistoryService.getHistory("ABC-1234")).thenReturn(List.of(entry));
+        when(assetHistoryService.getHistory("VEHICLE-17")).thenReturn(List.of(entry));
 
         ResponseEntity<List<AssetHistoryService.AssetHistoryEntry>> response = controller.getVehicleHistory(17);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).containsExactly(entry);
-        verify(assetHistoryService).getHistory("ABC-1234");
+        verify(assetHistoryService).getHistory("VEHICLE-17");
     }
 
     @Test
     void returnsNotFoundWhenVehicleDoesNotExist() {
         when(fleetRepo.findById(404)).thenReturn(Optional.empty());
-        when(fleetRepo.existsById(404)).thenReturn(false);
 
         ResponseEntity<List<AssetHistoryService.AssetHistoryEntry>> response = controller.getVehicleHistory(404);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
         assertThat(response.getBody()).isNull();
+    }
+
+    @Test
+    void plateLessVehicleReportsHistoryLoggedAgainstItsId() {
+        // Registration does not require a plate number, and audit rows for such a
+        // vehicle are filed under "VEHICLE-{id}". Looking history up by the blank
+        // plate used to return an empty list, wrongly reporting no history at all.
+        var vehicle = new FleetVehicle();
+        vehicle.setVehicleID(21);
+        vehicle.setPlateNumber("   ");
+        var entry = new AssetHistoryService.AssetHistoryEntry(
+                LocalDateTime.of(2026, 8, 14, 11, 0),
+                "Lifecycle", "Marked Impounded", "SYSTEM", "Held pending clearance");
+
+        when(fleetRepo.findById(21)).thenReturn(Optional.of(vehicle));
+        when(assetHistoryService.getHistory("VEHICLE-21")).thenReturn(List.of(entry));
+
+        ResponseEntity<List<AssetHistoryService.AssetHistoryEntry>> response = controller.getVehicleHistory(21);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).containsExactly(entry);
     }
 }

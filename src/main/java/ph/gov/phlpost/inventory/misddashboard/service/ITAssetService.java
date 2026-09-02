@@ -8,6 +8,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
 @Service
 public class ITAssetService {
 
@@ -16,15 +22,20 @@ public class ITAssetService {
     private final AuditLogService auditService;
     private final String supplierOwnerId;
     private final String maintenanceTechnicianJobTitle;
+    private final int maxReceiveQuantity;
+
+    private static final DateTimeFormatter ASSET_TAG_DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
     public ITAssetService(AssetRepository assetRepo, PersonnelRepository personnelRepo, AuditLogService auditService,
             @Value("${asset.workflow.supplier-owner-id:SUPPLIER}") String supplierOwnerId,
-            @Value("${asset.workflow.maintenance-technician-job-title:Computer Maintenance Technologist}") String maintenanceTechnicianJobTitle) {
+            @Value("${asset.workflow.maintenance-technician-job-title:Computer Maintenance Technologist}") String maintenanceTechnicianJobTitle,
+            @Value("${asset.receive.max-quantity:100}") int maxReceiveQuantity) {
         this.assetRepo = assetRepo;
         this.personnelRepo = personnelRepo;
         this.auditService = auditService;
         this.supplierOwnerId = supplierOwnerId;
         this.maintenanceTechnicianJobTitle = maintenanceTechnicianJobTitle;
+        this.maxReceiveQuantity = maxReceiveQuantity;
     }
 
     @Transactional
@@ -118,6 +129,13 @@ public class ITAssetService {
         String previousOwner = asset.getCurrentOwnerID();
 
         if ("Unserviceable".equals(status)) {
+            // Declaring an asset beyond repair also returns it to MISD custody.
+            // It previously stayed "Deployed" and accountable to its holder, and
+            // AssetWorkflowHelper.isUnserviceable then hid every action that
+            // could have corrected that — leaving the asset stuck on someone's
+            // accountability with no way off it.
+            asset.setCurrentOwnerID(null);
+            asset.setDeploymentStatus("Unavailable");
             asset.setMaintenanceHealthStatus("Beyond Economic Repair (BER)");
             asset.setLifecycleStatus("End of Life (EOL)");
         } else if ("Retired".equals(status)) {
@@ -130,6 +148,8 @@ public class ITAssetService {
         assetRepo.save(asset);
         if ("Retired".equals(status)) {
             logAssignmentForExistingOwner(assetTag, previousOwner, "Asset Retired", notes);
+        } else if ("Unserviceable".equals(status)) {
+            logAssignmentForExistingOwner(assetTag, previousOwner, "Returned - Unserviceable", notes);
         }
         auditService.logLifecycleEvent(assetTag, "SYSTEM", actionType,
                 statusSummary(asset) + appendNotes(notes));
@@ -139,6 +159,86 @@ public class ITAssetService {
     public void recordReceived(Asset asset, String performedBy) {
         auditService.logLifecycleEvent(asset.getAssetTag(), performedBy, "Asset Received",
                 statusSummary(asset) + appendNotes(asset.getRemarks()));
+    }
+
+    /**
+     * Receives one or more units of the same catalog item into storage and
+     * returns the asset tags created.
+     *
+     * <p>
+     * The loop used to live in the controller with no transaction, so a failure
+     * part-way through a batch left the first few assets created while the user
+     * was told the whole receipt had failed. The quantity was also an unchecked
+     * {@code int} — the form's {@code min="1"} is client-side only, so a
+     * mistyped 1000 created a thousand rows without confirmation and a 0 reported
+     * "Successfully received 0 asset(s)".
+     */
+    @Transactional
+    public List<String> receiveAssets(Asset baseAsset, int quantity, String performedBy) {
+        if (quantity < 1) {
+            throw new IllegalArgumentException("Quantity must be at least 1.");
+        }
+        if (quantity > maxReceiveQuantity) {
+            throw new IllegalArgumentException(
+                    "A maximum of " + maxReceiveQuantity + " assets can be received at once.");
+        }
+
+        String datePrefix = "PPC-" + LocalDate.now().format(ASSET_TAG_DATE_FORMAT) + "-";
+        List<String> createdAssetTags = new ArrayList<>();
+
+        for (int index = 0; index < quantity; index++) {
+            Asset newAsset = new Asset();
+            newAsset.setCatalogID(baseAsset.getCatalogID());
+            newAsset.setPurchaseDate(baseAsset.getPurchaseDate());
+            newAsset.setPurchasePrice(baseAsset.getPurchasePrice());
+            newAsset.setRemarks(baseAsset.getRemarks());
+
+            newAsset.setDeploymentStatus("In Storage");
+            newAsset.setMaintenanceHealthStatus("Operational");
+            newAsset.setLifecycleStatus("Procured / Pre-Deployment");
+            newAsset.setCurrentOwnerID(null);
+
+            // A serial number identifies one physical unit, so it is only carried
+            // over for a single-unit receipt.
+            if (quantity == 1) {
+                newAsset.setSerialNumber(baseAsset.getSerialNumber());
+                String requestedTag = baseAsset.getAssetTag() == null ? "" : baseAsset.getAssetTag().trim();
+                newAsset.setAssetTag(requestedTag.isEmpty() ? generateNextAssetTag(datePrefix) : requestedTag);
+            } else {
+                newAsset.setSerialNumber(null);
+                newAsset.setAssetTag(generateNextAssetTag(datePrefix));
+            }
+
+            assetRepo.saveAndFlush(newAsset);
+            recordReceived(newAsset, performedBy);
+            createdAssetTags.add(newAsset.getAssetTag());
+        }
+
+        return createdAssetTags;
+    }
+
+    /**
+     * Next tag in the PPC-yyyy-MM-dd-NNNNN sequence for the given day.
+     * Synchronized against concurrent receipts within this instance.
+     */
+    private synchronized String generateNextAssetTag(String datePrefix) {
+        Optional<Asset> lastAsset = assetRepo.findTopByAssetTagStartingWithOrderByAssetTagDesc(datePrefix);
+
+        if (lastAsset.isEmpty() || lastAsset.get().getAssetTag() == null) {
+            return datePrefix + "00001";
+        }
+
+        String lastTag = lastAsset.get().getAssetTag();
+        try {
+            int sequence = Integer.parseInt(lastTag.substring(datePrefix.length()));
+            return datePrefix + String.format("%05d", sequence + 1);
+        } catch (RuntimeException ex) {
+            // Previously fell back to "99999", which silently collided with itself
+            // on the next receipt. Failing here rolls the whole batch back instead.
+            throw new IllegalArgumentException(
+                    "Could not determine the next asset tag after '" + lastTag + "'. "
+                            + "Enter an asset tag manually or correct the existing record.");
+        }
     }
 
     @Transactional

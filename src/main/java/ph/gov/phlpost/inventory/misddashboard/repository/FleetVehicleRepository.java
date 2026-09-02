@@ -8,6 +8,12 @@ import java.util.List;
 
 public interface FleetVehicleRepository extends JpaRepository<FleetVehicle, Integer> {
 
+        // Vehicle age is measured from AcquisitionYear, falling back to
+        // ManufactureYear when it is not recorded, so these queries agree with
+        // FleetService.USEFUL_LIFE_YEARS and the detail panel's depreciation flag.
+        // "Missing" and "Stolen" are the values actually written; the combined
+        // "Missing/Stolen" is retained only for rows predating the correction.
+
         @Query(value = "SELECT COUNT(*) FROM FleetVehicles WHERE COALESCE(AdminLegaltionalStatus, '') NOT IN ('Sold', 'Disposed', 'Decommissioned')", nativeQuery = true)
         long countCurrentInventoryVehicles();
 
@@ -29,7 +35,7 @@ public interface FleetVehicleRepository extends JpaRepository<FleetVehicle, Inte
         @Query(value = "SELECT COUNT(*) FROM FleetVehicles WHERE AdminLegaltionalStatus IN ('Registration Expired', 'Impounded')", nativeQuery = true)
         long countVehiclesWithAdminLegalIssues();
 
-        @Query(value = "SELECT COUNT(*) FROM FleetVehicles WHERE COALESCE(AdminLegaltionalStatus, '') NOT IN ('Sold', 'Disposed', 'Decommissioned') AND (OperationalStatus IN ('Grounded', 'Missing/Stolen', 'Slated for Disposal') OR MaintenanceStatus IN ('Scheduled Maintenance', 'Under Repair', 'Awaiting Parts', 'Beyond Economic Repair (BER)'))", nativeQuery = true)
+        @Query(value = "SELECT COUNT(*) FROM FleetVehicles WHERE COALESCE(AdminLegaltionalStatus, '') NOT IN ('Sold', 'Disposed', 'Decommissioned') AND (OperationalStatus IN ('Grounded', 'Missing', 'Stolen', 'Missing/Stolen', 'Slated for Disposal') OR MaintenanceStatus IN ('Scheduled Maintenance', 'Under Repair', 'Awaiting Parts', 'Beyond Economic Repair (BER)'))", nativeQuery = true)
         long countVehiclesWithOperationalMaintenanceIssues();
 
         @Query(value = "SELECT COUNT(*) FROM FleetVehicles WHERE AdminLegaltionalStatus = 'Sold'", nativeQuery = true)
@@ -43,10 +49,10 @@ public interface FleetVehicleRepository extends JpaRepository<FleetVehicle, Inte
 
         @Query(value = "SELECT COUNT(*) FROM FleetVehicles WHERE " +
                         "COALESCE(AdminLegaltionalStatus, '') NOT IN ('Sold', 'Disposed', 'Decommissioned') AND (" +
-                        "(YEAR(CURDATE()) - ManufactureYear) >= 10 " +
+                        "(YEAR(CURDATE()) - COALESCE(AcquisitionYear, ManufactureYear)) >= 10 " +
                         "OR RegistrationExpiry BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 30 DAY) " +
                         "OR AdminLegaltionalStatus IN ('Registration Expired', 'Impounded') " +
-                        "OR OperationalStatus IN ('Grounded', 'Missing/Stolen', 'Slated for Disposal') " +
+                        "OR OperationalStatus IN ('Grounded', 'Missing', 'Stolen', 'Missing/Stolen', 'Slated for Disposal') " +
                         "OR MaintenanceStatus IN ('Scheduled Maintenance', 'Under Repair', 'Awaiting Parts', 'Beyond Economic Repair (BER)')"
                         +
                         ")", nativeQuery = true)
@@ -54,10 +60,10 @@ public interface FleetVehicleRepository extends JpaRepository<FleetVehicle, Inte
 
         @Query(value = "SELECT * FROM FleetVehicles WHERE " +
                         "COALESCE(AdminLegaltionalStatus, '') NOT IN ('Sold', 'Disposed', 'Decommissioned') AND (" +
-                        "(YEAR(CURDATE()) - ManufactureYear) >= 10 " +
+                        "(YEAR(CURDATE()) - COALESCE(AcquisitionYear, ManufactureYear)) >= 10 " +
                         "OR RegistrationExpiry BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 30 DAY) " +
                         "OR AdminLegaltionalStatus IN ('Registration Expired', 'Impounded') " +
-                        "OR OperationalStatus IN ('Grounded', 'Missing/Stolen', 'Slated for Disposal') " +
+                        "OR OperationalStatus IN ('Grounded', 'Missing', 'Stolen', 'Missing/Stolen', 'Slated for Disposal') " +
                         "OR MaintenanceStatus IN ('Scheduled Maintenance', 'Under Repair', 'Awaiting Parts', 'Beyond Economic Repair (BER)')"
                         +
                         ")", nativeQuery = true)
