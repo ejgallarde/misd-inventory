@@ -7,8 +7,11 @@
     <nav th:fragment="navbar" class="navbar navbar-dark bg-dark mb-4">
         <div class="container-fluid d-flex justify-content-between align-items-center">
             <div class="d-flex align-items-center">
-                <img th:src="@{/logo.png}" alt="PHLPost Logo" style="height: 40px;" class="me-2">
-                <span class="navbar-brand mb-0 h1 fw-bold">Management Information Systems Department</span>
+                <!-- TEMPORARY branding swap: was @{/logo.png} (PHLPost). Revert both
+                     header images and the two footer images together. -->
+                <img th:src="@{/dar.png}" alt="DAR Logo" style="height: 40px;" class="me-2">
+                <span class="navbar-brand mb-0 h1 fw-bold">Support to Parcelization of Lands for Individual
+                    Titling</span>
                 <span class="navbar-text text-white d-none d-md-inline ms-2 border-start ps-2">
                     Broad Unified Resource & Asset Tracker
                 </span>
@@ -49,8 +52,10 @@
     <nav th:fragment="publicHeader" class="navbar navbar-dark bg-dark mb-4">
         <div class="container-fluid d-flex justify-content-between align-items-center">
             <div class="d-flex align-items-center">
-                <img th:src="@{/logo.png}" alt="PHLPost Logo" style="height: 40px;" class="me-2">
-                <span class="navbar-brand mb-0 h1 fw-bold">Management Information Systems Department</span>
+                <!-- TEMPORARY branding swap: was @{/logo.png} (PHLPost). -->
+                <img th:src="@{/dar.png}" alt="DAR Logo" style="height: 40px;" class="me-2">
+                <span class="navbar-brand mb-0 h1 fw-bold">Support to Parcelization of Lands for Individual
+                    Titling</span>
             </div>
             <button class="btn btn-sm theme-toggle-btn fw-semibold" type="button" id="themeToggleBtn"
                 title="Switch theme" aria-label="Switch theme">☀️</button>
@@ -61,8 +66,10 @@
         <div
             class="container-fluid px-4 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
             <div class="d-flex align-items-center gap-2 flex-wrap">
-                <img th:src="@{/logo.png}" alt="PHLPost Logo" class="footer-logo">
-                <img th:src="@{/bagong pilipinas.png}" alt="Bagong Pilipinas Logo" class="footer-logo">
+                <!-- TEMPORARY branding swap: were @{/logo.png} (PHLPost) and
+                     @{/bagong pilipinas.png} respectively. -->
+                <img th:src="@{/dar.png}" alt="DAR Logo" class="footer-logo">
+                <img th:src="@{/split.jpg}" alt="SPLIT Project Logo" class="footer-logo">
                 <small>© 2026 Philippine Postal Corporation. All rights reserved.</small>
             </div>
             <!-- Restore as a link once PHLPost publishes a privacy notice URL; a
