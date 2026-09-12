@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<body>
+    <div th:fragment="surveyAssetDetailOffcanvas" class="offcanvas offcanvas-end shadow" tabindex="-1"
+        id="surveyAssetDetailOffcanvas" aria-labelledby="surveyAssetDetailLabel" style="width: min(860px, 96vw);">
+        <div class="offcanvas-header bg-dark text-white">
+            <h5 class="offcanvas-title mb-0" id="surveyAssetDetailLabel">Survey Asset Details</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"
+                aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body bg-light">
+            <form id="surveyAssetEditForm">
+                <input type="hidden" id="editSurveyAssetID" name="surveyAssetID">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-muted small text-uppercase">Survey Asset Type</label>
+                        <div id="surveyAssetDetailType" class="form-control-plaintext"
+                            data-lockonce-view="surveyAssetType"></div>
+                        <select id="editSurveyAssetType" data-lockonce-input="surveyAssetType"
+                            class="form-select survey-asset-lockonce-input d-none" disabled>
+                            <option value="" disabled selected>Select survey asset type</option>
+                            <option th:each="type : ${surveyAssetTypes}" th:value="${type}" th:text="${type}">
+                            </option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-muted small text-uppercase">Asset Tag</label>
+                        <div id="surveyAssetDetailAssetTag" class="form-control-plaintext" data-lockonce-view="assetTag">
+                        </div>
+                        <input type="text" id="editSurveyAssetTag" data-lockonce-input="assetTag"
+                            class="form-control survey-asset-lockonce-input d-none" disabled
+                            placeholder="Enter asset tag">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-muted small text-uppercase">Serial Number</label>
+                        <div id="surveyAssetDetailSerialNumber" class="form-control-plaintext"
+                            data-lockonce-view="serialNumber"></div>
+                        <input type="text" id="editSurveyAssetSerialNumber" data-lockonce-input="serialNumber"
+                            class="form-control survey-asset-lockonce-input d-none" disabled
+                            placeholder="Enter serial number">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-muted small text-uppercase">Manufacturer</label>
+                        <div id="surveyAssetDetailManufacturer" class="form-control-plaintext"
+                            data-lockonce-view="manufacturer"></div>
+                        <input type="text" id="editSurveyAssetManufacturer" data-lockonce-input="manufacturer"
+                            class="form-control survey-asset-lockonce-input d-none" disabled
+                            placeholder="e.g. Trimble">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-muted small text-uppercase">Model</label>
+                        <div id="surveyAssetDetailModel" class="form-control-plaintext" data-lockonce-view="modelName">
+                        </div>
+                        <input type="text" id="editSurveyAssetModel" data-lockonce-input="modelName"
+                            class="form-control survey-asset-lockonce-input d-none" disabled placeholder="e.g. R12i">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-muted small text-uppercase">Acquisition Date</label>
+                        <div id="surveyAssetDetailAcquisitionDate" class="form-control-plaintext"
+                            data-lockonce-view="acquisitionDate"></div>
+                        <input type="date" id="editSurveyAssetAcquisitionDate" data-lockonce-input="acquisitionDate"
+                            class="form-control survey-asset-lockonce-input d-none" disabled>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-muted small text-uppercase">Acquisition Cost</label>
+                        <div id="surveyAssetDetailCost" class="form-control-plaintext" data-lockonce-view="cost">
+                        </div>
+                        <input type="text" id="editSurveyAssetCost" data-lockonce-input="cost"
+                            class="form-control survey-asset-lockonce-input d-none" disabled
+                            placeholder="e.g. 350000.00">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-muted small text-uppercase">Current Valuation
+                            <span class="text-muted fw-normal text-lowercase ms-1" style="font-size: 0.75em;"
+                                title="Straight-line depreciation per COA Circular 2003-007 (GAM): 10-year useful life, 10% residual value, 9% annual depreciation rate."
+                                data-bs-toggle="tooltip" data-bs-placement="top">(GAM, straight-line)</span>
+                        </label>
+                        <div id="surveyAssetDetailCurrentValuation" class="form-control-plaintext fw-bold text-primary">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-muted small text-uppercase">Custodian</label>
+                        <div id="surveyAssetDetailCustodian" class="form-control-plaintext"></div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-muted small text-uppercase">Custodian's Manager</label>
+                        <div id="surveyAssetDetailCustodianManager" class="form-control-plaintext"></div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-muted small text-uppercase">Last Calibration
+                            Date</label>
+                        <div id="surveyAssetDetailLastCalibrationDate"
+                            class="form-control-plaintext survey-asset-detail-view-only"></div>
+                        <input type="date" id="editSurveyAssetLastCalibrationDate"
+                            class="form-control survey-asset-field survey-asset-detail-edit-only d-none" disabled>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-muted small text-uppercase">Calibration Due Date</label>
+                        <div id="surveyAssetDetailCalibrationDueDate"
+                            class="form-control-plaintext survey-asset-detail-view-only"></div>
+                        <div id="surveyAssetDetailCalibrationOverdueNote"
+                            class="small text-danger fw-semibold survey-asset-detail-view-only d-none">
+                            Calibration has lapsed &mdash; recalibrate, or use Actions to record the equipment's
+                            condition.
+                        </div>
+                        <input type="date" id="editSurveyAssetCalibrationDueDate"
+                            class="form-control survey-asset-field survey-asset-detail-edit-only d-none" disabled>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-muted small text-uppercase">Administrative &amp; Legal
+                            Status</label>
+                        <div id="surveyAssetDetailAdminLegalStatus"
+                            class="form-control-plaintext survey-asset-detail-view-only"></div>
+                        <select id="editSurveyAssetAdminLegalStatus"
+                            class="form-select survey-asset-field survey-asset-detail-edit-only d-none" disabled>
+                            <option value="" selected disabled>Select administrative/legal status</option>
+                            <option th:each="status : ${surveyAssetAdminLegalStatuses}" th:value="${status}"
+                                th:text="${status}"></option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-muted small text-uppercase">Operational Status</label>
+                        <div id="surveyAssetDetailOperationalStatus"
+                            class="form-control-plaintext survey-asset-detail-view-only"></div>
+                        <select id="editSurveyAssetOperationalStatus"
+                            class="form-select survey-asset-field survey-asset-detail-edit-only d-none" disabled>
+                            <option value="" selected disabled>Select operational status</option>
+                            <option th:each="status : ${surveyAssetOperationalStatuses}" th:value="${status}"
+                                th:text="${status}"></option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-muted small text-uppercase">Condition Status</label>
+                        <div id="surveyAssetDetailConditionStatus"
+                            class="form-control-plaintext survey-asset-detail-view-only"></div>
+                        <select id="editSurveyAssetConditionStatus"
+                            class="form-select survey-asset-field survey-asset-detail-edit-only d-none" disabled>
+                            <option value="" selected disabled>Select condition status</option>
+                            <option th:each="status : ${surveyAssetConditionStatuses}" th:value="${status}"
+                                th:text="${status}"></option>
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-bold text-muted small text-uppercase">Remarks</label>
+                        <div id="surveyAssetDetailRemarks" class="form-control-plaintext survey-asset-detail-view-only">
+                        </div>
+                        <textarea id="editSurveyAssetRemarks" rows="2"
+                            class="form-control survey-asset-field survey-asset-detail-edit-only d-none" disabled></textarea>
+                    </div>
+                </div>
+
+                <hr class="my-4">
+
+                <div>
+                    <h6 class="fw-bold mb-3">Attached Documents</h6>
+                    <div id="surveyAssetDocumentsEmpty" class="text-muted small">No documents attached yet.</div>
+                    <table class="table table-sm table-bordered align-middle mb-0 documents-grid-table">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Category</th>
+                                <th>File</th>
+                                <th>Uploaded</th>
+                                <th class="text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="surveyAssetDocumentsTableBody"></tbody>
+                    </table>
+                    <div class="mt-3 survey-asset-detail-edit-only d-none">
+                        <label class="form-label fw-bold text-muted small text-uppercase">Upload Additional
+                            Documents</label>
+                        <input type="file" id="surveyAssetDetailDocumentFiles"
+                            class="form-control js-detail-document-input" multiple
+                            data-document-preview-target="surveyAssetDetailDocumentPreview"
+                            data-document-category-template-target="surveyAssetDetailDocumentCategoryTemplate"
+                            th:attr="data-document-allowed-extensions=${documentUploadAllowedExtensions},data-document-max-size-mb=${documentUploadMaxSizeMb}"
+                            accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx">
+                        <select id="surveyAssetDetailDocumentCategoryTemplate" class="d-none">
+                            <option value="" selected disabled>Select a document category</option>
+                            <option th:each="documentCategory : ${surveyAssetDocumentUploadCategories}"
+                                th:value="${documentCategory}" th:text="${documentCategory}"></option>
+                        </select>
+                        <ul id="surveyAssetDetailDocumentPreview"
+                            class="list-group list-group-flush border rounded mt-2 small"></ul>
+                        <div class="d-grid d-md-flex justify-content-md-end mt-2">
+                            <button type="button" id="uploadSurveyAssetDocumentsBtn" class="btn btn-sm btn-primary">Upload
+                                Selected</button>
+                        </div>
+                    </div>
+                </div>
+
+                <hr class="my-4">
+
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="offcanvas">Close</button>
+                    <button type="button" class="btn btn-outline-secondary w-100" id="enableSurveyAssetEditBtn">Enable
+                        Edit Mode</button>
+                    <button type="button" class="btn btn-outline-danger w-100 d-none"
+                        id="cancelSurveyAssetEditBtn">Cancel Edit</button>
+                    <button type="button" class="btn btn-primary w-100 d-none" id="saveSurveyAssetEditBtn">Save
+                        Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+
+</html>

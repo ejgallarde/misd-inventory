@@ -7,7 +7,7 @@ import ph.gov.phlpost.inventory.misddashboard.repository.AssetRepository;
 import ph.gov.phlpost.inventory.misddashboard.repository.EquipmentCatalogRepository;
 import ph.gov.phlpost.inventory.misddashboard.repository.FleetVehicleRepository;
 import ph.gov.phlpost.inventory.misddashboard.repository.PersonnelRepository;
-import ph.gov.phlpost.inventory.misddashboard.repository.RealEstatePropertyRepository;
+import ph.gov.phlpost.inventory.misddashboard.repository.SurveyAssetRepository;
 import ph.gov.phlpost.inventory.misddashboard.service.RegistryService;
 import ph.gov.phlpost.inventory.misddashboard.util.TextUtils;
 
@@ -36,7 +36,7 @@ public class MainDashboardController {
         private final DashboardRepository dashboardRepo;
         private final AssetRepository assetRepo;
         private final FleetVehicleRepository fleetRepo;
-        private final RealEstatePropertyRepository propertyRepo;
+        private final SurveyAssetRepository surveyAssetRepo;
         private final EquipmentCatalogRepository catalogRepo;
         private final PersonnelRepository personnelRepo;
         private final RegistryService registryService;
@@ -62,23 +62,17 @@ public class MainDashboardController {
         @Value("#{'${dropdown.fleet-maintenance-statuses}'.split(',')}")
         private List<String> fleetMaintenanceStatuses;
 
-        @Value("#{'${dropdown.property-types}'.split(',')}")
-        private List<String> propertyTypes;
+        @Value("#{'${dropdown.surveyasset-types}'.split(',')}")
+        private List<String> surveyAssetTypes;
 
-        @Value("#{'${dropdown.property-areas}'.split(',')}")
-        private List<String> propertyAreas;
+        @Value("#{'${dropdown.surveyasset-admin-legal-statuses}'.split(',')}")
+        private List<String> surveyAssetAdminLegalStatuses;
 
-        @Value("#{'${dropdown.property-tax-statuses}'.split(',')}")
-        private List<String> propertyTaxStatusesAdd;
+        @Value("#{'${dropdown.surveyasset-operational-statuses}'.split(',')}")
+        private List<String> surveyAssetOperationalStatuses;
 
-        @Value("#{'${dropdown.property-legal-titling-statuses}'.split(',')}")
-        private List<String> propertyLegalTitlingStatuses;
-
-        @Value("#{'${dropdown.property-operational-statuses}'.split(',')}")
-        private List<String> propertyOperationalStatuses;
-
-        @Value("#{'${dropdown.property-condition-statuses}'.split(',')}")
-        private List<String> propertyConditionStatuses;
+        @Value("#{'${dropdown.surveyasset-condition-statuses}'.split(',')}")
+        private List<String> surveyAssetConditionStatuses;
 
         @Value("${document.upload.max-size-mb:15}")
         private int documentUploadMaxSizeMb;
@@ -92,8 +86,8 @@ public class MainDashboardController {
         @Value("${document.upload.categories.vehicle}")
         private String vehicleDocumentUploadCategoriesCsv;
 
-        @Value("${document.upload.categories.property}")
-        private String propertyDocumentUploadCategoriesCsv;
+        @Value("${document.upload.categories.surveyasset}")
+        private String surveyAssetDocumentUploadCategoriesCsv;
 
         @Value("#{'${dropdown.asset-deployment-statuses}'.split(',')}")
         private List<String> assetDeploymentStatusOptions;
@@ -106,12 +100,13 @@ public class MainDashboardController {
 
         public MainDashboardController(DashboardRepository dashboardRepo, AssetRepository assetRepo,
                         FleetVehicleRepository fleetRepo,
-                        RealEstatePropertyRepository propertyRepo, EquipmentCatalogRepository catalogRepo,
+                        SurveyAssetRepository surveyAssetRepo,
+                        EquipmentCatalogRepository catalogRepo,
                         PersonnelRepository personnelRepo, RegistryService registryService) {
                 this.dashboardRepo = dashboardRepo;
                 this.assetRepo = assetRepo;
                 this.fleetRepo = fleetRepo;
-                this.propertyRepo = propertyRepo;
+                this.surveyAssetRepo = surveyAssetRepo;
                 this.catalogRepo = catalogRepo;
                 this.personnelRepo = personnelRepo;
                 this.registryService = registryService;
@@ -163,48 +158,26 @@ public class MainDashboardController {
                                 fleetRepo.countDisposedOrDecommissionedVehicles());
                 model.addAttribute("problematicVehicles", fleetRepo.findProblematicVehicles());
 
-                // Land Assets and Buildings & Facilities
-                String lotType = "Lot";
-
-                model.addAttribute("totalLandAssets", propertyRepo.countByPropertyTypeIgnoreCase(lotType));
-                model.addAttribute("totalLandArea", propertyRepo.sumTotalLandAreaByType(lotType));
-                model.addAttribute("currentInventoryLandAssets",
-                                propertyRepo.countByTypeAndOperationalStatusNot(lotType, "Slated for Disposal"));
-                model.addAttribute("activeInUseLandAssets",
-                                propertyRepo.countByTypeAndOperationalStatus(lotType, "Active/In Use"));
-                model.addAttribute("vacantIdleLandAssets",
-                                propertyRepo.countByTypeAndOperationalStatus(lotType, "Vacant/Idle"));
-                model.addAttribute("coLocatedLandAssets",
-                                propertyRepo.countByTypeAndOperationalStatus(lotType, "Co-Located"));
-                model.addAttribute("leasedOutLandAssets",
-                                propertyRepo.countByTypeAndOperationalStatus(lotType, "Leased Out"));
-                model.addAttribute("underConstructionLandAssets",
-                                propertyRepo.countByTypeAndOperationalStatus(lotType, "Under Construction"));
-                model.addAttribute("slatedForDisposalLandAssets",
-                                propertyRepo.countByTypeAndOperationalStatus(lotType, "Slated for Disposal"));
-                model.addAttribute("problematicLandAssets",
-                                propertyRepo.findProblematicPropertiesByType(lotType));
-
-                model.addAttribute("totalBuildingFacilityAssets", propertyRepo.countByPropertyTypeExcluding(lotType));
-                model.addAttribute("currentInventoryBuildingAssets",
-                                propertyRepo.countByTypeExcludingAndOperationalStatusNot(lotType,
-                                                "Slated for Disposal"));
-                model.addAttribute("activeInUseBuildingAssets",
-                                propertyRepo.countByTypeExcludingAndOperationalStatus(lotType, "Active/In Use"));
-                model.addAttribute("vacantIdleBuildingAssets",
-                                propertyRepo.countByTypeExcludingAndOperationalStatus(lotType, "Vacant/Idle"));
-                model.addAttribute("coLocatedBuildingAssets",
-                                propertyRepo.countByTypeExcludingAndOperationalStatus(lotType, "Co-Located"));
-                model.addAttribute("leasedOutBuildingAssets",
-                                propertyRepo.countByTypeExcludingAndOperationalStatus(lotType, "Leased Out"));
-                model.addAttribute("underConstructionBuildingAssets",
-                                propertyRepo.countByTypeExcludingAndOperationalStatus(lotType,
-                                                "Under Construction"));
-                model.addAttribute("slatedForDisposalBuildingAssets",
-                                propertyRepo.countByTypeExcludingAndOperationalStatus(lotType,
-                                                "Slated for Disposal"));
-                model.addAttribute("problematicBuildingAssets",
-                                propertyRepo.findProblematicPropertiesByTypeExcluding(lotType));
+                // Survey Assets
+                model.addAttribute("totalSurveyAssets", surveyAssetRepo.count());
+                model.addAttribute("currentInventorySurveyAssets", surveyAssetRepo.countCurrentInventorySurveyAssets());
+                model.addAttribute("availableIdleSurveyAssets", surveyAssetRepo.countAvailableIdleSurveyAssets());
+                model.addAttribute("deployedSurveyAssets", surveyAssetRepo.countDeployedSurveyAssets());
+                model.addAttribute("needsCalibrationSurveyAssets",
+                                surveyAssetRepo.countNeedsCalibrationSurveyAssets());
+                model.addAttribute("slatedForDisposalSurveyAssets",
+                                surveyAssetRepo.countSlatedForDisposalSurveyAssets());
+                model.addAttribute("decommissionedSurveyAssets", surveyAssetRepo.countDecommissionedSurveyAssets());
+                model.addAttribute("totalProblematicSurveyAssets", surveyAssetRepo.countProblematicSurveyAssets());
+                model.addAttribute("surveyAssetsWithAdminLegalIssues",
+                                surveyAssetRepo.countSurveyAssetsWithAdminLegalIssues());
+                model.addAttribute("surveyAssetsWithOperationalConditionIssues",
+                                surveyAssetRepo.countSurveyAssetsWithOperationalConditionIssues());
+                model.addAttribute("calibrationDueSurveyAssets", surveyAssetRepo.countCalibrationDueSurveyAssets());
+                model.addAttribute("soldSurveyAssets", surveyAssetRepo.countSoldSurveyAssets());
+                model.addAttribute("disposedOrDecommissionedSurveyAssets",
+                                surveyAssetRepo.countDisposedOrDecommissionedSurveyAssets());
+                model.addAttribute("problematicSurveyAssets", surveyAssetRepo.findProblematicSurveyAssets());
 
                 // Mappings
                 model.addAttribute("employeeMap", registryService.getEmployeeNameMap());
@@ -226,8 +199,8 @@ public class MainDashboardController {
                                 TextUtils.splitCsv(vehicleDocumentUploadCategoriesCsv).stream()
                                                 .sorted(String.CASE_INSENSITIVE_ORDER)
                                                 .toList());
-                model.addAttribute("propertyDocumentUploadCategories",
-                                TextUtils.splitCsv(propertyDocumentUploadCategoriesCsv).stream()
+                model.addAttribute("surveyAssetDocumentUploadCategories",
+                                TextUtils.splitCsv(surveyAssetDocumentUploadCategoriesCsv).stream()
                                                 .sorted(String.CASE_INSENSITIVE_ORDER)
                                                 .toList());
                 model.addAttribute("assetDeploymentStatusOptions", assetDeploymentStatusOptions);
@@ -247,18 +220,12 @@ public class MainDashboardController {
                 model.addAttribute("fleetAdminLegalStatuses", fleetAdminLegalStatuses);
                 model.addAttribute("fleetOperationalStatuses", fleetOperationalStatuses);
                 model.addAttribute("fleetMaintenanceStatuses", fleetMaintenanceStatuses);
-                model.addAttribute("propertyTypes", propertyTypes.stream()
+                model.addAttribute("surveyAssetTypes", surveyAssetTypes.stream()
                                 .sorted(String.CASE_INSENSITIVE_ORDER)
                                 .toList());
-                model.addAttribute("propertyAreas", propertyAreas.stream()
-                                .sorted(String.CASE_INSENSITIVE_ORDER)
-                                .toList());
-                model.addAttribute("propertyTaxStatusesAdd", propertyTaxStatusesAdd.stream()
-                                .sorted(String.CASE_INSENSITIVE_ORDER)
-                                .toList());
-                model.addAttribute("propertyLegalTitlingStatuses", propertyLegalTitlingStatuses);
-                model.addAttribute("propertyOperationalStatuses", propertyOperationalStatuses);
-                model.addAttribute("propertyConditionStatuses", propertyConditionStatuses);
+                model.addAttribute("surveyAssetAdminLegalStatuses", surveyAssetAdminLegalStatuses);
+                model.addAttribute("surveyAssetOperationalStatuses", surveyAssetOperationalStatuses);
+                model.addAttribute("surveyAssetConditionStatuses", surveyAssetConditionStatuses);
 
                 return "dashboard";
         }

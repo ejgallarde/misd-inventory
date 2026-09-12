@@ -7,9 +7,11 @@ import org.springframework.web.multipart.MultipartFile;
 
 import ph.gov.phlpost.inventory.misddashboard.model.Document;
 import ph.gov.phlpost.inventory.misddashboard.model.RealEstateProperty;
+import ph.gov.phlpost.inventory.misddashboard.model.SurveyAsset;
 import ph.gov.phlpost.inventory.misddashboard.repository.DocumentRepository;
 import ph.gov.phlpost.inventory.misddashboard.repository.FleetVehicleRepository;
 import ph.gov.phlpost.inventory.misddashboard.repository.RealEstatePropertyRepository;
+import ph.gov.phlpost.inventory.misddashboard.repository.SurveyAssetRepository;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -29,6 +31,7 @@ public class DocumentService {
     private final DocumentRepository documentRepository;
     private final FleetVehicleRepository fleetVehicleRepository;
     private final RealEstatePropertyRepository realEstatePropertyRepository;
+    private final SurveyAssetRepository surveyAssetRepository;
     private final long maxFileSizeBytes;
     private final int maxFileCount;
     private final Set<String> allowedExtensions;
@@ -37,16 +40,19 @@ public class DocumentService {
     public DocumentService(DocumentStorageService storageService, DocumentRepository documentRepository,
             FleetVehicleRepository fleetVehicleRepository,
             RealEstatePropertyRepository realEstatePropertyRepository,
+            SurveyAssetRepository surveyAssetRepository,
             @Value("${document.upload.max-size-mb:15}") long maxFileSizeMb,
             @Value("${document.upload.max-files:25}") int maxFileCount,
             @Value("${document.upload.allowed-extensions:pdf,jpg,jpeg,png,doc,docx,xls,xlsx}") String allowedExtensionsConfig,
             @Value("${document.upload.categories.it:Official Receipt / Invoice,Inspection Report,Acceptance Report,Serial Number Label,Photographs,Equipment Specification Sheet,Repair or Service Report}") String itCategoriesConfig,
             @Value("${document.upload.categories.vehicle:Delivery Receipt,Original Receipt (OR),Certificate of Registration (CR),PMS Report,Car Insurance Policy,Stencil,TPL,Driver's License,Warranty Certificate}") String vehicleCategoriesConfig,
-            @Value("${document.upload.categories.property:Title,Tax Declaration,Property Photo,Deed of Sale,Appendix 71}") String propertyCategoriesConfig) {
+            @Value("${document.upload.categories.property:Title,Tax Declaration,Property Photo,Deed of Sale,Appendix 71}") String propertyCategoriesConfig,
+            @Value("${document.upload.categories.surveyasset:Official Receipt / Invoice,Calibration Certificate,Equipment Specification Sheet,Photographs,Warranty Certificate,Repair or Service Report}") String surveyAssetCategoriesConfig) {
         this.storageService = storageService;
         this.documentRepository = documentRepository;
         this.fleetVehicleRepository = fleetVehicleRepository;
         this.realEstatePropertyRepository = realEstatePropertyRepository;
+        this.surveyAssetRepository = surveyAssetRepository;
         this.maxFileSizeBytes = Math.max(1L, maxFileSizeMb) * 1024L * 1024L;
         this.maxFileCount = Math.max(1, maxFileCount);
         this.allowedExtensions = Arrays.stream(allowedExtensionsConfig.split(","))
@@ -59,6 +65,7 @@ public class DocumentService {
         this.allowedCategoriesByReferenceType.put("IT_EQUIPMENT", toCategorySet(itCategoriesConfig));
         this.allowedCategoriesByReferenceType.put("VEHICLE", toCategorySet(vehicleCategoriesConfig));
         this.allowedCategoriesByReferenceType.put("PROPERTY", toCategorySet(propertyCategoriesConfig));
+        this.allowedCategoriesByReferenceType.put("SURVEY_ASSET", toCategorySet(surveyAssetCategoriesConfig));
     }
 
     public boolean hasFiles(MultipartFile[] files) {
@@ -291,6 +298,7 @@ public class DocumentService {
             case "VEHICLE" -> "vehicles";
             case "PROPERTY" -> "properties";
             case "IT_EQUIPMENT" -> "it-equipment";
+            case "SURVEY_ASSET" -> "survey-assets";
             default -> throw new IllegalArgumentException("Unsupported reference type: " + referenceType);
         };
     }
@@ -299,6 +307,7 @@ public class DocumentService {
         return switch (normalizedReferenceType) {
             case "VEHICLE" -> resolveVehicleStorageId(normalizedReferenceId);
             case "PROPERTY" -> resolvePropertyStorageId(normalizedReferenceId);
+            case "SURVEY_ASSET" -> resolveSurveyAssetStorageId(normalizedReferenceId);
             default -> normalizedReferenceId;
         };
     }
@@ -325,6 +334,32 @@ public class DocumentService {
         return realEstatePropertyRepository.findById(propertyId)
                 .map(this::resolvePropertyIdentifier)
                 .orElse(normalizedReferenceId);
+    }
+
+    private String resolveSurveyAssetStorageId(String normalizedReferenceId) {
+        Integer surveyAssetId = parseInteger(normalizedReferenceId);
+        if (surveyAssetId == null) {
+            return normalizedReferenceId;
+        }
+
+        return surveyAssetRepository.findById(surveyAssetId)
+                .map(this::resolveSurveyAssetIdentifier)
+                .orElse(normalizedReferenceId);
+    }
+
+    private String resolveSurveyAssetIdentifier(SurveyAsset asset) {
+        String assetTag = asset.getAssetTag();
+        if (assetTag != null && !assetTag.isBlank()) {
+            return assetTag.trim();
+        }
+
+        String serialNumber = asset.getSerialNumber();
+        if (serialNumber != null && !serialNumber.isBlank()) {
+            return serialNumber.trim();
+        }
+
+        Integer surveyAssetId = asset.getSurveyAssetID();
+        return surveyAssetId == null ? "survey-asset" : "survey-asset-" + surveyAssetId;
     }
 
     private String resolvePropertyIdentifier(RealEstateProperty property) {

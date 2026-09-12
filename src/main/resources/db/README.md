@@ -1,6 +1,21 @@
 # `db/` contents
 
-Two kinds of file live here. They are not interchangeable.
+Three kinds of file live here. They are not interchangeable.
+
+## DAR schema — `dar_inventory_schema.sql`
+
+A standalone, from-scratch `CREATE DATABASE` + `CREATE TABLE` script for the
+`dar_inventory` database used by this branch's DAR (Department of Agrarian
+Reform) deployment. Unlike the `misd_inventory_*.sql` dumps below, it is not a
+`mysqldump` of a live database — it is the schema to run once to stand up a new
+one. It covers only the three domains this deployment tracks (IT assets, fleet
+vehicles, survey assets) plus their shared personnel/location/document/audit
+infrastructure; it deliberately omits `realestateproperties` and the PSGC
+tables, which are MISD-only. Run it with:
+
+```
+mysql -u<user> -p < src/main/resources/db/dar_inventory_schema.sql
+```
 
 ## Reference schema — `misd_inventory_*.sql`
 
