@@ -3,21 +3,31 @@ package ph.gov.phlpost.inventory.misddashboard.service;
 import ph.gov.phlpost.inventory.misddashboard.model.SurveyAsset;
 import ph.gov.phlpost.inventory.misddashboard.repository.SurveyAssetRepository;
 import ph.gov.phlpost.inventory.misddashboard.util.TextUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.Year;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 @Service
 public class SurveyAssetService {
 
     private final SurveyAssetRepository surveyAssetRepo;
     private final AuditLogService auditService;
+    private final int maxReceiveQuantity;
 
-    public SurveyAssetService(SurveyAssetRepository surveyAssetRepo, AuditLogService auditService) {
+    private static final DateTimeFormatter ASSET_TAG_DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+    public SurveyAssetService(SurveyAssetRepository surveyAssetRepo, AuditLogService auditService,
+            @Value("${surveyasset.receive.max-quantity:100}") int maxReceiveQuantity) {
         this.surveyAssetRepo = surveyAssetRepo;
         this.auditService = auditService;
+        this.maxReceiveQuantity = maxReceiveQuantity;
     }
 
     @Transactional
@@ -119,6 +129,85 @@ public class SurveyAssetService {
     }
 
     /**
+     * Receives one or more units of the same cataloged survey equipment model
+     * into storage, mirroring {@link ITAssetService#receiveAssets}. Quantity
+     * bounds are validated here (the form's {@code min="1"} is client-side
+     * only), and each unit is saved and audited individually.
+     */
+    @Transactional
+    public List<SurveyAsset> receiveSurveyAssets(SurveyAsset baseAsset, int quantity, String performedBy) {
+        if (quantity < 1) {
+            throw new IllegalArgumentException("Quantity must be at least 1.");
+        }
+        if (quantity > maxReceiveQuantity) {
+            throw new IllegalArgumentException(
+                    "A maximum of " + maxReceiveQuantity + " survey assets can be received at once.");
+        }
+
+        String datePrefix = "SVY-" + LocalDate.now().format(ASSET_TAG_DATE_FORMAT) + "-";
+        List<SurveyAsset> created = new ArrayList<>();
+
+        for (int index = 0; index < quantity; index++) {
+            SurveyAsset newAsset = new SurveyAsset();
+            newAsset.setCatalogID(baseAsset.getCatalogID());
+            newAsset.setAcquisitionDate(baseAsset.getAcquisitionDate());
+            newAsset.setCost(baseAsset.getCost());
+            newAsset.setLastCalibrationDate(baseAsset.getLastCalibrationDate());
+            newAsset.setCalibrationDueDate(baseAsset.getCalibrationDueDate());
+            newAsset.setRemarks(baseAsset.getRemarks());
+
+            newAsset.setAssignedCustodianID(null);
+            newAsset.setAdminLegalStatus("Registered/Accountable");
+            newAsset.setOperationalStatus("Available/Idle");
+            newAsset.setConditionStatus("Operational");
+
+            // A serial number identifies one physical unit, so it is only carried
+            // over for a single-unit receipt.
+            if (quantity == 1) {
+                newAsset.setSerialNumber(baseAsset.getSerialNumber());
+                String requestedTag = baseAsset.getAssetTag() == null ? "" : baseAsset.getAssetTag().trim();
+                newAsset.setAssetTag(requestedTag.isEmpty() ? generateNextAssetTag(datePrefix) : requestedTag);
+            } else {
+                newAsset.setSerialNumber(null);
+                newAsset.setAssetTag(generateNextAssetTag(datePrefix));
+            }
+
+            surveyAssetRepo.saveAndFlush(newAsset);
+            auditService.logLifecycleEvent(auditReferenceId(newAsset), performedBy, "Survey Asset Received",
+                    statusSummary(newAsset) + appendNotes(newAsset.getRemarks()));
+            created.add(newAsset);
+        }
+
+        return created;
+    }
+
+    /**
+     * Next tag in the SVY-yyyy-MM-dd-NNNNN sequence for the given day.
+     * Synchronized against concurrent receipts within this instance.
+     */
+    private synchronized String generateNextAssetTag(String datePrefix) {
+        Optional<SurveyAsset> lastAsset = surveyAssetRepo.findTopByAssetTagStartingWithOrderByAssetTagDesc(datePrefix);
+
+        if (lastAsset.isEmpty() || lastAsset.get().getAssetTag() == null) {
+            return datePrefix + "00001";
+        }
+
+        String lastTag = lastAsset.get().getAssetTag();
+        try {
+            int sequence = Integer.parseInt(lastTag.substring(datePrefix.length()));
+            return datePrefix + String.format("%05d", sequence + 1);
+        } catch (RuntimeException ex) {
+            throw new IllegalArgumentException(
+                    "Could not determine the next asset tag after '" + lastTag + "'. "
+                            + "Enter an asset tag manually or correct the existing record.");
+        }
+    }
+
+    private String appendNotes(String notes) {
+        return notes == null || notes.isBlank() ? "" : "; Notes: " + notes.trim();
+    }
+
+    /**
      * Audit reference for a survey asset: always the immutable primary key, the
      * same convention used for fleet vehicles (see {@link FleetService#auditReferenceId}).
      * Asset tag and serial number are both optional-unique columns, so neither is
@@ -153,15 +242,10 @@ public class SurveyAssetService {
         if (TextUtils.isBlank(asset.getSerialNumber()) && !TextUtils.isBlank(submitted.getSerialNumber())) {
             asset.setSerialNumber(submitted.getSerialNumber());
         }
-        if (TextUtils.isBlank(asset.getSurveyAssetType()) && !TextUtils.isBlank(submitted.getSurveyAssetType())) {
-            asset.setSurveyAssetType(submitted.getSurveyAssetType());
-        }
-        if (TextUtils.isBlank(asset.getManufacturer()) && !TextUtils.isBlank(submitted.getManufacturer())) {
-            asset.setManufacturer(submitted.getManufacturer());
-        }
-        if (TextUtils.isBlank(asset.getModelName()) && !TextUtils.isBlank(submitted.getModelName())) {
-            asset.setModelName(submitted.getModelName());
-        }
+        // CatalogID is intentionally never touched here: this method mutates the
+        // managed entity field-by-field rather than overwriting it wholesale, so
+        // simply never setting it keeps a received unit's catalog assignment
+        // permanent with no extra guard needed.
         if (asset.getAcquisitionDate() == null && submitted.getAcquisitionDate() != null) {
             asset.setAcquisitionDate(submitted.getAcquisitionDate());
         }

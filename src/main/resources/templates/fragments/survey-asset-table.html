@@ -21,9 +21,9 @@
             <tr th:each="surveyAsset : ${surveyAssets}" class="survey-asset-table-row"
                 th:data-survey-asset-id="${surveyAsset.surveyAssetID}"
                 th:data-survey-asset-acquisition-year="${surveyAsset.acquisitionDate != null ? #temporals.year(surveyAsset.acquisitionDate) : ''}"
-                th:data-survey-asset-manufacturer="${surveyAsset.manufacturer}"
-                th:data-survey-asset-model="${surveyAsset.modelName}"
-                th:data-survey-asset-type="${surveyAsset.surveyAssetType}"
+                th:data-survey-asset-manufacturer="${surveyCatalogMap[surveyAsset.catalogID] != null ? surveyCatalogMap[surveyAsset.catalogID].manufacturer : ''}"
+                th:data-survey-asset-model="${surveyCatalogMap[surveyAsset.catalogID] != null ? surveyCatalogMap[surveyAsset.catalogID].modelName : ''}"
+                th:data-survey-asset-type="${surveyCatalogMap[surveyAsset.catalogID] != null ? surveyCatalogMap[surveyAsset.catalogID].category : ''}"
                 th:data-admin-status="${surveyAsset.adminLegalStatus}"
                 th:data-operational-status="${surveyAsset.operationalStatus}"
                 th:data-condition-status="${surveyAsset.conditionStatus}"
@@ -45,7 +45,9 @@
                 <td th:classappend="${surveyAsset.assignedCustodianID != null ? 'fw-bold' : ''}"
                     th:text="${surveyAsset.assignedCustodianID != null and employeeMap[surveyAsset.assignedCustodianID] != null ? employeeMap[surveyAsset.assignedCustodianID] : 'Unassigned'}">
                 </td>
-                <td th:text="${surveyAsset.surveyAssetType != null ? surveyAsset.surveyAssetType : 'Unknown'}"></td>
+                <td
+                    th:text="${surveyCatalogMap[surveyAsset.catalogID] != null ? surveyCatalogMap[surveyAsset.catalogID].category : 'Unknown'}">
+                </td>
                 <td
                     th:text="${surveyAsset.lastCalibrationDate != null ? #temporals.format(surveyAsset.lastCalibrationDate, 'MMM d, yyyy') : 'N/A'}">
                 </td>

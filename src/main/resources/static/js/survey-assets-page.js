@@ -53,8 +53,21 @@ $(document).ready(function () {
     }
 
     const LOCKONCE_FIELDS = [
-        'surveyAssetType', 'assetTag', 'serialNumber', 'manufacturer', 'modelName', 'acquisitionDate', 'cost'
+        'assetTag', 'serialNumber', 'acquisitionDate', 'cost'
     ];
+
+    function escapeValue(value) {
+        return MISDCommon.escapeHtml(value == null || value === '' ? 'N/A' : String(value));
+    }
+
+    function renderSurveyCatalogSummary(data) {
+        return `<div class="d-grid gap-2">
+            <div><span class="text-muted fw-semibold">Category:</span> ${escapeValue(data.catalogCategory)}</div>
+            <div><span class="text-muted fw-semibold">Manufacturer:</span> ${escapeValue(data.catalogManufacturer)}</div>
+            <div><span class="text-muted fw-semibold">Model Name:</span> ${escapeValue(data.catalogModelName)}</div>
+            <div><span class="text-muted fw-semibold">Specifications:</span>${MISDCommon.renderCatalogSpecifications(data.catalogSpecifications)}</div>
+        </div>`;
+    }
 
     function applyLockonceVisibility(editMode, data) {
         if (!editMode || !data) {
@@ -74,11 +87,8 @@ $(document).ready(function () {
     function fillSurveyAssetEditFields(data) {
         $('#editSurveyAssetID').val(data.surveyAssetID || '');
         // Lock-once inputs — pre-populated; visibility controlled by applyLockonceVisibility
-        $('#editSurveyAssetType').val(data.surveyAssetType || '');
         $('#editSurveyAssetTag').val(data.assetTag || '');
         $('#editSurveyAssetSerialNumber').val(data.serialNumber || '');
-        $('#editSurveyAssetManufacturer').val(data.manufacturer || '');
-        $('#editSurveyAssetModel').val(data.modelName || '');
         $('#editSurveyAssetAcquisitionDate').val(formatDateInput(data.acquisitionDate));
         $('#editSurveyAssetCost').val(data.cost || '');
         // Always-editable fields
@@ -95,11 +105,8 @@ $(document).ready(function () {
         return {
             surveyAssetID: Number.isNaN(surveyAssetID) ? null : surveyAssetID,
             // Lock-once fields (backend ignores if already set in DB)
-            surveyAssetType: $('#editSurveyAssetType').val() || null,
             assetTag: $('#editSurveyAssetTag').val() || null,
             serialNumber: $('#editSurveyAssetSerialNumber').val() || null,
-            manufacturer: $('#editSurveyAssetManufacturer').val() || null,
-            modelName: $('#editSurveyAssetModel').val() || null,
             acquisitionDate: $('#editSurveyAssetAcquisitionDate').val() || null,
             cost: MISDCommon.normalizeDecimalInput($('#editSurveyAssetCost').val()),
             // Always-editable fields
@@ -330,11 +337,9 @@ $(document).ready(function () {
     function loadSurveyAssetDetails(surveyAssetId) {
         $.get('/survey-assets/' + surveyAssetId, function (data) {
             currentSurveyAssetData = data;
-            $('#surveyAssetDetailType').text(data.surveyAssetType || 'N/A');
+            $('#surveyAssetCatalogSummary').html(renderSurveyCatalogSummary(data));
             $('#surveyAssetDetailAssetTag').text(data.assetTag || 'N/A');
             $('#surveyAssetDetailSerialNumber').text(data.serialNumber || 'N/A');
-            $('#surveyAssetDetailManufacturer').text(data.manufacturer || 'N/A');
-            $('#surveyAssetDetailModel').text(data.modelName || 'N/A');
             $('#surveyAssetDetailAcquisitionDate').text(MISDCommon.formatDate(data.acquisitionDate));
             $('#surveyAssetDetailCustodian').text(data.assignedCustodianName || 'Unassigned');
             $('#surveyAssetDetailCustodianManager').text(data.assignedCustodianManagerName || 'N/A');

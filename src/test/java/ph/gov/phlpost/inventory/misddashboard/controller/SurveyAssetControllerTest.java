@@ -18,16 +18,22 @@ import org.springframework.http.ResponseEntity;
 
 import ph.gov.phlpost.inventory.misddashboard.model.SurveyAsset;
 import ph.gov.phlpost.inventory.misddashboard.repository.SurveyAssetRepository;
+import ph.gov.phlpost.inventory.misddashboard.repository.SurveyEquipmentCatalogRepository;
 import ph.gov.phlpost.inventory.misddashboard.service.AssetHistoryService;
 import ph.gov.phlpost.inventory.misddashboard.service.DocumentService;
 import ph.gov.phlpost.inventory.misddashboard.service.RegistryService;
 import ph.gov.phlpost.inventory.misddashboard.service.SurveyAssetService;
+
+import tools.jackson.databind.json.JsonMapper;
 
 @ExtendWith(MockitoExtension.class)
 class SurveyAssetControllerTest {
 
     @Mock
     private SurveyAssetRepository surveyAssetRepo;
+
+    @Mock
+    private SurveyEquipmentCatalogRepository surveyCatalogRepo;
 
     @Mock
     private SurveyAssetService surveyAssetService;
@@ -40,6 +46,9 @@ class SurveyAssetControllerTest {
 
     @Mock
     private AssetHistoryService assetHistoryService;
+
+    @Mock
+    private JsonMapper jsonMapper;
 
     @InjectMocks
     private SurveyAssetController controller;

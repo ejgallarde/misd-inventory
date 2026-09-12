@@ -60,7 +60,8 @@ Added for this DAR deployment. Modeled directly on Fleet (see CLAUDE.md).
 | Method | Route | Owning Controller | Internal Caller Type | Internal Callers | Status |
 |---|---|---|---|---|---|
 | GET | /survey-assets | SurveyAssetController | Link | templates/dashboard.html (Survey Assets card href) | Active |
-| POST | /survey-assets/add | SurveyAssetController | Form submit | templates/dashboard.html (Register Survey Asset form) | Active |
+| POST | /survey-assets/catalog/add | SurveyAssetController | Form submit | templates/dashboard.html (Add to Catalog form) | Active |
+| POST | /survey-assets/receive | SurveyAssetController | Form submit | templates/dashboard.html (Receive Survey Asset form; renamed from /survey-assets/add when the module gained a catalog + batch receiving, mirroring /assets/receive) | Active |
 | POST | /survey-assets/assign | SurveyAssetController | Form submit | fragments/survey-asset-table.html → templates/survey-assets.html (Assign modal) | Active |
 | POST | /survey-assets/return | SurveyAssetController | Form submit | fragments/survey-asset-table.html → templates/survey-assets.html (Return modal) | Active |
 | POST | /survey-assets/retire | SurveyAssetController | Form submit | fragments/survey-asset-table.html → templates/survey-assets.html (Retire modal) | Active |

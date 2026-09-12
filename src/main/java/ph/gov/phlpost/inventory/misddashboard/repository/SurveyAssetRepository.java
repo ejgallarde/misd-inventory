@@ -5,8 +5,11 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface SurveyAssetRepository extends JpaRepository<SurveyAsset, Integer> {
+
+        Optional<SurveyAsset> findTopByAssetTagStartingWithOrderByAssetTagDesc(String prefix);
 
         // Equipment age is measured from AcquisitionDate; calibration due date
         // replaces Fleet's registration expiry as the recurring compliance check.

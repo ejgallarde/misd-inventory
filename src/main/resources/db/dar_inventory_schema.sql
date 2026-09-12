@@ -154,15 +154,42 @@ CREATE TABLE `fleetvehicles` (
 
 -- ---------------------------------------------------------------------------
 -- Survey Assets (new for DAR)
+--
+-- Mirrors the IT Assets catalog/asset split above: `surveyequipmentcatalog`
+-- defines a reusable Type+Manufacturer+Model (+ optional specs) once, and each
+-- `surveyassets` row is one physical unit pointing at a catalog entry via
+-- CatalogID, the same way `assets.CatalogID` points at `equipmentcatalog`.
+--
+-- Anyone with an existing local dev DB from before this change (no production
+-- data expected yet) needs to either drop and re-run this whole script, or
+-- apply by hand:
+--   CREATE TABLE `surveyequipmentcatalog` ( ... as below ... );
+--   ALTER TABLE `surveyassets`
+--     ADD COLUMN `CatalogID` int NOT NULL AFTER `SurveyAssetID`,
+--     DROP COLUMN `SurveyAssetType`,
+--     DROP COLUMN `Manufacturer`,
+--     DROP COLUMN `ModelName`,
+--     ADD KEY `CatalogID` (`CatalogID`),
+--     ADD CONSTRAINT `surveyassets_ibfk_2` FOREIGN KEY (`CatalogID`)
+--       REFERENCES `surveyequipmentcatalog` (`CatalogID`) ON DELETE RESTRICT;
+-- (Only safe on a table with no rows yet, or after backfilling CatalogID --
+-- ADD COLUMN ... NOT NULL with no default fails on a populated table.)
 -- ---------------------------------------------------------------------------
+
+CREATE TABLE `surveyequipmentcatalog` (
+  `CatalogID` int NOT NULL AUTO_INCREMENT,
+  `Category` varchar(100) NOT NULL,
+  `Manufacturer` varchar(100) NOT NULL,
+  `ModelName` varchar(100) NOT NULL,
+  `Specifications` json DEFAULT NULL,
+  PRIMARY KEY (`CatalogID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 CREATE TABLE `surveyassets` (
   `SurveyAssetID` int NOT NULL AUTO_INCREMENT,
-  `SurveyAssetType` varchar(100) DEFAULT NULL,
+  `CatalogID` int NOT NULL,
   `AssetTag` varchar(50) DEFAULT NULL,
   `SerialNumber` varchar(255) DEFAULT NULL,
-  `Manufacturer` varchar(100) DEFAULT NULL,
-  `ModelName` varchar(100) DEFAULT NULL,
   `AcquisitionDate` date DEFAULT NULL,
   `Cost` decimal(15,2) DEFAULT NULL,
   `CalibrationDueDate` date DEFAULT NULL,
@@ -175,6 +202,8 @@ CREATE TABLE `surveyassets` (
   PRIMARY KEY (`SurveyAssetID`),
   UNIQUE KEY `AssetTag` (`AssetTag`),
   UNIQUE KEY `SerialNumber` (`SerialNumber`),
+  KEY `CatalogID` (`CatalogID`),
   KEY `AssignedCustodianID` (`AssignedCustodianID`),
-  CONSTRAINT `surveyassets_ibfk_1` FOREIGN KEY (`AssignedCustodianID`) REFERENCES `personnel` (`EmployeeID`) ON DELETE SET NULL
+  CONSTRAINT `surveyassets_ibfk_1` FOREIGN KEY (`AssignedCustodianID`) REFERENCES `personnel` (`EmployeeID`) ON DELETE SET NULL,
+  CONSTRAINT `surveyassets_ibfk_2` FOREIGN KEY (`CatalogID`) REFERENCES `surveyequipmentcatalog` (`CatalogID`) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;

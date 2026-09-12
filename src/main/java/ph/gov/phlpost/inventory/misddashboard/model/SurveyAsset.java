@@ -13,20 +13,14 @@ public class SurveyAsset {
     @Column(name = "SurveyAssetID")
     private Integer surveyAssetID;
 
-    @Column(name = "SurveyAssetType", nullable = true)
-    private String surveyAssetType;
+    @Column(name = "CatalogID", nullable = false)
+    private Integer catalogID;
 
     @Column(name = "AssetTag", unique = true, nullable = true)
     private String assetTag;
 
     @Column(name = "SerialNumber", unique = true, nullable = true)
     private String serialNumber;
-
-    @Column(name = "Manufacturer", nullable = true)
-    private String manufacturer;
-
-    @Column(name = "ModelName", nullable = true)
-    private String modelName;
 
     @Column(name = "AcquisitionDate")
     private LocalDate acquisitionDate;
@@ -66,12 +60,12 @@ public class SurveyAsset {
         this.surveyAssetID = surveyAssetID;
     }
 
-    public String getSurveyAssetType() {
-        return surveyAssetType;
+    public Integer getCatalogID() {
+        return catalogID;
     }
 
-    public void setSurveyAssetType(String surveyAssetType) {
-        this.surveyAssetType = surveyAssetType;
+    public void setCatalogID(Integer catalogID) {
+        this.catalogID = catalogID;
     }
 
     public String getAssetTag() {
@@ -88,22 +82,6 @@ public class SurveyAsset {
 
     public void setSerialNumber(String serialNumber) {
         this.serialNumber = serialNumber;
-    }
-
-    public String getManufacturer() {
-        return manufacturer;
-    }
-
-    public void setManufacturer(String manufacturer) {
-        this.manufacturer = manufacturer;
-    }
-
-    public String getModelName() {
-        return modelName;
-    }
-
-    public void setModelName(String modelName) {
-        this.modelName = modelName;
     }
 
     public LocalDate getAcquisitionDate() {

@@ -12,18 +12,17 @@
         <div class="offcanvas-body bg-light">
             <form id="surveyAssetEditForm">
                 <input type="hidden" id="editSurveyAssetID" name="surveyAssetID">
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <label class="form-label fw-bold text-muted small text-uppercase">Survey Asset Type</label>
-                        <div id="surveyAssetDetailType" class="form-control-plaintext"
-                            data-lockonce-view="surveyAssetType"></div>
-                        <select id="editSurveyAssetType" data-lockonce-input="surveyAssetType"
-                            class="form-select survey-asset-lockonce-input d-none" disabled>
-                            <option value="" disabled selected>Select survey asset type</option>
-                            <option th:each="type : ${surveyAssetTypes}" th:value="${type}" th:text="${type}">
-                            </option>
-                        </select>
+                <div class="row g-3 mb-3 survey-asset-detail-view-only">
+                    <div class="col-12">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-body">
+                                <div class="text-uppercase fw-bold text-muted small mb-2">Catalog Details</div>
+                                <div id="surveyAssetCatalogSummary" class="small"></div>
+                            </div>
+                        </div>
                     </div>
+                </div>
+                <div class="row g-3">
                     <div class="col-md-6">
                         <label class="form-label fw-bold text-muted small text-uppercase">Asset Tag</label>
                         <div id="surveyAssetDetailAssetTag" class="form-control-plaintext" data-lockonce-view="assetTag">
@@ -39,21 +38,6 @@
                         <input type="text" id="editSurveyAssetSerialNumber" data-lockonce-input="serialNumber"
                             class="form-control survey-asset-lockonce-input d-none" disabled
                             placeholder="Enter serial number">
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label fw-bold text-muted small text-uppercase">Manufacturer</label>
-                        <div id="surveyAssetDetailManufacturer" class="form-control-plaintext"
-                            data-lockonce-view="manufacturer"></div>
-                        <input type="text" id="editSurveyAssetManufacturer" data-lockonce-input="manufacturer"
-                            class="form-control survey-asset-lockonce-input d-none" disabled
-                            placeholder="e.g. Trimble">
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label fw-bold text-muted small text-uppercase">Model</label>
-                        <div id="surveyAssetDetailModel" class="form-control-plaintext" data-lockonce-view="modelName">
-                        </div>
-                        <input type="text" id="editSurveyAssetModel" data-lockonce-input="modelName"
-                            class="form-control survey-asset-lockonce-input d-none" disabled placeholder="e.g. R12i">
                     </div>
                     <div class="col-md-6">
                         <label class="form-label fw-bold text-muted small text-uppercase">Acquisition Date</label>

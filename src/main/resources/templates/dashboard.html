@@ -310,8 +310,10 @@
 
                 <!-- Tab Specific Actions -->
                 <div class="d-flex justify-content-end mb-3 gap-2">
+                    <button class="btn btn-primary shadow-sm" type="button" data-bs-toggle="offcanvas"
+                        data-bs-target="#addSurveyAssetOffcanvas">+ Receive Survey Asset</button>
                     <button class="btn btn-success shadow-sm" type="button" data-bs-toggle="offcanvas"
-                        data-bs-target="#addSurveyAssetOffcanvas">+ Register Survey Asset</button>
+                        data-bs-target="#addSurveyCatalogOffcanvas">+ Add to Catalog</button>
                 </div>
 
                 <section class="asset-portfolio mb-4" aria-labelledby="surveyAssetPortfolioTitle">
@@ -689,66 +691,83 @@
         </div>
     </div>
 
-    <!-- SURVEY ASSETS: Register Survey Asset Slide-out -->
-    <div class="offcanvas offcanvas-end shadow" tabindex="-1" id="addSurveyAssetOffcanvas" style="width: 450px;">
+    <!-- SURVEY ASSETS: Add to Catalog Slide-out -->
+    <div class="offcanvas offcanvas-end shadow" tabindex="-1" id="addSurveyCatalogOffcanvas" style="width: 450px;">
         <div class="offcanvas-header bg-light border-bottom">
-            <h5 class="offcanvas-title">Register Survey Asset</h5>
+            <h5 class="offcanvas-title">Add New Survey Equipment to Catalog</h5>
             <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
         </div>
         <div class="offcanvas-body">
-            <form th:action="@{/survey-assets/add}" method="post" id="addSurveyAssetForm"
-                enctype="multipart/form-data">
+            <form th:action="@{/survey-assets/catalog/add}" method="post" id="surveyCatalogForm">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                 <div class="mb-3">
-                    <label class="form-label fw-bold">Survey Asset Type <span class="required-indicator"
+                    <label class="form-label fw-bold">Category <span class="required-indicator"
                             aria-hidden="true">*</span></label>
-                    <select class="form-select" name="surveyAssetType" required>
-                        <option value="" selected disabled>Select survey asset type</option>
+                    <select class="form-select" name="category" required>
+                        <option value="" selected disabled>Select Category...</option>
                         <option th:each="type : ${surveyAssetTypes}" th:value="${type}" th:text="${type}"></option>
                     </select>
                 </div>
-                <div class="row mb-3">
-                    <div class="col-6"><label class="form-label fw-bold">Manufacturer <span
-                                class="required-indicator" aria-hidden="true">*</span></label><input type="text"
-                            class="form-control" name="manufacturer" placeholder="e.g. Trimble" required></div>
-                    <div class="col-6"><label class="form-label fw-bold">Model <span class="required-indicator"
-                                aria-hidden="true">*</span></label><input type="text" class="form-control"
-                            name="modelName" placeholder="e.g. R12i" required></div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Manufacturer / Make <span class="required-indicator"
+                            aria-hidden="true">*</span></label>
+                    <input type="text" class="form-control" name="manufacturer" placeholder="e.g. Trimble" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Model Name <span class="required-indicator"
+                            aria-hidden="true">*</span></label>
+                    <input type="text" class="form-control" name="modelName" placeholder="e.g. R12i" required>
+                </div>
+                <div class="mb-4 bg-light p-3 border rounded">
+                    <label class="form-label fw-bold mb-2">Technical Specifications</label>
+                    <input type="hidden" id="surveySpecifications" name="specifications" value="{}">
+                    <div id="survey-spec-rows-container"></div>
+                    <button type="button" class="btn btn-sm btn-outline-primary mt-2" id="addSurveySpecBtn">+ Add
+                        Detail</button>
+                </div>
+                <div class="d-grid gap-2 mt-4">
+                    <button type="submit" class="btn btn-primary">Save to Catalog</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- SURVEY ASSETS: Receive Survey Asset Slide-out -->
+    <div class="offcanvas offcanvas-end shadow" tabindex="-1" id="addSurveyAssetOffcanvas" style="width: 450px;">
+        <div class="offcanvas-header bg-light border-bottom">
+            <h5 class="offcanvas-title">Receive Survey Asset</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+        </div>
+        <div class="offcanvas-body">
+            <form th:action="@{/survey-assets/receive}" method="post" id="addSurveyAssetForm"
+                enctype="multipart/form-data">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                <div class="mb-3">
+                    <label class="form-label fw-bold text-muted small text-uppercase">Survey Equipment Model <span
+                            class="required-indicator" aria-hidden="true">*</span></label>
+                    <select class="form-select" name="catalogID" id="surveyReceiveCatalogSelect" required>
+                        <option value="" disabled selected>Select from Catalog...</option>
+                        <optgroup th:each="categoryEntry : ${surveyCatalogItemsByCategory}"
+                            th:label="${categoryEntry.key}">
+                            <option th:each="item : ${categoryEntry.value}" th:value="${item.catalogID}"
+                                th:text="${item.manufacturer + ' - ' + item.modelName}">
+                            </option>
+                        </optgroup>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold text-muted small text-uppercase">Quantity Received <span
+                            class="required-indicator" aria-hidden="true">*</span></label>
+                    <input type="number" class="form-control" id="surveyReceiveQuantity" name="quantity" value="1"
+                        min="1" required>
+                    <div class="form-text">Enter > 1 for bulk receiving. Asset Tags will be auto-generated.</div>
                 </div>
                 <div class="row mb-3">
                     <div class="col-6"><label class="form-label fw-bold">Asset Tag</label><input type="text"
-                            class="form-control" name="assetTag"></div>
+                            class="form-control" id="surveyReceiveAssetTag" name="assetTag"
+                            placeholder="Leave blank to auto-generate"></div>
                     <div class="col-6"><label class="form-label fw-bold">Serial Number</label><input type="text"
-                            class="form-control" name="serialNumber"></div>
-                </div>
-                <div class="row mb-3">
-                    <div class="col-6">
-                        <label class="form-label fw-bold">Administrative &amp; Legal Status <span
-                                class="required-indicator" aria-hidden="true">*</span></label>
-                        <select class="form-select" name="adminLegalStatus" required>
-                            <option value="" selected disabled>Select administrative/legal status</option>
-                            <option th:each="status : ${surveyAssetAdminLegalStatuses}" th:value="${status}"
-                                th:text="${status}"></option>
-                        </select>
-                    </div>
-                    <div class="col-6">
-                        <label class="form-label fw-bold">Operational Status <span class="required-indicator"
-                                aria-hidden="true">*</span></label>
-                        <select class="form-select" name="operationalStatus" required>
-                            <option value="" selected disabled>Select operational status</option>
-                            <option th:each="status : ${surveyAssetOperationalStatuses}" th:value="${status}"
-                                th:text="${status}"></option>
-                        </select>
-                    </div>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Condition Status <span class="required-indicator"
-                            aria-hidden="true">*</span></label>
-                    <select class="form-select" name="conditionStatus" required>
-                        <option value="" selected disabled>Select condition status</option>
-                        <option th:each="status : ${surveyAssetConditionStatuses}" th:value="${status}"
-                            th:text="${status}"></option>
-                    </select>
+                            class="form-control" id="surveyReceiveSerialNumber" name="serialNumber"></div>
                 </div>
                 <div class="row mb-3">
                     <div class="col-6"><label class="form-label fw-bold">Acquisition Date</label><input type="date"
@@ -763,7 +782,7 @@
                             type="date" class="form-control" name="calibrationDueDate"></div>
                 </div>
                 <div class="mb-3"><label class="form-label fw-bold">Remarks</label><textarea class="form-control"
-                        name="remarks" rows="2" placeholder="e.g. Initial registration details"></textarea></div>
+                        name="remarks" rows="2" placeholder="e.g. Delivery receipt notes..."></textarea></div>
                 <div class="mb-3"><label class="form-label fw-bold">Attach Documents</label><input type="file"
                         id="surveyAssetDocumentFilesInput" class="form-control js-document-upload-input"
                         name="documentFiles" multiple data-document-preview-target="surveyAssetDocumentPreview"
@@ -781,8 +800,8 @@
                     <ul id="surveyAssetDocumentPreview" class="list-group list-group-flush border rounded mt-2 small"
                         aria-live="polite"></ul>
                 </div>
-                <div class="d-grid gap-2"><button type="submit" class="btn btn-success">Register Survey
-                        Asset</button></div>
+                <div class="d-grid gap-2"><button type="submit" class="btn btn-primary">Receive into
+                        Storage</button></div>
             </form>
         </div>
     </div>

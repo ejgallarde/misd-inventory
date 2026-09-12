@@ -50,67 +50,109 @@ $(document).ready(function () {
     initDashboardTable('#surveyAssetActionRequiredTable', [[0, 'asc']],
         'No problematic survey assets found.');
 
-    const specOptions = [
-        'Processor (CPU)', 'Memory (RAM)', 'Storage (SSD/HDD)',
-        'Graphics (GPU)', 'Display/Resolution', 'Network/Wi-Fi',
-        'Ports', 'Battery', 'OS', 'Dimensions/Weight'
-    ];
-
-    document.getElementById('addSpecBtn').addEventListener('click', function () {
-        const container = document.getElementById('spec-rows-container');
-        const row = document.createElement('div');
-        row.className = 'input-group input-group-sm mb-2 spec-row';
-
-        let optionsHtml = '<option value="" selected disabled>Select...</option>';
-        specOptions.forEach(opt => {
-            optionsHtml += `<option value="${opt}">${opt}</option>`;
-        });
-
-        row.innerHTML = `
-            <select class="form-select spec-key" style="max-width: 40%;" required>
-                ${optionsHtml}
-            </select>
-            <input type="text" class="form-control spec-value" placeholder="Value" required>
-            <button class="btn btn-outline-danger remove-spec-btn" type="button" title="Remove row">X</button>
-        `;
-        container.appendChild(row);
-
-        row.querySelector('.remove-spec-btn').addEventListener('click', function () {
-            row.remove();
-        });
-    });
-
-    document.getElementById('catalogForm').addEventListener('submit', function (e) {
-        if (!this.checkValidity()) {
-            e.preventDefault();
-            this.classList.add('was-validated');
+    function wireCatalogSpecBuilder(options) {
+        const addBtn = document.getElementById(options.addBtnId);
+        const form = document.getElementById(options.formId);
+        if (!addBtn || !form) {
             return;
         }
 
-        const specRows = document.querySelectorAll('.spec-row');
-        const specObject = {};
+        addBtn.addEventListener('click', function () {
+            const container = document.getElementById(options.containerId);
+            const row = document.createElement('div');
+            row.className = 'input-group input-group-sm mb-2 spec-row';
 
-        specRows.forEach(row => {
-            const key = row.querySelector('.spec-key').value;
-            const value = row.querySelector('.spec-value').value;
-            if (key && value) {
-                specObject[key] = value;
-            }
+            let optionsHtml = '<option value="" selected disabled>Select...</option>';
+            options.specOptions.forEach(opt => {
+                optionsHtml += `<option value="${opt}">${opt}</option>`;
+            });
+
+            row.innerHTML = `
+                <select class="form-select spec-key" style="max-width: 40%;" required>
+                    ${optionsHtml}
+                </select>
+                <input type="text" class="form-control spec-value" placeholder="Value" required>
+                <button class="btn btn-outline-danger remove-spec-btn" type="button" title="Remove row">X</button>
+            `;
+            container.appendChild(row);
+
+            row.querySelector('.remove-spec-btn').addEventListener('click', function () {
+                row.remove();
+            });
         });
 
-        document.getElementById('specifications').value = JSON.stringify(specObject);
+        form.addEventListener('submit', function (e) {
+            if (!this.checkValidity()) {
+                e.preventDefault();
+                this.classList.add('was-validated');
+                return;
+            }
+
+            const specRows = document.querySelectorAll(`#${options.containerId} .spec-row`);
+            const specObject = {};
+
+            specRows.forEach(row => {
+                const key = row.querySelector('.spec-key').value;
+                const value = row.querySelector('.spec-value').value;
+                if (key && value) {
+                    specObject[key] = value;
+                }
+            });
+
+            document.getElementById(options.hiddenInputId).value = JSON.stringify(specObject);
+        });
+    }
+
+    wireCatalogSpecBuilder({
+        addBtnId: 'addSpecBtn',
+        containerId: 'spec-rows-container',
+        formId: 'catalogForm',
+        hiddenInputId: 'specifications',
+        specOptions: [
+            'Processor (CPU)', 'Memory (RAM)', 'Storage (SSD/HDD)',
+            'Graphics (GPU)', 'Display/Resolution', 'Network/Wi-Fi',
+            'Ports', 'Battery', 'OS', 'Dimensions/Weight'
+        ]
     });
 
-    $('#receiveQuantity').on('input', function () {
-        const qty = parseInt($(this).val()) || 1;
+    wireCatalogSpecBuilder({
+        addBtnId: 'addSurveySpecBtn',
+        containerId: 'survey-spec-rows-container',
+        formId: 'surveyCatalogForm',
+        hiddenInputId: 'surveySpecifications',
+        specOptions: [
+            'Accuracy', 'Measurement Range', 'Frequency/Channels', 'Battery Life',
+            'Data Storage', 'Connectivity', 'Operating Temperature', 'Weight',
+            'Included Accessories'
+        ]
+    });
 
-        if (qty > 1) {
-            $('#receiveAssetTag').prop('disabled', true).val('').attr('placeholder', 'Auto-generated for bulk entry');
-            $('#receiveSerialNumber').prop('disabled', true).val('').attr('placeholder', 'Disabled for bulk entry');
-        } else {
-            $('#receiveAssetTag').prop('disabled', false).attr('placeholder', 'Leave blank to auto-generate');
-            $('#receiveSerialNumber').prop('disabled', false).attr('placeholder', '');
-        }
+    function wireBulkReceiveQuantityToggle(options) {
+        $(`#${options.quantityInputId}`).on('input', function () {
+            const qty = parseInt($(this).val()) || 1;
+            const $tagInput = $(`#${options.tagInputId}`);
+            const $serialInput = $(`#${options.serialInputId}`);
+
+            if (qty > 1) {
+                $tagInput.prop('disabled', true).val('').attr('placeholder', 'Auto-generated for bulk entry');
+                $serialInput.prop('disabled', true).val('').attr('placeholder', 'Disabled for bulk entry');
+            } else {
+                $tagInput.prop('disabled', false).attr('placeholder', 'Leave blank to auto-generate');
+                $serialInput.prop('disabled', false).attr('placeholder', '');
+            }
+        });
+    }
+
+    wireBulkReceiveQuantityToggle({
+        quantityInputId: 'receiveQuantity',
+        tagInputId: 'receiveAssetTag',
+        serialInputId: 'receiveSerialNumber'
+    });
+
+    wireBulkReceiveQuantityToggle({
+        quantityInputId: 'surveyReceiveQuantity',
+        tagInputId: 'surveyReceiveAssetTag',
+        serialInputId: 'surveyReceiveSerialNumber'
     });
 
     function validateFileInputBeforeSubmit(input) {
@@ -211,6 +253,10 @@ $(document).ready(function () {
         if (this.id === 'receiveAssetOffcanvas') {
             $('#receiveAssetTag').prop('disabled', false).attr('placeholder', 'Leave blank to auto-generate');
             $('#receiveSerialNumber').prop('disabled', false).attr('placeholder', '');
+        }
+        if (this.id === 'addSurveyAssetOffcanvas') {
+            $('#surveyReceiveAssetTag').prop('disabled', false).attr('placeholder', 'Leave blank to auto-generate');
+            $('#surveyReceiveSerialNumber').prop('disabled', false).attr('placeholder', '');
         }
     });
 

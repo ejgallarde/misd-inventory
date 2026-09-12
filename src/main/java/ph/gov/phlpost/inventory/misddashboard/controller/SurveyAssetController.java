@@ -1,7 +1,9 @@
 package ph.gov.phlpost.inventory.misddashboard.controller;
 
 import ph.gov.phlpost.inventory.misddashboard.model.SurveyAsset;
+import ph.gov.phlpost.inventory.misddashboard.model.SurveyEquipmentCatalog;
 import ph.gov.phlpost.inventory.misddashboard.repository.SurveyAssetRepository;
+import ph.gov.phlpost.inventory.misddashboard.repository.SurveyEquipmentCatalogRepository;
 import ph.gov.phlpost.inventory.misddashboard.service.AssetHistoryService;
 import ph.gov.phlpost.inventory.misddashboard.service.DocumentService;
 import ph.gov.phlpost.inventory.misddashboard.service.RegistryService;
@@ -10,8 +12,10 @@ import ph.gov.phlpost.inventory.misddashboard.util.TextUtils;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -20,15 +24,22 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
+
 @Controller
 @RequestMapping("/survey-assets")
 public class SurveyAssetController {
 
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(SurveyAssetController.class);
+
     private final SurveyAssetRepository surveyAssetRepo;
+    private final SurveyEquipmentCatalogRepository surveyCatalogRepo;
     private final SurveyAssetService surveyAssetService;
     private final RegistryService registryService;
     private final DocumentService documentService;
     private final AssetHistoryService assetHistoryService;
+    private final JsonMapper jsonMapper;
 
     @Value("${document.upload.max-size-mb:15}")
     private int documentUploadMaxSizeMb;
@@ -39,9 +50,6 @@ public class SurveyAssetController {
     @Value("${document.upload.categories.surveyasset}")
     private String surveyAssetDocumentUploadCategoriesCsv;
 
-    @Value("#{'${dropdown.surveyasset-types}'.split(',')}")
-    private List<String> surveyAssetTypes;
-
     @Value("#{'${dropdown.surveyasset-admin-legal-statuses}'.split(',')}")
     private List<String> surveyAssetAdminLegalStatuses;
 
@@ -51,15 +59,20 @@ public class SurveyAssetController {
     @Value("#{'${dropdown.surveyasset-condition-statuses}'.split(',')}")
     private List<String> surveyAssetConditionStatuses;
 
-    public SurveyAssetController(SurveyAssetRepository surveyAssetRepo, SurveyAssetService surveyAssetService,
+    public SurveyAssetController(SurveyAssetRepository surveyAssetRepo,
+            SurveyEquipmentCatalogRepository surveyCatalogRepo,
+            SurveyAssetService surveyAssetService,
             RegistryService registryService,
             DocumentService documentService,
-            AssetHistoryService assetHistoryService) {
+            AssetHistoryService assetHistoryService,
+            JsonMapper jsonMapper) {
         this.surveyAssetRepo = surveyAssetRepo;
+        this.surveyCatalogRepo = surveyCatalogRepo;
         this.surveyAssetService = surveyAssetService;
         this.registryService = registryService;
         this.documentService = documentService;
         this.assetHistoryService = assetHistoryService;
+        this.jsonMapper = jsonMapper;
     }
 
     @GetMapping
@@ -74,83 +87,67 @@ public class SurveyAssetController {
                 TextUtils.splitCsv(surveyAssetDocumentUploadCategoriesCsv).stream()
                         .sorted(String.CASE_INSENSITIVE_ORDER)
                         .toList());
-        model.addAttribute("surveyAssetTypes", surveyAssetTypes.stream()
-                .sorted(String.CASE_INSENSITIVE_ORDER)
-                .toList());
+        model.addAttribute("surveyCatalogMap", registryService.getSurveyCatalogMap());
         model.addAttribute("surveyAssetAdminLegalStatuses", surveyAssetAdminLegalStatuses);
         model.addAttribute("surveyAssetOperationalStatuses", surveyAssetOperationalStatuses);
         model.addAttribute("surveyAssetConditionStatuses", surveyAssetConditionStatuses);
         return "survey-assets";
     }
 
-    @PostMapping("/add")
-    public String registerSurveyAsset(@ModelAttribute SurveyAsset newSurveyAsset,
+    @PostMapping("/catalog/add")
+    @CacheEvict(value = "surveyCatalogMap", allEntries = true)
+    public String addSurveyCatalog(@ModelAttribute SurveyEquipmentCatalog newCatalog,
+            RedirectAttributes redirectAttributes) {
+        surveyCatalogRepo.save(newCatalog);
+        redirectAttributes.addFlashAttribute("successMessage", "Survey equipment catalog updated.");
+        return "redirect:/";
+    }
+
+    @PostMapping("/receive")
+    public String receiveSurveyAsset(
+            @ModelAttribute SurveyAsset baseAsset,
+            @RequestParam(defaultValue = "1") int quantity,
             @RequestParam(value = "documentFiles", required = false) MultipartFile[] documentFiles,
             @RequestParam(value = "documentCategories", required = false) String[] documentCategories,
             Authentication authentication,
             RedirectAttributes redirectAttributes) {
-        // Registration does not set a custodian; this is handled by lifecycle actions.
-        newSurveyAsset.setAssignedCustodianID(null);
 
-        String validationError = validateSurveyAssetRegistration(newSurveyAsset);
-        if (validationError != null) {
-            redirectAttributes.addFlashAttribute("errorMessage", validationError);
+        String performedBy = authentication != null ? authentication.getName() : "SYSTEM";
+        List<SurveyAsset> created;
+
+        try {
+            created = surveyAssetService.receiveSurveyAssets(baseAsset, quantity, performedBy);
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
             return "redirect:/";
         }
 
-        if (newSurveyAsset.getAdminLegalStatus() == null || newSurveyAsset.getAdminLegalStatus().isBlank()) {
-            newSurveyAsset.setAdminLegalStatus("Registered/Accountable");
-        }
-        if (newSurveyAsset.getOperationalStatus() == null || newSurveyAsset.getOperationalStatus().isBlank()) {
-            newSurveyAsset.setOperationalStatus("Available/Idle");
-        }
-        if (newSurveyAsset.getConditionStatus() == null || newSurveyAsset.getConditionStatus().isBlank()) {
-            newSurveyAsset.setConditionStatus("Operational");
-        }
+        String successMessage = "Successfully received " + created.size() + " survey asset(s) into storage.";
 
-        surveyAssetRepo.save(newSurveyAsset);
-
-        if (documentService.hasFiles(documentFiles) && newSurveyAsset.getSurveyAssetID() != null) {
+        if (documentService.hasFiles(documentFiles)) {
             String uploadedBy = authentication != null ? authentication.getName() : "SystemUser";
             try {
-                documentService.uploadAndSaveDocuments(
-                        documentFiles,
-                        "SURVEY_ASSET",
-                        String.valueOf(newSurveyAsset.getSurveyAssetID()),
-                        documentCategories,
-                        uploadedBy);
+                for (SurveyAsset asset : created) {
+                    documentService.uploadAndSaveDocuments(
+                            documentFiles,
+                            "SURVEY_ASSET",
+                            String.valueOf(asset.getSurveyAssetID()),
+                            documentCategories,
+                            uploadedBy);
+                }
+                if (created.size() > 1) {
+                    successMessage += " Documents attached to all created records: "
+                            + created.stream().map(SurveyAsset::getAssetTag).collect(Collectors.joining(", ")) + ".";
+                }
             } catch (Exception e) {
                 redirectAttributes.addFlashAttribute("errorMessage",
-                        "Survey asset saved, but document upload failed: " + e.getMessage());
+                        "Survey assets were saved, but document upload failed: " + e.getMessage());
                 return "redirect:/";
             }
         }
 
-        redirectAttributes.addFlashAttribute("successMessage",
-                "Success! Survey asset registered.");
+        redirectAttributes.addFlashAttribute("successMessage", successMessage);
         return "redirect:/";
-    }
-
-    private String validateSurveyAssetRegistration(SurveyAsset asset) {
-        if (TextUtils.isBlank(asset.getSurveyAssetType())) {
-            return "Survey asset type is required.";
-        }
-        if (TextUtils.isBlank(asset.getManufacturer())) {
-            return "Manufacturer is required.";
-        }
-        if (TextUtils.isBlank(asset.getModelName())) {
-            return "Model is required.";
-        }
-        if (TextUtils.isBlank(asset.getAdminLegalStatus())) {
-            return "Administrative & Legal Status is required.";
-        }
-        if (TextUtils.isBlank(asset.getOperationalStatus())) {
-            return "Operational Status is required.";
-        }
-        if (TextUtils.isBlank(asset.getConditionStatus())) {
-            return "Condition Status is required.";
-        }
-        return null;
     }
 
     @PostMapping("/assign")
@@ -272,6 +269,7 @@ public class SurveyAssetController {
             // Read-only: opening the detail panel must not change the record.
             SurveyAsset asset = surveyAssetService.findSurveyAsset(id);
             SurveyAssetService.SurveyAssetStatusFlags statusFlags = SurveyAssetService.deriveStatusFlags(asset);
+            SurveyEquipmentCatalog catalog = registryService.getSurveyCatalogMap().get(asset.getCatalogID());
 
             String assignedCustodianId = asset.getAssignedCustodianID();
             String assignedCustodianName = registryService.resolveDisplayName(assignedCustodianId);
@@ -281,11 +279,16 @@ public class SurveyAssetController {
 
             Map<String, Object> response = Map.ofEntries(
                     Map.entry("surveyAssetID", asset.getSurveyAssetID()),
-                    Map.entry("surveyAssetType", asset.getSurveyAssetType() == null ? "" : asset.getSurveyAssetType()),
+                    Map.entry("catalogID", asset.getCatalogID() == null ? "" : asset.getCatalogID()),
+                    Map.entry("catalogCategory", catalog == null || catalog.getCategory() == null ? "" : catalog.getCategory()),
+                    Map.entry("catalogManufacturer",
+                            catalog == null || catalog.getManufacturer() == null ? "" : catalog.getManufacturer()),
+                    Map.entry("catalogModelName",
+                            catalog == null || catalog.getModelName() == null ? "" : catalog.getModelName()),
+                    Map.entry("catalogSpecifications",
+                            formatSpecifications(catalog == null ? null : catalog.getSpecifications())),
                     Map.entry("assetTag", asset.getAssetTag() == null ? "" : asset.getAssetTag()),
                     Map.entry("serialNumber", asset.getSerialNumber() == null ? "" : asset.getSerialNumber()),
-                    Map.entry("manufacturer", asset.getManufacturer() == null ? "" : asset.getManufacturer()),
-                    Map.entry("modelName", asset.getModelName() == null ? "" : asset.getModelName()),
                     Map.entry("acquisitionDate",
                             asset.getAcquisitionDate() == null ? "" : asset.getAcquisitionDate()),
                     Map.entry("cost", asset.getCost() == null ? "" : asset.getCost()),
@@ -339,6 +342,20 @@ public class SurveyAssetController {
         }
         if (TextUtils.isBlank(asset.getSerialNumber())) {
             asset.setSerialNumber(null);
+        }
+    }
+
+    private String formatSpecifications(String specifications) {
+        if (specifications == null || specifications.isBlank()) {
+            return null;
+        }
+
+        try {
+            JsonNode jsonNode = jsonMapper.readTree(specifications);
+            return jsonMapper.writerWithDefaultPrettyPrinter().writeValueAsString(jsonNode);
+        } catch (Exception ex) {
+            log.warn("Failed to pretty-print survey catalog specifications JSON, returning raw value", ex);
+            return specifications;
         }
     }
 }

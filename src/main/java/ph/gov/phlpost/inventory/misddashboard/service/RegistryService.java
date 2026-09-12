@@ -3,8 +3,10 @@ package ph.gov.phlpost.inventory.misddashboard.service;
 import ph.gov.phlpost.inventory.misddashboard.model.EquipmentCatalog;
 import ph.gov.phlpost.inventory.misddashboard.model.Personnel;
 import ph.gov.phlpost.inventory.misddashboard.model.PersonnelBaseLocation;
+import ph.gov.phlpost.inventory.misddashboard.model.SurveyEquipmentCatalog;
 import ph.gov.phlpost.inventory.misddashboard.repository.EquipmentCatalogRepository;
 import ph.gov.phlpost.inventory.misddashboard.repository.PersonnelRepository;
+import ph.gov.phlpost.inventory.misddashboard.repository.SurveyEquipmentCatalogRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -22,12 +24,15 @@ public class RegistryService {
 
     private final PersonnelRepository personnelRepository;
     private final EquipmentCatalogRepository catalogRepository;
+    private final SurveyEquipmentCatalogRepository surveyCatalogRepository;
     private final String supplierOwnerId;
 
     public RegistryService(PersonnelRepository personnelRepository, EquipmentCatalogRepository catalogRepository,
+            SurveyEquipmentCatalogRepository surveyCatalogRepository,
             @Value("${asset.workflow.supplier-owner-id:SUPPLIER}") String supplierOwnerId) {
         this.personnelRepository = personnelRepository;
         this.catalogRepository = catalogRepository;
+        this.surveyCatalogRepository = surveyCatalogRepository;
         this.supplierOwnerId = supplierOwnerId;
     }
 
@@ -57,6 +62,21 @@ public class RegistryService {
         return catalogRepository.findAll().stream()
                 .sorted(Comparator
                         .comparing((EquipmentCatalog c) -> normalize(c.getManufacturer()))
+                        .thenComparing(c -> normalize(c.getModelName()))
+                        .thenComparing(c -> c.getCatalogID()))
+                .collect(Collectors.toMap(
+                        c -> c.getCatalogID(),
+                        c -> c,
+                        (existing, replacement) -> existing,
+                        LinkedHashMap::new));
+    }
+
+    // Caches the survey equipment catalog items
+    @Cacheable("surveyCatalogMap")
+    public Map<Integer, SurveyEquipmentCatalog> getSurveyCatalogMap() {
+        return surveyCatalogRepository.findAll().stream()
+                .sorted(Comparator
+                        .comparing((SurveyEquipmentCatalog c) -> normalize(c.getManufacturer()))
                         .thenComparing(c -> normalize(c.getModelName()))
                         .thenComparing(c -> c.getCatalogID()))
                 .collect(Collectors.toMap(
