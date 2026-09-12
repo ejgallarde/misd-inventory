@@ -40,7 +40,8 @@ Purpose: Track controller endpoint ownership and internal callers (template form
 | Method | Route | Owning Controller | Internal Caller Type | Internal Callers | Status |
 |---|---|---|---|---|---|
 | GET | /fleet | FleetController | Link | templates/dashboard.html (Fleet card href) | Active |
-| POST | /fleet/add | FleetController | Form submit | templates/dashboard.html (Register Vehicle form) | Active |
+| POST | /fleet/catalog/add | FleetController | Form submit | templates/dashboard.html (Add to Catalog form) | Active |
+| POST | /fleet/add | FleetController | Form submit | templates/dashboard.html (Register Vehicle form; takes catalogID since the catalog was added, no batching — plate/engine/chassis/body numbers are real-world unique identifiers) | Active |
 | POST | /fleet/assign | FleetController | Form submit | fragments/fleet-table.html → templates/fleet.html (Assign modal) | Active |
 | POST | /fleet/return | FleetController | Form submit | fragments/fleet-table.html → templates/fleet.html (Return modal) | Active |
 | POST | /fleet/retire | FleetController | Form submit | fragments/fleet-table.html → templates/fleet.html (Retire modal) | Active |

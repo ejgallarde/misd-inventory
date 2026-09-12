@@ -1,10 +1,12 @@
 package ph.gov.phlpost.inventory.misddashboard.service;
 
 import ph.gov.phlpost.inventory.misddashboard.model.EquipmentCatalog;
+import ph.gov.phlpost.inventory.misddashboard.model.FleetVehicleCatalog;
 import ph.gov.phlpost.inventory.misddashboard.model.Personnel;
 import ph.gov.phlpost.inventory.misddashboard.model.PersonnelBaseLocation;
 import ph.gov.phlpost.inventory.misddashboard.model.SurveyEquipmentCatalog;
 import ph.gov.phlpost.inventory.misddashboard.repository.EquipmentCatalogRepository;
+import ph.gov.phlpost.inventory.misddashboard.repository.FleetVehicleCatalogRepository;
 import ph.gov.phlpost.inventory.misddashboard.repository.PersonnelRepository;
 import ph.gov.phlpost.inventory.misddashboard.repository.SurveyEquipmentCatalogRepository;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,14 +27,17 @@ public class RegistryService {
     private final PersonnelRepository personnelRepository;
     private final EquipmentCatalogRepository catalogRepository;
     private final SurveyEquipmentCatalogRepository surveyCatalogRepository;
+    private final FleetVehicleCatalogRepository fleetCatalogRepository;
     private final String supplierOwnerId;
 
     public RegistryService(PersonnelRepository personnelRepository, EquipmentCatalogRepository catalogRepository,
             SurveyEquipmentCatalogRepository surveyCatalogRepository,
+            FleetVehicleCatalogRepository fleetCatalogRepository,
             @Value("${asset.workflow.supplier-owner-id:SUPPLIER}") String supplierOwnerId) {
         this.personnelRepository = personnelRepository;
         this.catalogRepository = catalogRepository;
         this.surveyCatalogRepository = surveyCatalogRepository;
+        this.fleetCatalogRepository = fleetCatalogRepository;
         this.supplierOwnerId = supplierOwnerId;
     }
 
@@ -77,6 +82,21 @@ public class RegistryService {
         return surveyCatalogRepository.findAll().stream()
                 .sorted(Comparator
                         .comparing((SurveyEquipmentCatalog c) -> normalize(c.getManufacturer()))
+                        .thenComparing(c -> normalize(c.getModelName()))
+                        .thenComparing(c -> c.getCatalogID()))
+                .collect(Collectors.toMap(
+                        c -> c.getCatalogID(),
+                        c -> c,
+                        (existing, replacement) -> existing,
+                        LinkedHashMap::new));
+    }
+
+    // Caches the fleet vehicle catalog items
+    @Cacheable("fleetCatalogMap")
+    public Map<Integer, FleetVehicleCatalog> getFleetCatalogMap() {
+        return fleetCatalogRepository.findAll().stream()
+                .sorted(Comparator
+                        .comparing((FleetVehicleCatalog c) -> normalize(c.getManufacturer()))
                         .thenComparing(c -> normalize(c.getModelName()))
                         .thenComparing(c -> c.getCatalogID()))
                 .collect(Collectors.toMap(

@@ -12,6 +12,16 @@
         <div class="offcanvas-body bg-light">
             <form id="fleetEditForm">
                 <input type="hidden" id="editFleetVehicleID" name="vehicleID">
+                <div class="row g-3 mb-3 fleet-detail-view-only">
+                    <div class="col-12">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-body">
+                                <div class="text-uppercase fw-bold text-muted small mb-2">Catalog Details</div>
+                                <div id="fleetCatalogSummary" class="small"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 <div class="row g-3">
                     <div class="col-md-6">
                         <label class="form-label fw-bold text-muted small text-uppercase">Plate Number</label>
@@ -19,22 +29,6 @@
                         </div>
                         <input type="text" id="editFleetPlateNumber" data-lockonce-input="plateNumber"
                             class="form-control fleet-lockonce-input d-none" disabled placeholder="Enter plate number">
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label fw-bold text-muted small text-uppercase">Vehicle Type</label>
-                        <div id="fleetDetailType" class="form-control-plaintext"></div>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label fw-bold text-muted small text-uppercase">Make</label>
-                        <div id="fleetDetailMake" class="form-control-plaintext" data-lockonce-view="make"></div>
-                        <input type="text" id="editFleetMake" data-lockonce-input="make"
-                            class="form-control fleet-lockonce-input d-none" disabled placeholder="e.g. Toyota">
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label fw-bold text-muted small text-uppercase">Model</label>
-                        <div id="fleetDetailModel" class="form-control-plaintext" data-lockonce-view="model"></div>
-                        <input type="text" id="editFleetModel" data-lockonce-input="model"
-                            class="form-control fleet-lockonce-input d-none" disabled placeholder="e.g. Hi-Lux">
                     </div>
                     <div class="col-md-6">
                         <label class="form-label fw-bold text-muted small text-uppercase">Year Model</label>

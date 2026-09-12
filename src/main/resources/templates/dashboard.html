@@ -187,8 +187,10 @@
 
                 <!-- Tab Specific Actions -->
                 <div class="d-flex justify-content-end mb-3 gap-2">
-                    <button class="btn btn-success shadow-sm" type="button" data-bs-toggle="offcanvas"
+                    <button class="btn btn-primary shadow-sm" type="button" data-bs-toggle="offcanvas"
                         data-bs-target="#addVehicleOffcanvas">+ Register Vehicle</button>
+                    <button class="btn btn-success shadow-sm" type="button" data-bs-toggle="offcanvas"
+                        data-bs-target="#addFleetCatalogOffcanvas">+ Add to Catalog</button>
                 </div>
 
                 <section class="asset-portfolio mb-4" aria-labelledby="vehiclePortfolioTitle">
@@ -569,6 +571,48 @@
         </div>
     </div>
 
+    <!-- FLEET: Add to Catalog Slide-out -->
+    <div class="offcanvas offcanvas-end shadow" tabindex="-1" id="addFleetCatalogOffcanvas" style="width: 450px;">
+        <div class="offcanvas-header bg-light border-bottom">
+            <h5 class="offcanvas-title">Add New Fleet Vehicle to Catalog</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+        </div>
+        <div class="offcanvas-body">
+            <form th:action="@{/fleet/catalog/add}" method="post" id="fleetCatalogForm">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Vehicle Type <span class="required-indicator"
+                            aria-hidden="true">*</span></label>
+                    <select class="form-select" name="category" required>
+                        <option value="" selected disabled>Select vehicle type</option>
+                        <option th:each="vehicleType : ${vehicleTypes}" th:value="${vehicleType}"
+                            th:text="${vehicleType}"></option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Make <span class="required-indicator"
+                            aria-hidden="true">*</span></label>
+                    <input type="text" class="form-control" name="manufacturer" placeholder="e.g. Toyota" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Model <span class="required-indicator"
+                            aria-hidden="true">*</span></label>
+                    <input type="text" class="form-control" name="modelName" placeholder="e.g. Hiace" required>
+                </div>
+                <div class="mb-4 bg-light p-3 border rounded">
+                    <label class="form-label fw-bold mb-2">Technical Specifications</label>
+                    <input type="hidden" id="fleetSpecifications" name="specifications" value="{}">
+                    <div id="fleet-spec-rows-container"></div>
+                    <button type="button" class="btn btn-sm btn-outline-primary mt-2" id="addFleetSpecBtn">+ Add
+                        Detail</button>
+                </div>
+                <div class="d-grid gap-2 mt-4">
+                    <button type="submit" class="btn btn-primary">Save to Catalog</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- FLEET: Register Vehicle Slide-out -->
     <div class="offcanvas offcanvas-end shadow" tabindex="-1" id="addVehicleOffcanvas" style="width: 450px;">
         <div class="offcanvas-header bg-light border-bottom">
@@ -582,22 +626,18 @@
                     <div class="col-6"><label class="form-label fw-bold">Plate Number</label><input type="text"
                             class="form-control" name="plateNumber"></div>
                     <div class="col-6">
-                        <label class="form-label fw-bold">Vehicle Type <span class="required-indicator"
+                        <label class="form-label fw-bold">Vehicle Model <span class="required-indicator"
                                 aria-hidden="true">*</span></label>
-                        <select class="form-select" name="vehicleType" required>
-                            <option value="" selected disabled>Select vehicle type</option>
-                            <option th:each="vehicleType : ${vehicleTypes}" th:value="${vehicleType}"
-                                th:text="${vehicleType}"></option>
+                        <select class="form-select" name="catalogID" required>
+                            <option value="" disabled selected>Select from Catalog...</option>
+                            <optgroup th:each="categoryEntry : ${fleetCatalogItemsByCategory}"
+                                th:label="${categoryEntry.key}">
+                                <option th:each="item : ${categoryEntry.value}" th:value="${item.catalogID}"
+                                    th:text="${item.manufacturer + ' - ' + item.modelName}">
+                                </option>
+                            </optgroup>
                         </select>
                     </div>
-                </div>
-                <div class="row mb-3">
-                    <div class="col-5"><label class="form-label fw-bold">Make <span class="required-indicator"
-                                aria-hidden="true">*</span></label><input type="text" class="form-control" name="make"
-                            placeholder="e.g. Toyota" required></div>
-                    <div class="col-7"><label class="form-label fw-bold">Model <span class="required-indicator"
-                                aria-hidden="true">*</span></label><input type="text" class="form-control" name="model"
-                            placeholder="e.g. Hiace" required></div>
                 </div>
                 <div class="row mb-3">
                     <div class="col-6"><label class="form-label fw-bold">Year Model <span class="required-indicator"

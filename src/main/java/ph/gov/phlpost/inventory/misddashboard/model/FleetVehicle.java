@@ -13,20 +13,14 @@ public class FleetVehicle {
     @Column(name = "VehicleID")
     private Integer vehicleID;
 
+    @Column(name = "CatalogID", nullable = false)
+    private Integer catalogID;
+
     @Column(name = "PlateNumber", unique = true, nullable = true)
     private String plateNumber;
 
     @Column(name = "BodyNumber", unique = true, nullable = true)
     private String bodyNumber;
-
-    @Column(name = "VehicleType", nullable = true)
-    private String vehicleType;
-
-    @Column(name = "Make", nullable = true)
-    private String make;
-
-    @Column(name = "Model", nullable = true)
-    private String model;
 
     @Column(name = "ManufactureYear")
     private Integer manufactureYear;
@@ -91,28 +85,12 @@ public class FleetVehicle {
         this.plateNumber = plateNumber;
     }
 
-    public String getVehicleType() {
-        return vehicleType;
+    public Integer getCatalogID() {
+        return catalogID;
     }
 
-    public void setVehicleType(String vehicleType) {
-        this.vehicleType = vehicleType;
-    }
-
-    public String getMake() {
-        return make;
-    }
-
-    public void setMake(String make) {
-        this.make = make;
-    }
-
-    public String getModel() {
-        return model;
-    }
-
-    public void setModel(String model) {
-        this.model = model;
+    public void setCatalogID(Integer catalogID) {
+        this.catalogID = catalogID;
     }
 
     public Integer getManufactureYear() {

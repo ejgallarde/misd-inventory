@@ -17,17 +17,23 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import ph.gov.phlpost.inventory.misddashboard.model.FleetVehicle;
+import ph.gov.phlpost.inventory.misddashboard.repository.FleetVehicleCatalogRepository;
 import ph.gov.phlpost.inventory.misddashboard.repository.FleetVehicleRepository;
 import ph.gov.phlpost.inventory.misddashboard.service.AssetHistoryService;
 import ph.gov.phlpost.inventory.misddashboard.service.DocumentService;
 import ph.gov.phlpost.inventory.misddashboard.service.FleetService;
 import ph.gov.phlpost.inventory.misddashboard.service.RegistryService;
 
+import tools.jackson.databind.json.JsonMapper;
+
 @ExtendWith(MockitoExtension.class)
 class FleetControllerTest {
 
     @Mock
     private FleetVehicleRepository fleetRepo;
+
+    @Mock
+    private FleetVehicleCatalogRepository fleetCatalogRepo;
 
     @Mock
     private FleetService fleetService;
@@ -40,6 +46,9 @@ class FleetControllerTest {
 
     @Mock
     private AssetHistoryService assetHistoryService;
+
+    @Mock
+    private JsonMapper jsonMapper;
 
     @InjectMocks
     private FleetController controller;

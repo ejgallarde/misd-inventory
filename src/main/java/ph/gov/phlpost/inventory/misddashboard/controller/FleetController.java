@@ -1,6 +1,8 @@
 package ph.gov.phlpost.inventory.misddashboard.controller;
 
 import ph.gov.phlpost.inventory.misddashboard.model.FleetVehicle;
+import ph.gov.phlpost.inventory.misddashboard.model.FleetVehicleCatalog;
+import ph.gov.phlpost.inventory.misddashboard.repository.FleetVehicleCatalogRepository;
 import ph.gov.phlpost.inventory.misddashboard.repository.FleetVehicleRepository;
 import ph.gov.phlpost.inventory.misddashboard.service.AssetHistoryService;
 import ph.gov.phlpost.inventory.misddashboard.service.DocumentService;
@@ -13,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -21,15 +24,22 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
+
 @Controller
 @RequestMapping("/fleet")
 public class FleetController {
 
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(FleetController.class);
+
     private final FleetVehicleRepository fleetRepo;
+    private final FleetVehicleCatalogRepository fleetCatalogRepo;
     private final FleetService fleetService;
     private final RegistryService registryService;
     private final DocumentService documentService;
     private final AssetHistoryService assetHistoryService;
+    private final JsonMapper jsonMapper;
 
     @Value("${document.upload.max-size-mb:15}")
     private int documentUploadMaxSizeMb;
@@ -55,15 +65,20 @@ public class FleetController {
     @Value("#{'${dropdown.fuel-types}'.split(',')}")
     private List<String> fleetFuelTypes;
 
-    public FleetController(FleetVehicleRepository fleetRepo, FleetService fleetService,
+    public FleetController(FleetVehicleRepository fleetRepo,
+            FleetVehicleCatalogRepository fleetCatalogRepo,
+            FleetService fleetService,
             RegistryService registryService,
             DocumentService documentService,
-            AssetHistoryService assetHistoryService) {
+            AssetHistoryService assetHistoryService,
+            JsonMapper jsonMapper) {
         this.fleetRepo = fleetRepo;
+        this.fleetCatalogRepo = fleetCatalogRepo;
         this.fleetService = fleetService;
         this.registryService = registryService;
         this.documentService = documentService;
         this.assetHistoryService = assetHistoryService;
+        this.jsonMapper = jsonMapper;
     }
 
     @GetMapping
@@ -82,7 +97,17 @@ public class FleetController {
         model.addAttribute("fleetMaintenanceStatuses", fleetMaintenanceStatuses);
         model.addAttribute("fleetVehicleYears", fleetVehicleYears);
         model.addAttribute("fleetFuelTypes", fleetFuelTypes);
+        model.addAttribute("fleetCatalogMap", registryService.getFleetCatalogMap());
         return "fleet";
+    }
+
+    @PostMapping("/catalog/add")
+    @CacheEvict(value = "fleetCatalogMap", allEntries = true)
+    public String addFleetCatalog(@ModelAttribute FleetVehicleCatalog newCatalog,
+            RedirectAttributes redirectAttributes) {
+        fleetCatalogRepo.save(newCatalog);
+        redirectAttributes.addFlashAttribute("successMessage", "Fleet vehicle catalog updated.");
+        return "redirect:/";
     }
 
     @PostMapping("/add")
@@ -134,14 +159,8 @@ public class FleetController {
     }
 
     private String validateVehicleRegistration(FleetVehicle vehicle) {
-        if (TextUtils.isBlank(vehicle.getVehicleType())) {
-            return "Vehicle type is required.";
-        }
-        if (TextUtils.isBlank(vehicle.getMake())) {
-            return "Make is required.";
-        }
-        if (TextUtils.isBlank(vehicle.getModel())) {
-            return "Model is required.";
+        if (vehicle.getCatalogID() == null) {
+            return "Vehicle model is required.";
         }
         if (vehicle.getManufactureYear() == null) {
             return "Manufacture year is required.";
@@ -297,6 +316,7 @@ public class FleetController {
             // Read-only: opening the detail panel must not change the record.
             FleetVehicle vehicle = fleetService.findVehicle(id);
             FleetService.VehicleStatusFlags statusFlags = FleetService.deriveStatusFlags(vehicle);
+            FleetVehicleCatalog catalog = registryService.getFleetCatalogMap().get(vehicle.getCatalogID());
 
             String assignedDriverId = vehicle.getAssignedDriverID();
             String assignedDriverName = registryService.resolveDisplayName(assignedDriverId);
@@ -308,9 +328,14 @@ public class FleetController {
                     Map.entry("vehicleID", vehicle.getVehicleID()),
                     Map.entry("plateNumber", vehicle.getPlateNumber() == null ? "" : vehicle.getPlateNumber()),
                     Map.entry("bodyNumber", vehicle.getBodyNumber() == null ? "" : vehicle.getBodyNumber()),
-                    Map.entry("vehicleType", vehicle.getVehicleType() == null ? "" : vehicle.getVehicleType()),
-                    Map.entry("make", vehicle.getMake() == null ? "" : vehicle.getMake()),
-                    Map.entry("model", vehicle.getModel() == null ? "" : vehicle.getModel()),
+                    Map.entry("catalogID", vehicle.getCatalogID() == null ? "" : vehicle.getCatalogID()),
+                    Map.entry("catalogCategory", catalog == null || catalog.getCategory() == null ? "" : catalog.getCategory()),
+                    Map.entry("catalogManufacturer",
+                            catalog == null || catalog.getManufacturer() == null ? "" : catalog.getManufacturer()),
+                    Map.entry("catalogModelName",
+                            catalog == null || catalog.getModelName() == null ? "" : catalog.getModelName()),
+                    Map.entry("catalogSpecifications",
+                            formatSpecifications(catalog == null ? null : catalog.getSpecifications())),
                     Map.entry("manufactureYear",
                             vehicle.getManufactureYear() == null ? "" : vehicle.getManufactureYear()),
                     Map.entry("engineNumber",
@@ -354,5 +379,19 @@ public class FleetController {
         String performedBy = authentication != null ? authentication.getName() : "SYSTEM";
         fleetService.updateVehicleDetails(updatedVehicle, performedBy);
         return ResponseEntity.ok("Fleet vehicle details updated successfully");
+    }
+
+    private String formatSpecifications(String specifications) {
+        if (specifications == null || specifications.isBlank()) {
+            return null;
+        }
+
+        try {
+            JsonNode jsonNode = jsonMapper.readTree(specifications);
+            return jsonMapper.writerWithDefaultPrettyPrinter().writeValueAsString(jsonNode);
+        } catch (Exception ex) {
+            log.warn("Failed to pretty-print fleet catalog specifications JSON, returning raw value", ex);
+            return specifications;
+        }
     }
 }

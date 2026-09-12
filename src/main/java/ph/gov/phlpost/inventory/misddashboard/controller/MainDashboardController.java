@@ -1,11 +1,13 @@
 package ph.gov.phlpost.inventory.misddashboard.controller;
 
 import ph.gov.phlpost.inventory.misddashboard.model.EquipmentCatalog;
+import ph.gov.phlpost.inventory.misddashboard.model.FleetVehicleCatalog;
 import ph.gov.phlpost.inventory.misddashboard.model.Personnel;
 import ph.gov.phlpost.inventory.misddashboard.model.SurveyEquipmentCatalog;
 import ph.gov.phlpost.inventory.misddashboard.repository.DashboardRepository;
 import ph.gov.phlpost.inventory.misddashboard.repository.AssetRepository;
 import ph.gov.phlpost.inventory.misddashboard.repository.EquipmentCatalogRepository;
+import ph.gov.phlpost.inventory.misddashboard.repository.FleetVehicleCatalogRepository;
 import ph.gov.phlpost.inventory.misddashboard.repository.FleetVehicleRepository;
 import ph.gov.phlpost.inventory.misddashboard.repository.PersonnelRepository;
 import ph.gov.phlpost.inventory.misddashboard.repository.SurveyAssetRepository;
@@ -41,6 +43,7 @@ public class MainDashboardController {
         private final SurveyAssetRepository surveyAssetRepo;
         private final EquipmentCatalogRepository catalogRepo;
         private final SurveyEquipmentCatalogRepository surveyCatalogRepo;
+        private final FleetVehicleCatalogRepository fleetCatalogRepo;
         private final PersonnelRepository personnelRepo;
         private final RegistryService registryService;
 
@@ -106,6 +109,7 @@ public class MainDashboardController {
                         SurveyAssetRepository surveyAssetRepo,
                         EquipmentCatalogRepository catalogRepo,
                         SurveyEquipmentCatalogRepository surveyCatalogRepo,
+                        FleetVehicleCatalogRepository fleetCatalogRepo,
                         PersonnelRepository personnelRepo, RegistryService registryService) {
                 this.dashboardRepo = dashboardRepo;
                 this.assetRepo = assetRepo;
@@ -113,6 +117,7 @@ public class MainDashboardController {
                 this.surveyAssetRepo = surveyAssetRepo;
                 this.catalogRepo = catalogRepo;
                 this.surveyCatalogRepo = surveyCatalogRepo;
+                this.fleetCatalogRepo = fleetCatalogRepo;
                 this.personnelRepo = personnelRepo;
                 this.registryService = registryService;
         }
@@ -162,6 +167,8 @@ public class MainDashboardController {
                 model.addAttribute("disposedOrDecommissionedVehicles",
                                 fleetRepo.countDisposedOrDecommissionedVehicles());
                 model.addAttribute("problematicVehicles", fleetRepo.findProblematicVehicles());
+                model.addAttribute("fleetCatalogItemsByCategory",
+                                groupFleetCatalogItemsByCategory(fleetCatalogRepo.findAll()));
 
                 // Survey Assets
                 model.addAttribute("totalSurveyAssets", surveyAssetRepo.count());
@@ -190,6 +197,7 @@ public class MainDashboardController {
                 model.addAttribute("employeeMap", registryService.getEmployeeNameMap());
                 model.addAttribute("catalogMap", registryService.getCatalogMap());
                 model.addAttribute("surveyCatalogMap", registryService.getSurveyCatalogMap());
+                model.addAttribute("fleetCatalogMap", registryService.getFleetCatalogMap());
                 model.addAttribute("departmentMap", registryService.getDepartmentMap());
                 model.addAttribute("divisionMap", registryService.getDivisionMap());
                 model.addAttribute("personnelLocationMap", registryService.getPersonnelLocationMap());
@@ -288,6 +296,25 @@ public class MainDashboardController {
                 return catalogItems.stream()
                                 .sorted(Comparator
                                                 .comparing((SurveyEquipmentCatalog item) -> item.getManufacturer() == null
+                                                                ? ""
+                                                                : item.getManufacturer(),
+                                                                String.CASE_INSENSITIVE_ORDER)
+                                                .thenComparing(item -> item.getModelName() == null ? ""
+                                                                : item.getModelName(),
+                                                                String.CASE_INSENSITIVE_ORDER))
+                                .collect(Collectors.groupingBy(
+                                                item -> item.getCategory() == null || item.getCategory().isBlank()
+                                                                ? "Uncategorized"
+                                                                : item.getCategory(),
+                                                java.util.TreeMap::new,
+                                                Collectors.toList()));
+        }
+
+        private Map<String, List<FleetVehicleCatalog>> groupFleetCatalogItemsByCategory(
+                        List<FleetVehicleCatalog> catalogItems) {
+                return catalogItems.stream()
+                                .sorted(Comparator
+                                                .comparing((FleetVehicleCatalog item) -> item.getManufacturer() == null
                                                                 ? ""
                                                                 : item.getManufacturer(),
                                                                 String.CASE_INSENSITIVE_ORDER)

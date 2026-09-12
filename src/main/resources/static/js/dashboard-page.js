@@ -127,6 +127,17 @@ $(document).ready(function () {
         ]
     });
 
+    wireCatalogSpecBuilder({
+        addBtnId: 'addFleetSpecBtn',
+        containerId: 'fleet-spec-rows-container',
+        formId: 'fleetCatalogForm',
+        hiddenInputId: 'fleetSpecifications',
+        specOptions: [
+            'Seating Capacity', 'Cargo Capacity', 'Transmission', 'Fuel Type',
+            'Engine Displacement', 'Drivetrain', 'Fuel Efficiency', 'Gross Vehicle Weight'
+        ]
+    });
+
     function wireBulkReceiveQuantityToggle(options) {
         $(`#${options.quantityInputId}`).on('input', function () {
             const qty = parseInt($(this).val()) || 1;

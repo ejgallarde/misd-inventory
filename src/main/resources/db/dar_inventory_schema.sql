@@ -121,14 +121,43 @@ CREATE TABLE `assetassignments` (
 
 -- ---------------------------------------------------------------------------
 -- Fleet Management
+--
+-- Mirrors the IT/Survey Assets catalog/asset split: `fleetvehiclecatalog`
+-- defines a reusable VehicleType+Make+Model (+ optional specs) once, and each
+-- `fleetvehicles` row is one physical vehicle pointing at a catalog entry via
+-- CatalogID. Unlike IT/Survey, there is no batch/quantity receiving for
+-- vehicles -- PlateNumber, EngineNumber, ChassisNumberVIN and BodyNumber are
+-- all real-world unique identifiers issued externally, not internal tags that
+-- can be auto-generated, so vehicles are still registered one at a time.
+--
+-- Anyone with an existing local dev DB from before this change needs to
+-- either drop and re-run this whole script, or apply by hand:
+--   CREATE TABLE `fleetvehiclecatalog` ( ... as below ... );
+--   ALTER TABLE `fleetvehicles`
+--     ADD COLUMN `CatalogID` int NOT NULL AFTER `VehicleID`,
+--     DROP COLUMN `VehicleType`,
+--     DROP COLUMN `Make`,
+--     DROP COLUMN `Model`,
+--     ADD KEY `CatalogID` (`CatalogID`),
+--     ADD CONSTRAINT `fleetvehicles_ibfk_2` FOREIGN KEY (`CatalogID`)
+--       REFERENCES `fleetvehiclecatalog` (`CatalogID`) ON DELETE RESTRICT;
+-- (Only safe on a table with no rows yet, or after backfilling CatalogID --
+-- ADD COLUMN ... NOT NULL with no default fails on a populated table.)
 -- ---------------------------------------------------------------------------
+
+CREATE TABLE `fleetvehiclecatalog` (
+  `CatalogID` int NOT NULL AUTO_INCREMENT,
+  `Category` varchar(100) NOT NULL,
+  `Manufacturer` varchar(100) NOT NULL,
+  `ModelName` varchar(100) NOT NULL,
+  `Specifications` json DEFAULT NULL,
+  PRIMARY KEY (`CatalogID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 CREATE TABLE `fleetvehicles` (
   `VehicleID` int NOT NULL AUTO_INCREMENT,
+  `CatalogID` int NOT NULL,
   `PlateNumber` varchar(255) DEFAULT NULL,
-  `VehicleType` varchar(255) DEFAULT NULL,
-  `Make` varchar(255) DEFAULT NULL,
-  `Model` varchar(255) DEFAULT NULL,
   `ManufactureYear` int DEFAULT NULL,
   `EngineNumber` varchar(255) DEFAULT NULL,
   `ChassisNumberVIN` varchar(255) DEFAULT NULL,
@@ -148,8 +177,10 @@ CREATE TABLE `fleetvehicles` (
   UNIQUE KEY `EngineNumber` (`EngineNumber`),
   UNIQUE KEY `ChassisNumberVIN` (`ChassisNumberVIN`),
   UNIQUE KEY `BodyNumber` (`BodyNumber`),
+  KEY `CatalogID` (`CatalogID`),
   KEY `AssignedDriverID` (`AssignedDriverID`),
-  CONSTRAINT `fleetvehicles_ibfk_1` FOREIGN KEY (`AssignedDriverID`) REFERENCES `personnel` (`EmployeeID`) ON DELETE SET NULL
+  CONSTRAINT `fleetvehicles_ibfk_1` FOREIGN KEY (`AssignedDriverID`) REFERENCES `personnel` (`EmployeeID`) ON DELETE SET NULL,
+  CONSTRAINT `fleetvehicles_ibfk_2` FOREIGN KEY (`CatalogID`) REFERENCES `fleetvehiclecatalog` (`CatalogID`) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- ---------------------------------------------------------------------------

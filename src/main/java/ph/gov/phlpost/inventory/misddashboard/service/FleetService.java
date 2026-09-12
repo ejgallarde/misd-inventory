@@ -173,12 +173,10 @@ public class FleetService {
         if (TextUtils.isBlank(vehicle.getPlateNumber()) && !TextUtils.isBlank(submitted.getPlateNumber())) {
             vehicle.setPlateNumber(submitted.getPlateNumber());
         }
-        if (TextUtils.isBlank(vehicle.getMake()) && !TextUtils.isBlank(submitted.getMake())) {
-            vehicle.setMake(submitted.getMake());
-        }
-        if (TextUtils.isBlank(vehicle.getModel()) && !TextUtils.isBlank(submitted.getModel())) {
-            vehicle.setModel(submitted.getModel());
-        }
+        // CatalogID is intentionally never touched here: this method mutates the
+        // managed entity field-by-field rather than overwriting it wholesale, so
+        // simply never setting it keeps a registered vehicle's catalog
+        // assignment permanent with no extra guard needed.
         if (vehicle.getManufactureYear() == null && submitted.getManufactureYear() != null) {
             vehicle.setManufactureYear(submitted.getManufactureYear());
         }

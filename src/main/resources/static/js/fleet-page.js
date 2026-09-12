@@ -53,9 +53,22 @@ $(document).ready(function () {
     }
 
     const LOCKONCE_FIELDS = [
-        'plateNumber', 'make', 'model', 'manufactureYear', 'bodyNumber',
+        'plateNumber', 'manufactureYear', 'bodyNumber',
         'fuelType', 'engineNumber', 'chassisNumberVIN', 'cost', 'acquisitionYear'
     ];
+
+    function escapeValue(value) {
+        return MISDCommon.escapeHtml(value == null || value === '' ? 'N/A' : String(value));
+    }
+
+    function renderFleetCatalogSummary(data) {
+        return `<div class="d-grid gap-2">
+            <div><span class="text-muted fw-semibold">Vehicle Type:</span> ${escapeValue(data.catalogCategory)}</div>
+            <div><span class="text-muted fw-semibold">Make:</span> ${escapeValue(data.catalogManufacturer)}</div>
+            <div><span class="text-muted fw-semibold">Model:</span> ${escapeValue(data.catalogModelName)}</div>
+            <div><span class="text-muted fw-semibold">Specifications:</span>${MISDCommon.renderCatalogSpecifications(data.catalogSpecifications)}</div>
+        </div>`;
+    }
 
     function applyLockonceVisibility(editMode, data) {
         if (!editMode || !data) {
@@ -76,8 +89,6 @@ $(document).ready(function () {
         $('#editFleetVehicleID').val(data.vehicleID || '');
         // Lock-once inputs — pre-populated; visibility controlled by applyLockonceVisibility
         $('#editFleetPlateNumber').val(data.plateNumber || '');
-        $('#editFleetMake').val(data.make || '');
-        $('#editFleetModel').val(data.model || '');
         $('#editFleetManufactureYear').val(data.manufactureYear || '');
         $('#editFleetAcquisitionYear').val(data.acquisitionYear || '');
         $('#editFleetBodyNumber').val(data.bodyNumber || '');
@@ -102,8 +113,6 @@ $(document).ready(function () {
             vehicleID: Number.isNaN(vehicleID) ? null : vehicleID,
             // Lock-once fields (backend ignores if already set in DB)
             plateNumber: $('#editFleetPlateNumber').val() || null,
-            make: $('#editFleetMake').val() || null,
-            model: $('#editFleetModel').val() || null,
             manufactureYear: mfgYear ? Number(mfgYear) : null,
             acquisitionYear: acqYear ? Number(acqYear) : null,
             bodyNumber: $('#editFleetBodyNumber').val() || null,
@@ -344,10 +353,8 @@ $(document).ready(function () {
     function loadFleetDetails(vehicleId) {
         $.get('/fleet/' + vehicleId, function (data) {
             currentFleetData = data;
+            $('#fleetCatalogSummary').html(renderFleetCatalogSummary(data));
             $('#fleetDetailPlate').text(data.plateNumber || 'N/A');
-            $('#fleetDetailType').text(data.vehicleType || 'N/A');
-            $('#fleetDetailMake').text(data.make || 'N/A');
-            $('#fleetDetailModel').text(data.model || 'N/A');
             $('#fleetDetailYear').text(data.manufactureYear || 'N/A');
             $('#fleetDetailAcquisitionYear').text(data.acquisitionYear || 'N/A');
             $('#fleetDetailBodyNumber').text(data.bodyNumber || 'N/A');
