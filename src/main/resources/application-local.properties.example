@@ -15,3 +15,7 @@ MISD_STORAGE_ROOT=
 
 # Demo-mode sign-in password (app.security.demo-mode=true). Change it.
 MISD_DEMO_USER_PASSWORD=
+
+# Uncomment for local dev to re-enable Thymeleaf hot-reload (see application-dev.properties).
+# Leave unset in any deployed environment.
+#spring.profiles.active=dev

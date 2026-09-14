@@ -1,6 +1,8 @@
 package ph.gov.phlpost.inventory.misddashboard.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
 @Entity
 @Table(name = "EquipmentCatalog")
@@ -11,12 +13,18 @@ public class EquipmentCatalog {
     @Column(name = "CatalogID")
     private Integer catalogID;
 
+    @NotBlank
+    @Size(max = 50)
     @Column(name = "Category", nullable = false)
     private String category;
 
+    @NotBlank
+    @Size(max = 50)
     @Column(name = "Manufacturer", nullable = false)
     private String manufacturer;
 
+    @NotBlank
+    @Size(max = 100)
     @Column(name = "ModelName", nullable = false)
     private String modelName;
 

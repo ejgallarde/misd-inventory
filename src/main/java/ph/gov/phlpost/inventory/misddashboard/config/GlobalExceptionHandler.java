@@ -13,6 +13,8 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BindException;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -101,6 +103,24 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Catch-all for anything not covered by a specific handler above (Spring
+     * matches the most specific handler regardless of source order, so this
+     * only ever fires for genuinely unexpected failures). Logged at ERROR with
+     * the full stack trace so it's actually visible to whoever monitors the
+     * logs; the user only ever sees a generic message, never exception.getMessage(),
+     * so an internal detail (a query, a path, a class name) can't leak to them.
+     */
+    @ExceptionHandler(Exception.class)
+    public Object handleUnexpected(Exception exception,
+            HandlerMethod handlerMethod,
+            HttpServletRequest request,
+            RedirectAttributes redirectAttributes) {
+        log.error("Unhandled exception on {} {}", request.getMethod(), request.getRequestURI(), exception);
+        return respond(handlerMethod, request, redirectAttributes, HttpStatus.INTERNAL_SERVER_ERROR,
+                "Something went wrong. Try again or contact support if the problem continues.");
+    }
+
+    /**
      * Turns a MySQL constraint message into registry wording. Falls back to a
      * generic sentence rather than exposing the raw SQL to the user — the full
      * driver message is already in the log line above the call site.
@@ -136,6 +156,12 @@ public class GlobalExceptionHandler {
         }
         if (exception instanceof HttpMessageNotReadableException) {
             return "The submitted values could not be read. Check numeric and date fields, then try again.";
+        }
+        if (exception instanceof MethodArgumentNotValidException validation) {
+            FieldError fieldError = validation.getBindingResult().getFieldError();
+            if (fieldError != null) {
+                return "Field '" + fieldError.getField() + "': " + fieldError.getDefaultMessage();
+            }
         }
         return "Some values could not be accepted. Check numeric and date fields, then try again.";
     }

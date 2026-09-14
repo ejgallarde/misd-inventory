@@ -10,6 +10,8 @@ import ph.gov.phlpost.inventory.misddashboard.service.RegistryService;
 import ph.gov.phlpost.inventory.misddashboard.service.SurveyAssetService;
 import ph.gov.phlpost.inventory.misddashboard.util.TextUtils;
 
+import jakarta.validation.Valid;
+
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -96,7 +98,7 @@ public class SurveyAssetController {
 
     @PostMapping("/catalog/add")
     @CacheEvict(value = "surveyCatalogMap", allEntries = true)
-    public String addSurveyCatalog(@ModelAttribute SurveyEquipmentCatalog newCatalog,
+    public String addSurveyCatalog(@Valid @ModelAttribute SurveyEquipmentCatalog newCatalog,
             RedirectAttributes redirectAttributes) {
         surveyCatalogRepo.save(newCatalog);
         redirectAttributes.addFlashAttribute("successMessage", "Survey equipment catalog updated.");
@@ -320,7 +322,7 @@ public class SurveyAssetController {
     }
 
     @PostMapping("/update")
-    public ResponseEntity<String> updateSurveyAsset(@RequestBody SurveyAsset updatedSurveyAsset,
+    public ResponseEntity<String> updateSurveyAsset(@Valid @RequestBody SurveyAsset updatedSurveyAsset,
             Authentication authentication) {
         Integer surveyAssetId = updatedSurveyAsset.getSurveyAssetID();
         if (surveyAssetId == null || !surveyAssetRepo.existsById(surveyAssetId)) {

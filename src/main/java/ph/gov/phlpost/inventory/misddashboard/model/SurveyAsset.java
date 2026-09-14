@@ -1,6 +1,9 @@
 package ph.gov.phlpost.inventory.misddashboard.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
@@ -13,21 +16,29 @@ public class SurveyAsset {
     @Column(name = "SurveyAssetID")
     private Integer surveyAssetID;
 
+    @Size(max = 100)
     @Column(name = "PropertyNumber")
     private String propertyNumber;
 
+    @NotNull
     @Column(name = "CatalogID", nullable = false)
     private Integer catalogID;
 
+    // No @NotBlank: /survey-assets/receive leaves this blank on the incoming
+    // "base" template for multi-unit receipts and SurveyAssetService generates
+    // or assigns it afterward, same pattern as Asset.assetTag.
+    @Size(max = 50)
     @Column(name = "AssetTag", unique = true, nullable = true)
     private String assetTag;
 
+    @Size(max = 255)
     @Column(name = "SerialNumber", unique = true, nullable = true)
     private String serialNumber;
 
     @Column(name = "AcquisitionDate")
     private LocalDate acquisitionDate;
 
+    @DecimalMin(value = "0.00", message = "Cost cannot be negative")
     @Column(name = "Cost")
     private BigDecimal cost;
 
@@ -37,15 +48,19 @@ public class SurveyAsset {
     @Column(name = "LastCalibrationDate")
     private LocalDate lastCalibrationDate;
 
+    @Size(max = 20)
     @Column(name = "AssignedCustodianID")
     private String assignedCustodianID;
 
+    @Size(max = 255)
     @Column(name = "AdminLegalStatus")
     private String adminLegalStatus;
 
+    @Size(max = 255)
     @Column(name = "OperationalStatus")
     private String operationalStatus;
 
+    @Size(max = 255)
     @Column(name = "ConditionStatus")
     private String conditionStatus;
 

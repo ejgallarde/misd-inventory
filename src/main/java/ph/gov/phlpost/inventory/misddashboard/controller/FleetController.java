@@ -10,6 +10,8 @@ import ph.gov.phlpost.inventory.misddashboard.service.FleetService;
 import ph.gov.phlpost.inventory.misddashboard.service.RegistryService;
 import ph.gov.phlpost.inventory.misddashboard.util.TextUtils;
 
+import jakarta.validation.Valid;
+
 import java.time.Year;
 import java.util.List;
 import java.util.Map;
@@ -91,7 +93,7 @@ public class FleetController {
 
     @PostMapping("/catalog/add")
     @CacheEvict(value = "fleetCatalogMap", allEntries = true)
-    public String addFleetCatalog(@ModelAttribute FleetVehicleCatalog newCatalog,
+    public String addFleetCatalog(@Valid @ModelAttribute FleetVehicleCatalog newCatalog,
             RedirectAttributes redirectAttributes) {
         int currentYear = Year.now().getValue();
         if (newCatalog.getYearModel() == null
@@ -354,7 +356,7 @@ public class FleetController {
     }
 
     @PostMapping("/update")
-    public ResponseEntity<String> updateVehicle(@RequestBody FleetVehicle updatedVehicle,
+    public ResponseEntity<String> updateVehicle(@Valid @RequestBody FleetVehicle updatedVehicle,
             Authentication authentication) {
         Integer vehicleId = updatedVehicle.getVehicleID();
         if (vehicleId == null || !fleetRepo.existsById(vehicleId)) {

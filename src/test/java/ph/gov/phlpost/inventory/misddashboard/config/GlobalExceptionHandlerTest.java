@@ -78,6 +78,25 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
+    void beanValidationFailureNamesTheOffendingField() throws NoSuchMethodException {
+        org.springframework.validation.BeanPropertyBindingResult bindingResult =
+                new org.springframework.validation.BeanPropertyBindingResult(new Object(), "asset");
+        bindingResult.addError(new org.springframework.validation.FieldError(
+                "asset", "deploymentStatus", "must not be blank"));
+        org.springframework.core.MethodParameter parameter = new org.springframework.core.MethodParameter(
+                GlobalExceptionHandlerTest.class.getDeclaredMethod("dummyValidationTarget", Object.class), 0);
+        org.springframework.web.bind.MethodArgumentNotValidException exception =
+                new org.springframework.web.bind.MethodArgumentNotValidException(parameter, bindingResult);
+
+        assertEquals("Field 'deploymentStatus': must not be blank",
+                handler.describeInvalidSubmission(exception));
+    }
+
+    @SuppressWarnings("unused")
+    private void dummyValidationTarget(Object body) {
+    }
+
+    @Test
     void ajaxCallerReceivesJsonRatherThanARedirect() {
         MockHttpServletRequest request = new MockHttpServletRequest("POST", "/assets/update");
         request.addHeader("X-Requested-With", "XMLHttpRequest");
@@ -125,6 +144,36 @@ class GlobalExceptionHandlerTest {
                 duplicateSerialViolation(), null, request, new RedirectAttributesModelMap());
 
         assertEquals("redirect:/", response);
+    }
+
+    @Test
+    void unexpectedExceptionRendersAGenericMessageWithoutLeakingItsOwnText() {
+        MockHttpServletRequest request = new MockHttpServletRequest("POST", "/assets/update");
+        request.addHeader("X-Requested-With", "XMLHttpRequest");
+
+        Object response = handler.handleUnexpected(
+                new NullPointerException("catalogEntry.getPrice() on a null reference"),
+                null, request, new RedirectAttributesModelMap());
+
+        ResponseEntity<?> entity = assertInstanceOf(ResponseEntity.class, response);
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, entity.getStatusCode());
+        Map<?, ?> body = (Map<?, ?>) entity.getBody();
+        String message = (String) body.get("error");
+        assertTrue(message.indexOf("catalogEntry") < 0, "the exception's own message must not reach the user");
+        assertEquals("Something went wrong. Try again or contact support if the problem continues.", message);
+    }
+
+    @Test
+    void unexpectedExceptionOnFormPostRedirectsWithAFlashMessage() {
+        MockHttpServletRequest request = new MockHttpServletRequest("POST", "/fleet/add");
+        RedirectAttributesModelMap redirectAttributes = new RedirectAttributesModelMap();
+
+        Object response = handler.handleUnexpected(
+                new IllegalStateException("unexpected"), null, request, redirectAttributes);
+
+        assertEquals("redirect:/", response);
+        assertEquals("Something went wrong. Try again or contact support if the problem continues.",
+                redirectAttributes.getFlashAttributes().get("errorMessage"));
     }
 
     private DataIntegrityViolationException duplicateSerialViolation() {

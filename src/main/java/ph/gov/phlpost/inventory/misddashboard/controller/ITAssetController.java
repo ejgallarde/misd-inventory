@@ -12,6 +12,8 @@ import ph.gov.phlpost.inventory.misddashboard.service.ITAssetService;
 import ph.gov.phlpost.inventory.misddashboard.service.RegistryService;
 import ph.gov.phlpost.inventory.misddashboard.util.TextUtils;
 
+import jakarta.validation.Valid;
+
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.List;
@@ -110,7 +112,7 @@ public class ITAssetController {
 
     @PostMapping("/catalog/add")
     @CacheEvict(value = "catalogMap", allEntries = true)
-    public String addCatalog(@ModelAttribute EquipmentCatalog newCatalog, RedirectAttributes redirectAttributes) {
+    public String addCatalog(@Valid @ModelAttribute EquipmentCatalog newCatalog, RedirectAttributes redirectAttributes) {
         catalogRepo.save(newCatalog);
         redirectAttributes.addFlashAttribute("successMessage", "Catalog updated.");
         return "redirect:/";
@@ -293,7 +295,7 @@ public class ITAssetController {
     }
 
     @PostMapping("/assets/update")
-    public ResponseEntity<String> updateITAsset(@RequestBody Asset updatedAsset, Authentication authentication) {
+    public ResponseEntity<String> updateITAsset(@Valid @RequestBody Asset updatedAsset, Authentication authentication) {
         normalizeBlankOptionalFields(updatedAsset);
         applyStatusTransitions(updatedAsset);
         String performedBy = authentication != null ? authentication.getName() : "SYSTEM";

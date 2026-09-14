@@ -1,6 +1,9 @@
 package ph.gov.phlpost.inventory.misddashboard.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
@@ -13,21 +16,27 @@ public class FleetVehicle {
     @Column(name = "VehicleID")
     private Integer vehicleID;
 
+    @Size(max = 100)
     @Column(name = "PropertyNumber")
     private String propertyNumber;
 
+    @NotNull
     @Column(name = "CatalogID", nullable = false)
     private Integer catalogID;
 
+    @Size(max = 255)
     @Column(name = "PlateNumber", unique = true, nullable = true)
     private String plateNumber;
 
+    @Size(max = 255)
     @Column(name = "BodyNumber", unique = true, nullable = true)
     private String bodyNumber;
 
+    @Size(max = 255)
     @Column(name = "EngineNumber", unique = true)
     private String engineNumber;
 
+    @Size(max = 255)
     @Column(name = "ChassisNumberVIN", unique = true)
     private String chassisNumberVIN;
 
@@ -37,18 +46,25 @@ public class FleetVehicle {
     @Column(name = "InsuranceExpiry")
     private LocalDate insuranceExpiry;
 
+    @Size(max = 20)
     @Column(name = "AssignedDriverID")
     private String assignedDriverID;
 
+    // No @NotBlank: the column allows NULL and /fleet/add leaves this blank on
+    // the incoming form, defaulting it server-side after binding completes.
+    @Size(max = 255)
     @Column(name = "AdminLegaltionalStatus")
     private String adminLegaltionalStatus;
 
+    @Size(max = 255)
     @Column(name = "OperationalStatus")
     private String operationalStatus;
 
+    @Size(max = 255)
     @Column(name = "MaintenanceStatus")
     private String maintenanceStatus;
 
+    @DecimalMin(value = "0.00", message = "Cost cannot be negative")
     @Column(name = "Cost")
     private BigDecimal cost;
 

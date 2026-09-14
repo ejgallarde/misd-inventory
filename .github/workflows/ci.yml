@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Build and test
+        # MisdInventoryDashboardApplicationTests is the one @SpringBootTest that
+        # boots the full context against a real MySQL "dar_inventory" database.
+        # There is currently no versioned schema script to seed one in CI (the
+        # canonical db/dar_inventory_schema.sql was removed and its replacement
+        # is unresolved — see project notes), so that single test class is
+        # excluded here rather than silently failing the whole build or standing
+        # up an unverified schema. Every other test (all Mockito-based, no
+        # Spring context) still runs and gates the build. Remove this exclusion
+        # once the schema-file situation is resolved.
+        run: ./mvnw -B clean verify "-Dtest=!MisdInventoryDashboardApplicationTests" -DfailIfNoTests=false
