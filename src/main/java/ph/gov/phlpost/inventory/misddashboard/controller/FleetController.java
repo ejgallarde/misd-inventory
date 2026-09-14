@@ -311,6 +311,7 @@ public class FleetController {
 
             Map<String, Object> response = Map.ofEntries(
                     Map.entry("vehicleID", vehicle.getVehicleID()),
+                    Map.entry("propertyNumber", vehicle.getPropertyNumber() == null ? "" : vehicle.getPropertyNumber()),
                     Map.entry("plateNumber", vehicle.getPlateNumber() == null ? "" : vehicle.getPlateNumber()),
                     Map.entry("bodyNumber", vehicle.getBodyNumber() == null ? "" : vehicle.getBodyNumber()),
                     Map.entry("catalogID", vehicle.getCatalogID() == null ? "" : vehicle.getCatalogID()),

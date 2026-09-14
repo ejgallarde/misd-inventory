@@ -157,7 +157,7 @@ PLACEHOLDER_SERIAL_RE = re.compile(r'no\s*plate\s*available|^n/?a$|^none$|^not\s
 # to migration_flags_report.csv for later manual review/reassignment.
 SENTINEL_EMPLOYEE_ID = 'PERS-00000'
 FLAG_UNRESOLVED_OWNER = '[MIGRATION FLAG: UNRESOLVED OWNER]'
-FLAG_DUPLICATE_IDENTIFIER = '[MIGRATION FLAG: DUPLICATE IDENTIFIER]'
+FLAG_IDENTIFIER_ADJUSTED = '[MIGRATION FLAG: IDENTIFIER ADJUSTED - SEE MIGRATION_FLAGS_REPORT]'
 
 
 # ======================================================================
@@ -424,12 +424,19 @@ class Migration:
 
     # ---------------- in-batch dedup for UNIQUE columns ----------------
     def dedupe_value(self, field_key, value, max_len, region, row_num, reference_type, reference_id, field_name):
-        """Returns value unchanged the first time it's seen for this field; every
-        later occurrence is disambiguated so it can't violate the column's UNIQUE
-        constraint, and logged to self.flags for the migration_flags_report.csv."""
+        """Returns a value safe to store in a UNIQUE, varchar(max_len) column:
+        truncates it if the source value is longer than the column allows, and
+        disambiguates it if (after any truncation) it collides with a value
+        already used for this field in this batch. Either adjustment is logged
+        to self.flags for the migration_flags_report.csv; the untruncated
+        original is always preserved there even when the DB copy is clipped."""
         if value is None:
             return None
-        norm_val = value.strip().upper()
+        applied = value
+        oversized = len(applied) > max_len
+        if oversized:
+            applied = applied[:max_len]
+        norm_val = applied.strip().upper()
         seen = self._dup_seen[field_key]
         if norm_val in seen:
             self._dup_counter[field_key] += 1
@@ -442,7 +449,14 @@ class Migration:
             })
             return applied
         seen.add(norm_val)
-        return value
+        if oversized:
+            self.flags.append({
+                'category': 'OVERSIZED_VALUE', 'region': region, 'row': row_num,
+                'reference_type': reference_type, 'reference_id': reference_id,
+                'field': field_name, 'original_value': value, 'applied_value': applied,
+                'note': f"{field_name} was {len(value)} chars, exceeding the column's {max_len}-char limit; truncated for storage.",
+            })
+        return applied
 
     # ---------------- locations ----------------
     def get_or_create_location(self, region, province, office):
@@ -599,7 +613,7 @@ class Migration:
             plate = self.dedupe_value('fleet_plate', plate_clean, 255, sn, r, 'FLEETVEHICLE', str(vid), 'PlateNumber')
             fleet_remarks = remarks_final
             if plate != plate_clean:
-                fleet_remarks = (f"{fleet_remarks} | " if fleet_remarks else "") + FLAG_DUPLICATE_IDENTIFIER
+                fleet_remarks = (f"{fleet_remarks} | " if fleet_remarks else "") + FLAG_IDENTIFIER_ADJUSTED
             self.fleetvehicles.append({
                 'VehicleID': vid, 'PropertyNumber': propnum, 'CatalogID': cat_id,
                 'PlateNumber': plate, 'Cost': cost, 'AssignedDriverID': emp_id,
@@ -626,7 +640,7 @@ class Migration:
             serial = self.dedupe_value('survey_serial', serial_raw, 255, sn, r, 'SURVEYASSET', asset_tag, 'SerialNumber')
             survey_remarks = remarks_final
             if serial != serial_raw:
-                survey_remarks = (f"{survey_remarks} | " if survey_remarks else "") + FLAG_DUPLICATE_IDENTIFIER
+                survey_remarks = (f"{survey_remarks} | " if survey_remarks else "") + FLAG_IDENTIFIER_ADJUSTED
             self.surveyassets.append({
                 'SurveyAssetID': sid, 'PropertyNumber': propnum, 'AssetTag': asset_tag,
                 'CatalogID': cat_id, 'SerialNumber': serial, 'Cost': cost,
@@ -654,7 +668,7 @@ class Migration:
             deployment = 'Deployed' if emp_id else 'Unassigned'
             asset_remarks = remarks_final
             if serial != serial_raw:
-                asset_remarks = (f"{asset_remarks} | " if asset_remarks else "") + FLAG_DUPLICATE_IDENTIFIER
+                asset_remarks = (f"{asset_remarks} | " if asset_remarks else "") + FLAG_IDENTIFIER_ADJUSTED
             self.assets.append({
                 'AssetTag': asset_tag, 'PropertyNumber': propnum, 'BundledWithAssetTag': None,
                 'CatalogID': cat_id, 'SerialNumber': serial, 'PurchasePrice': cost,
@@ -732,7 +746,7 @@ def build_sql(m: Migration):
         )
     out.append("")
 
-    for table in ['equipmentcatalog', 'fleetvehiclecatalog', 'surveyequipmentcatalog']:
+    for table in ['equipmentcatalog', 'surveyequipmentcatalog']:
         out.append(f"-- ===================== {table} (new entries) =====================")
         for c in getattr(m, table).values():
             out.append(
@@ -741,6 +755,19 @@ def build_sql(m: Migration):
                 f"ON DUPLICATE KEY UPDATE `ModelName`=`ModelName`;"
             )
         out.append("")
+
+    out.append("-- ===================== fleetvehiclecatalog (new entries) =====================")
+    out.append("-- YearModel/FuelType have no source column in the workbook. YearModel=0 matches")
+    out.append("-- the placeholder convention already used by the pre-existing seed rows; FuelType")
+    out.append("-- defaults by vehicle category (motorcycles -> Gas, everything else -> Diesel).")
+    for c in m.fleetvehiclecatalog.values():
+        fuel_type = 'Gas' if 'motorcycle' in c['Category'].lower() else 'Diesel'
+        out.append(
+            "INSERT INTO `fleetvehiclecatalog` (`Category`,`Manufacturer`,`ModelName`,`YearModel`,`FuelType`) VALUES "
+            f"({sql_str(c['Category'])},{sql_str(c['Manufacturer'])},{sql_str(c['ModelName'])},0,{sql_str(fuel_type)}) "
+            f"ON DUPLICATE KEY UPDATE `ModelName`=`ModelName`;"
+        )
+    out.append("")
 
     out.append("-- ===================== assets =====================")
     out.append("-- CatalogID below is looked up by (Category,Manufacturer,ModelName) since the")
@@ -797,7 +824,16 @@ def build_sql(m: Migration):
         )
     out.append("")
     out.append("COMMIT;")
-    return '\n'.join(out)
+    # `out` is a flat list where each entry is either a comment line, a blank
+    # separator, or one COMPLETE standalone SQL statement (never a fragment of
+    # one) - so the executable statement list can be derived directly from it,
+    # rather than by re-splitting the joined text on ';\n' and guessing at
+    # statement boundaries from string content (which silently swallowed the
+    # first statement of every section, since a comment line immediately
+    # followed by that statement forms one ';\n'-delimited chunk that starts
+    # with '--' and was being skipped whole).
+    statements = [line for line in out if line.strip() and not line.strip().startswith('--')]
+    return '\n'.join(out), statements
 
 
 def _cat_lookup(m, table, catalog_id):
@@ -812,7 +848,7 @@ def _cat_lookup(m, table, catalog_id):
 # Execute mode (optional, requires pymysql + a real server)
 # ======================================================================
 
-def execute_sql(sql_text, host, user, password, database, port=3306):
+def execute_sql(statements, host, user, password, database, port=3306):
     try:
         import pymysql
     except ImportError:
@@ -820,9 +856,9 @@ def execute_sql(sql_text, host, user, password, database, port=3306):
     conn = pymysql.connect(host=host, user=user, password=password, database=database, port=port, autocommit=False)
     try:
         with conn.cursor() as cur:
-            for stmt in sql_text.split(';\n'):
-                stmt = stmt.strip()
-                if not stmt or stmt.startswith('--'):
+            for stmt in statements:
+                stmt = stmt.rstrip(';').strip()
+                if not stmt:
                     continue
                 cur.execute(stmt)
         conn.commit()
@@ -888,7 +924,7 @@ def main():
         for rec in m.flags:
             dw.writerow(rec)
 
-    sql_text = build_sql(m)
+    sql_text, statements = build_sql(m)
     with open(args.out_sql, 'w', encoding='utf-8') as f:
         f.write(sql_text)
 
@@ -908,8 +944,10 @@ def main():
         f.write(f"rows skipped (manual review required): {len(m.skipped)}\n")
         unresolved_owner_flags = sum(1 for fl in m.flags if fl['category'] == 'UNRESOLVED_OWNER')
         duplicate_id_flags = sum(1 for fl in m.flags if fl['category'] == 'DUPLICATE_IDENTIFIER')
+        oversized_flags = sum(1 for fl in m.flags if fl['category'] == 'OVERSIZED_VALUE')
         f.write(f"flagged - sentinel owner assigned (see {args.out_flags}): {unresolved_owner_flags}\n")
-        f.write(f"flagged - duplicate identifier disambiguated (see {args.out_flags}): {duplicate_id_flags}\n\n")
+        f.write(f"flagged - duplicate identifier disambiguated (see {args.out_flags}): {duplicate_id_flags}\n")
+        f.write(f"flagged - oversized identifier truncated (see {args.out_flags}): {oversized_flags}\n\n")
         f.write("SKIPPED ROWS\n------------\n")
         for sn, r, reason in m.skipped:
             f.write(f"  {sn} row {r}: {reason}\n")
@@ -924,7 +962,7 @@ def main():
 
     if args.execute:
         print("\n--execute set: connecting to MySQL and running the migration...")
-        execute_sql(sql_text, args.host, args.user, args.password, args.database, args.port)
+        execute_sql(statements, args.host, args.user, args.password, args.database, args.port)
     else:
         print("\nDry run only (default). Review migration_output.sql, then re-run with --execute to apply it.")
 

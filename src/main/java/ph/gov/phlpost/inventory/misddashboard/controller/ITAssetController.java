@@ -331,6 +331,8 @@ public class ITAssetController {
 
         return new AssetDetailResponse(
                 asset.getAssetTag(),
+                asset.getPropertyNumber(),
+                asset.getBundledWithAssetTag(),
                 asset.getCatalogID(),
                 asset.getSerialNumber(),
                 asset.getPurchaseDate(),
@@ -440,6 +442,8 @@ public class ITAssetController {
 
     private record AssetDetailResponse(
             String assetTag,
+            String propertyNumber,
+            String bundledWithAssetTag,
             Integer catalogID,
             String serialNumber,
             LocalDate purchaseDate,

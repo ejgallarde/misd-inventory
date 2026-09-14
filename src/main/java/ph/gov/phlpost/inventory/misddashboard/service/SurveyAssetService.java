@@ -236,6 +236,9 @@ public class SurveyAssetService {
         asset.setRemarks(submitted.getRemarks());
 
         // Lock-once fields: only applied when the current database value is blank
+        if (TextUtils.isBlank(asset.getPropertyNumber()) && !TextUtils.isBlank(submitted.getPropertyNumber())) {
+            asset.setPropertyNumber(submitted.getPropertyNumber());
+        }
         if (TextUtils.isBlank(asset.getAssetTag()) && !TextUtils.isBlank(submitted.getAssetTag())) {
             asset.setAssetTag(submitted.getAssetTag());
         }

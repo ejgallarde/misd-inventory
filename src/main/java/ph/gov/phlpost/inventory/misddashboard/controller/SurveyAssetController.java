@@ -277,16 +277,21 @@ public class SurveyAssetController {
                     ? "N/A"
                     : registryService.getManagerNameByEmployeeId(assignedCustodianId);
 
+            String catalogSpecifications = formatSpecifications(catalog == null ? null : catalog.getSpecifications());
             Map<String, Object> response = Map.ofEntries(
                     Map.entry("surveyAssetID", asset.getSurveyAssetID()),
+                    Map.entry("propertyNumber", asset.getPropertyNumber() == null ? "" : asset.getPropertyNumber()),
                     Map.entry("catalogID", asset.getCatalogID() == null ? "" : asset.getCatalogID()),
                     Map.entry("catalogCategory", catalog == null || catalog.getCategory() == null ? "" : catalog.getCategory()),
                     Map.entry("catalogManufacturer",
                             catalog == null || catalog.getManufacturer() == null ? "" : catalog.getManufacturer()),
                     Map.entry("catalogModelName",
                             catalog == null || catalog.getModelName() == null ? "" : catalog.getModelName()),
-                    Map.entry("catalogSpecifications",
-                            formatSpecifications(catalog == null ? null : catalog.getSpecifications())),
+                    // Map.entry (unlike a plain HashMap) rejects a null value outright, and
+                    // formatSpecifications returns null whenever the catalog row has no
+                    // Specifications JSON set - true for every catalog entry the migration
+                    // script created, since it never populates that column.
+                    Map.entry("catalogSpecifications", catalogSpecifications == null ? "" : catalogSpecifications),
                     Map.entry("assetTag", asset.getAssetTag() == null ? "" : asset.getAssetTag()),
                     Map.entry("serialNumber", asset.getSerialNumber() == null ? "" : asset.getSerialNumber()),
                     Map.entry("acquisitionDate",

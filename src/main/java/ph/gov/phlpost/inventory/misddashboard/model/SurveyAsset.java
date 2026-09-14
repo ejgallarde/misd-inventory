@@ -13,6 +13,9 @@ public class SurveyAsset {
     @Column(name = "SurveyAssetID")
     private Integer surveyAssetID;
 
+    @Column(name = "PropertyNumber")
+    private String propertyNumber;
+
     @Column(name = "CatalogID", nullable = false)
     private Integer catalogID;
 
@@ -74,6 +77,14 @@ public class SurveyAsset {
 
     public void setAssetTag(String assetTag) {
         this.assetTag = assetTag;
+    }
+
+    public String getPropertyNumber() {
+        return propertyNumber;
+    }
+
+    public void setPropertyNumber(String propertyNumber) {
+        this.propertyNumber = propertyNumber;
     }
 
     public String getSerialNumber() {

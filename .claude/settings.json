@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python migrate_inventory.py --excel SPLITAssetMigration.xlsx --execute --host localhost --user root --password admin --database dar_inventory:*)"
+    ]
+  }
+}

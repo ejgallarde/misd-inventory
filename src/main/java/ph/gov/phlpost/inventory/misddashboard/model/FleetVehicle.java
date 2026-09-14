@@ -13,6 +13,9 @@ public class FleetVehicle {
     @Column(name = "VehicleID")
     private Integer vehicleID;
 
+    @Column(name = "PropertyNumber")
+    private String propertyNumber;
+
     @Column(name = "CatalogID", nullable = false)
     private Integer catalogID;
 
@@ -77,6 +80,14 @@ public class FleetVehicle {
 
     public void setPlateNumber(String plateNumber) {
         this.plateNumber = plateNumber;
+    }
+
+    public String getPropertyNumber() {
+        return propertyNumber;
+    }
+
+    public void setPropertyNumber(String propertyNumber) {
+        this.propertyNumber = propertyNumber;
     }
 
     public Integer getCatalogID() {

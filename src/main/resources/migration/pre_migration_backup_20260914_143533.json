@@ -1,0 +1,156 @@
+{
+  "assets": [],
+  "fleetvehicles": [],
+  "surveyassets": [],
+  "assetassignments": [],
+  "personnel": [
+    {
+      "EmployeeID": "EMP-001",
+      "FirstName": "Earl John",
+      "LastName": "Gallarde",
+      "JobTitle": "MIS Specialist",
+      "Department": "SPLIT-IT",
+      "Division": "N/A",
+      "ManagerID": null,
+      "BaseLocationID": 1
+    }
+  ],
+  "locations": [
+    {
+      "LocationID": 1,
+      "Area": "DAR Central Office",
+      "Province": "National Capital Region",
+      "OfficeAddress": "Elliptical Road, Quezon City"
+    }
+  ],
+  "equipmentcatalog": [
+    {
+      "CatalogID": 1,
+      "Category": "Desktop",
+      "Manufacturer": "Lenovo",
+      "ModelName": "M70T",
+      "Specifications": "{\"Ports\": \"Front: USB-C, USB-A ports, headphone/mic combo jack, optional card reader\", \"Memory (RAM)\": \"Up to 64GB DDR4 or DDR5 UDIMM\", \"Processor (CPU)\": \"Up to Intel Core i5/i7\", \"Storage (SSD/HDD)\": \"M.2 PCIe NVMe SSD + optional 3.5-inch SATA HDD\"}"
+    },
+    {
+      "CatalogID": 2,
+      "Category": "Desktop",
+      "Manufacturer": "HP",
+      "ModelName": "Pro SFF 280G9",
+      "Specifications": "{\"Memory (RAM)\": \"Up to DDR4-3200 MT/s, 2 DIMM slots\", \"Processor (CPU)\": \"Up to 14th Gen like i5-14500\", \"Dimensions/Weight\": \"9.5 x 30.3 x 27 cm, ~4.2 kg\", \"Storage (SSD/HDD)\": \"M.2 PCIe NVMe SSD (2242/2280) + one 3.5\\\" HDD bay\"}"
+    },
+    {
+      "CatalogID": 3,
+      "Category": "Laptop",
+      "Manufacturer": "Acer",
+      "ModelName": "Extensa 15 (EX215-55)",
+      "Specifications": "{\"Memory (RAM)\": \"8GB DDR4 (onboard + free slot, expandable up to 32GB / dual-channel support)\", \"Graphics (GPU)\": \"Intel UHD / Iris Xe Graphics (some configurations feature NVIDIA GeForce MX550 2GB GDDR6)\", \"Processor (CPU)\": \"Intel Core i7-1255U\", \"Storage (SSD/HDD)\": \"512GB or 1TB M.2 PCIe NVMe SSD\"}"
+    },
+    {
+      "CatalogID": 4,
+      "Category": "Desktop Computer",
+      "Manufacturer": "MSI",
+      "ModelName": "PRO DP180",
+      "Specifications": null
+    },
+    {
+      "CatalogID": 5,
+      "Category": "Laptop",
+      "Manufacturer": "Acer",
+      "ModelName": "TravelMate",
+      "Specifications": null
+    },
+    {
+      "CatalogID": 6,
+      "Category": "Printer",
+      "Manufacturer": "Brother",
+      "ModelName": "A3 Printer",
+      "Specifications": null
+    },
+    {
+      "CatalogID": 7,
+      "Category": "Photocopier",
+      "Manufacturer": "Kyocera",
+      "ModelName": "Photocopier Machine",
+      "Specifications": null
+    },
+    {
+      "CatalogID": 8,
+      "Category": "Plotter",
+      "Manufacturer": "Unspecified",
+      "ModelName": "Plotter (3-in-1)",
+      "Specifications": null
+    },
+    {
+      "CatalogID": 9,
+      "Category": "Printer",
+      "Manufacturer": "Unspecified",
+      "ModelName": "Bundled Printer (accessory - see assets.BundledWithAssetTag)",
+      "Specifications": null
+    },
+    {
+      "CatalogID": 10,
+      "Category": "UPS",
+      "Manufacturer": "Unspecified",
+      "ModelName": "Bundled UPS (accessory - see assets.BundledWithAssetTag)",
+      "Specifications": null
+    },
+    {
+      "CatalogID": 11,
+      "Category": "Monitor",
+      "Manufacturer": "Unspecified",
+      "ModelName": "Bundled Monitor (accessory - see assets.BundledWithAssetTag)",
+      "Specifications": null
+    }
+  ],
+  "fleetvehiclecatalog": [
+    {
+      "CatalogID": 1,
+      "Category": "Motorcycle",
+      "Manufacturer": "Honda",
+      "ModelName": "XRL 150",
+      "YearModel": 0,
+      "FuelType": "Gas"
+    },
+    {
+      "CatalogID": 2,
+      "Category": "Double Cabin Pick-up",
+      "Manufacturer": "Mitsubishi",
+      "ModelName": "Strada",
+      "YearModel": 0,
+      "FuelType": "Diesel"
+    },
+    {
+      "CatalogID": 3,
+      "Category": "Utility Van",
+      "Manufacturer": "Toyota",
+      "ModelName": "Hilux Tamaraw 2.4 UTILITY VAN DSL MT-UVR-24",
+      "YearModel": 0,
+      "FuelType": "Diesel"
+    }
+  ],
+  "surveyequipmentcatalog": [
+    {
+      "CatalogID": 4,
+      "Category": "Handheld GPS",
+      "Manufacturer": "Unspecified",
+      "ModelName": "Model P6",
+      "Specifications": null
+    },
+    {
+      "CatalogID": 5,
+      "Category": "RTK",
+      "Manufacturer": "GeoMax",
+      "ModelName": "Zenith60",
+      "Specifications": null
+    },
+    {
+      "CatalogID": 6,
+      "Category": "Total Station",
+      "Manufacturer": "GeoMax",
+      "ModelName": "Zoom 50",
+      "Specifications": null
+    }
+  ],
+  "assetdocument": [],
+  "lifecycleauditlog": []
+}

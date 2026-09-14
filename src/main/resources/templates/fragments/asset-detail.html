@@ -36,6 +36,16 @@
                             disabled>
                     </div>
                     <input type="hidden" id="editCatalogID" name="catalogID">
+                    <input type="hidden" id="editBundledWithAssetTag" name="bundledWithAssetTag">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-muted small text-uppercase">Property Number</label>
+                        <input type="text" id="editPropertyNumber" name="propertyNumber"
+                            class="form-control it-field bg-white" disabled placeholder="Enter property number">
+                    </div>
+                    <div class="col-12 d-none" id="assetBundledWithRow">
+                        <label class="form-label fw-bold text-muted small text-uppercase">Bundled With</label>
+                        <div id="assetBundledWithValue" class="form-control-plaintext"></div>
+                    </div>
                     <div class="col-12">
                         <label class="form-label fw-bold text-muted small text-uppercase">Serial Number</label>
                         <input type="text" id="editSerialNumber" name="serialNumber"

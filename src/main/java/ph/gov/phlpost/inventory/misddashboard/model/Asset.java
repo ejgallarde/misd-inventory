@@ -15,6 +15,12 @@ public class Asset {
     @Column(name = "AssetTag")
     private String assetTag;
 
+    @Column(name = "PropertyNumber")
+    private String propertyNumber;
+
+    @Column(name = "BundledWithAssetTag")
+    private String bundledWithAssetTag;
+
     @Column(name = "CatalogID", nullable = false)
     private Integer catalogID;
 
@@ -51,6 +57,22 @@ public class Asset {
 
     public void setAssetTag(String assetTag) {
         this.assetTag = assetTag;
+    }
+
+    public String getPropertyNumber() {
+        return propertyNumber;
+    }
+
+    public void setPropertyNumber(String propertyNumber) {
+        this.propertyNumber = propertyNumber;
+    }
+
+    public String getBundledWithAssetTag() {
+        return bundledWithAssetTag;
+    }
+
+    public void setBundledWithAssetTag(String bundledWithAssetTag) {
+        this.bundledWithAssetTag = bundledWithAssetTag;
     }
 
     public Integer getCatalogID() {

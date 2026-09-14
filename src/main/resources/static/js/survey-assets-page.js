@@ -53,7 +53,7 @@ $(document).ready(function () {
     }
 
     const LOCKONCE_FIELDS = [
-        'assetTag', 'serialNumber', 'acquisitionDate', 'cost'
+        'propertyNumber', 'assetTag', 'serialNumber', 'acquisitionDate', 'cost'
     ];
 
     function escapeValue(value) {
@@ -87,6 +87,7 @@ $(document).ready(function () {
     function fillSurveyAssetEditFields(data) {
         $('#editSurveyAssetID').val(data.surveyAssetID || '');
         // Lock-once inputs — pre-populated; visibility controlled by applyLockonceVisibility
+        $('#editSurveyAssetPropertyNumber').val(data.propertyNumber || '');
         $('#editSurveyAssetTag').val(data.assetTag || '');
         $('#editSurveyAssetSerialNumber').val(data.serialNumber || '');
         $('#editSurveyAssetAcquisitionDate').val(formatDateInput(data.acquisitionDate));
@@ -105,6 +106,7 @@ $(document).ready(function () {
         return {
             surveyAssetID: Number.isNaN(surveyAssetID) ? null : surveyAssetID,
             // Lock-once fields (backend ignores if already set in DB)
+            propertyNumber: $('#editSurveyAssetPropertyNumber').val() || null,
             assetTag: $('#editSurveyAssetTag').val() || null,
             serialNumber: $('#editSurveyAssetSerialNumber').val() || null,
             acquisitionDate: $('#editSurveyAssetAcquisitionDate').val() || null,
@@ -338,6 +340,7 @@ $(document).ready(function () {
         $.get('/survey-assets/' + surveyAssetId, function (data) {
             currentSurveyAssetData = data;
             $('#surveyAssetCatalogSummary').html(renderSurveyCatalogSummary(data));
+            $('#surveyAssetDetailPropertyNumber').text(data.propertyNumber || 'N/A');
             $('#surveyAssetDetailAssetTag').text(data.assetTag || 'N/A');
             $('#surveyAssetDetailSerialNumber').text(data.serialNumber || 'N/A');
             $('#surveyAssetDetailAcquisitionDate').text(MISDCommon.formatDate(data.acquisitionDate));

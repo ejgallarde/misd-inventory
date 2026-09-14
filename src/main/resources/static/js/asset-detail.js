@@ -18,6 +18,7 @@
 
     let currentAssetTag = '';
     let serialNumberEditable = false;
+    let propertyNumberEditable = false;
 
     /*
      * Shared entry point for the pages that host this panel.
@@ -103,11 +104,17 @@
     function load(assetTag) {
         $.get(`/assets/${encodeURIComponent(assetTag)}`, function (data) {
             const serialNumber = data.serialNumber == null ? '' : String(data.serialNumber);
+            const propertyNumber = data.propertyNumber == null ? '' : String(data.propertyNumber);
             currentAssetTag = data.assetTag;
             serialNumberEditable = serialNumber.trim() === '';
+            propertyNumberEditable = propertyNumber.trim() === '';
 
             $('#editAssetTag').val(data.assetTag);
             $('#editCatalogID').val(data.catalogID);
+            $('#editBundledWithAssetTag').val(data.bundledWithAssetTag || '');
+            $('#assetBundledWithRow').toggleClass('d-none', !data.bundledWithAssetTag);
+            $('#assetBundledWithValue').text(data.bundledWithAssetTag || '');
+            $('#editPropertyNumber').val(propertyNumber);
             $('#editSerialNumber').val(serialNumber);
             $('#editPurchaseDate').val(data.purchaseDate ? data.purchaseDate.split('T')[0] : '');
             $('#editPurchasePrice').val(data.purchasePrice);
@@ -210,6 +217,9 @@
             $('.it-field').not('#editAssetTag').prop('disabled', false);
             if (!serialNumberEditable) {
                 $('#editSerialNumber').prop('disabled', true);
+            }
+            if (!propertyNumberEditable) {
+                $('#editPropertyNumber').prop('disabled', true);
             }
             $(panelSelector).addClass('asset-edit-mode-active');
             $(this).addClass('d-none');

@@ -1,6 +1,6 @@
 MIGRATION SUMMARY
 ==================
-Generated: 2026-09-14T14:26:42.355337
+Generated: 2026-09-14T17:27:39.575742
 
 assets rows (incl. bundled accessories): 3495
 fleetvehicles rows: 1032
@@ -15,6 +15,7 @@ bundled accessory rows created: 167
 rows skipped (manual review required): 8
 flagged - sentinel owner assigned (see migration_flags_report.csv): 93
 flagged - duplicate identifier disambiguated (see migration_flags_report.csv): 139
+flagged - oversized identifier truncated (see migration_flags_report.csv): 5
 
 SKIPPED ROWS
 ------------

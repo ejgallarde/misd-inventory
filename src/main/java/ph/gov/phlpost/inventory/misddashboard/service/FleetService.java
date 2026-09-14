@@ -170,6 +170,9 @@ public class FleetService {
         vehicle.setRemarks(submitted.getRemarks());
 
         // Lock-once fields: only applied when the current database value is blank
+        if (TextUtils.isBlank(vehicle.getPropertyNumber()) && !TextUtils.isBlank(submitted.getPropertyNumber())) {
+            vehicle.setPropertyNumber(submitted.getPropertyNumber());
+        }
         if (TextUtils.isBlank(vehicle.getPlateNumber()) && !TextUtils.isBlank(submitted.getPlateNumber())) {
             vehicle.setPlateNumber(submitted.getPlateNumber());
         }
