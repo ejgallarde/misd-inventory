@@ -7,6 +7,7 @@
         <thead class="table-dark">
             <tr>
                 <th>Vehicle ID</th>
+                <th>Property Number</th>
                 <th>Plate No.</th>
                 <th>Accountable Owner</th>
                 <th>Type</th>
@@ -31,6 +32,9 @@
                 <td>
                     <a href="#" class="text-decoration-none fw-bold fleet-detail-link"
                         th:data-vehicle-id="${vehicle.vehicleID}" th:text="${vehicle.vehicleID}"></a>
+                </td>
+                <td
+                    th:text="${vehicle.propertyNumber != null and !#strings.isEmpty(vehicle.propertyNumber) ? vehicle.propertyNumber : 'N/A'}">
                 </td>
                 <td class="fw-bold">
                     <a href="#" th:if="${vehicle.plateNumber != null and !#strings.isEmpty(vehicle.plateNumber)}"

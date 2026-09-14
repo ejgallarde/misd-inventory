@@ -6,12 +6,12 @@
         class="table table-striped table-hover w-100 align-middle">
         <thead class="table-dark">
             <tr>
-                <th>Asset Tag</th>
+                <th>System Tag</th>
+                <th>Property Number</th>
                 <th>Category</th>
                 <th>Accountable Owner</th>
                 <th>Location of the Accountable Owner</th>
-                <th>Department</th>
-                <th>Division</th>
+                <th>Office/Department</th>
                 <th>Manager</th>
                 <th>Status Overview</th>
                 <th>Action</th>
@@ -22,6 +22,9 @@
                 <td>
                     <a href="#" class="text-decoration-none fw-bold asset-detail-link"
                         th:data-assettag="${asset.assetTag}" th:text="${asset.assetTag}"></a>
+                </td>
+                <td
+                    th:text="${asset.propertyNumber != null and !#strings.isEmpty(asset.propertyNumber) ? asset.propertyNumber : 'N/A'}">
                 </td>
                 <td>
                     <span class="asset-category-info" tabindex="0"
@@ -40,9 +43,6 @@
                 </td>
                 <td
                     th:text="${asset.currentOwnerID != null and departmentMap[asset.currentOwnerID] != null ? departmentMap[asset.currentOwnerID] : 'MISD - Unassigned'}">
-                </td>
-                <td
-                    th:text="${asset.currentOwnerID != null and divisionMap[asset.currentOwnerID] != null ? divisionMap[asset.currentOwnerID] : 'MISD - Unassigned'}">
                 </td>
                 <td
                     th:text="${asset.currentOwnerID != null and managerNameMap[asset.currentOwnerID] != null ? managerNameMap[asset.currentOwnerID] : 'No Manager'}">

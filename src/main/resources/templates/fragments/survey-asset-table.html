@@ -7,7 +7,8 @@
         <thead class="table-dark">
             <tr>
                 <th>Survey Asset ID</th>
-                <th>Asset Tag / Serial</th>
+                <th>Property Number</th>
+                <th>System Tag / Serial</th>
                 <th>Custodian</th>
                 <th>Type</th>
                 <th>Last Calibration</th>
@@ -32,6 +33,9 @@
                     <a href="#" class="text-decoration-none fw-bold survey-asset-detail-link"
                         th:data-survey-asset-id="${surveyAsset.surveyAssetID}"
                         th:text="${surveyAsset.surveyAssetID}"></a>
+                </td>
+                <td
+                    th:text="${surveyAsset.propertyNumber != null and !#strings.isEmpty(surveyAsset.propertyNumber) ? surveyAsset.propertyNumber : 'N/A'}">
                 </td>
                 <td class="fw-bold">
                     <a href="#"
