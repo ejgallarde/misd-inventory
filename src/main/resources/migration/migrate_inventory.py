@@ -63,9 +63,12 @@ Execute against a real MySQL server (requires `pip install pymysql`):
         --host localhost --user root --password *** --database dar_inventory
 
 Either mode also writes:
-    migration_log.txt        - per-table row counts, warnings
-    skipped_rows.csv          - the 3 rows excluded, and why
-    accessories_created.csv   - every bundled accessory row generated, for spot-checking
+    migration_log.txt          - per-table row counts, warnings
+    skipped_rows.csv            - the 3 rows excluded, and why
+    accessories_created.csv     - every bundled accessory row generated, for spot-checking
+    migration_flags_report.csv  - rows given a sentinel owner (PERS-00000, no resolvable
+                                   owner in source) or a disambiguated duplicate SerialNumber/
+                                   PlateNumber, for later manual review/reassignment
 """
 import argparse
 import csv
@@ -101,11 +104,14 @@ COL_REGION, COL_PROVINCE, COL_EQUIPMENT, COL_UNITCOST, COL_DEPR, COL_PROPNUM, CO
 FLEET, SURVEY, GENERAL = 'FLEET', 'SURVEY', 'GENERAL'
 
 EQUIPMENT_MAP = {
-    'DESKTOP COMPUTER – (LENOVO M70T)': (GENERAL, 'Desktop Computer', 'Lenovo', 'M70T'),
+    # Category aligned to the pre-existing equipmentcatalog seed row ('Desktop', not
+    # 'Desktop Computer') so this reuses that CatalogID instead of forking a duplicate.
+    'DESKTOP COMPUTER – (LENOVO M70T)': (GENERAL, 'Desktop', 'Lenovo', 'M70T'),
     'MOTORCYCLE – (HONDA XRL 150)': (FLEET, 'Motorcycle', 'Honda', 'XRL 150'),
     'DESKTOP COMPUTER – (MSI PRO DP180)': (GENERAL, 'Desktop Computer', 'MSI', 'PRO DP180'),
-    'DESKTOP COMPUTER – (HP PRO SFF 280G9)': (GENERAL, 'Desktop Computer', 'HP', 'Pro SFF 280G9'),
-    'LAPTOP – (ACER EXTENSA EX215-55G I7)': (GENERAL, 'Laptop', 'Acer', 'Extensa EX215-55G i7'),
+    'DESKTOP COMPUTER – (HP PRO SFF 280G9)': (GENERAL, 'Desktop', 'HP', 'Pro SFF 280G9'),
+    # ModelName aligned to the pre-existing catalog row ('Extensa 15 (EX215-55)').
+    'LAPTOP – (ACER EXTENSA EX215-55G I7)': (GENERAL, 'Laptop', 'Acer', 'Extensa 15 (EX215-55)'),
     'ACER TRAVELMATE': (GENERAL, 'Laptop', 'Acer', 'TravelMate'),
     'DOUBLE CABIN PICK-UP VEHICLES – MITSUBISHI STRADA': (FLEET, 'Double Cabin Pick-up', 'Mitsubishi', 'Strada'),
     'HANDHELD GPS – MODEL P6': (SURVEY, 'Handheld GPS', 'Unspecified', 'Model P6'),
@@ -119,9 +125,11 @@ EQUIPMENT_MAP = {
     'HP PRINTER': (GENERAL, 'Printer', 'HP', 'Unspecified'),
     'SERVER': (GENERAL, 'Server', 'Unspecified', 'Unspecified'),
 }
-# Hilux Tamaraw appears with a trailing batch suffix ("-24", "-25", ...) that is
-# a procurement-batch code, not a model difference - stripped via regex below.
-HILUX_RE = re.compile(r'^HILUX TAMARAW 2\.4 UTILITY VAN DSL MT-UVR\s*-?\d*$')
+# Hilux Tamaraw appears with a trailing batch suffix ("-24", "-25", ...). The
+# pre-existing fleetvehiclecatalog seed row keeps this suffix as part of the
+# ModelName ('...MT-UVR-24'), so it is preserved (not stripped) below to reuse
+# that CatalogID for -24 rows and to keep any other suffix as its own entry.
+HILUX_RE = re.compile(r'^HILUX TAMARAW 2\.4 UTILITY VAN DSL MT-UVR(\s*-?\d*)$')
 
 ACCESSORY_CATALOG = {
     'PRINTER': ('Printer', 'Unspecified', 'Bundled Printer (accessory - see assets.BundledWithAssetTag)'),
@@ -142,6 +150,14 @@ PROPNUM_RE = re.compile(r'\b\d{4}-\d{2}-\d{2}-[A-Z0-9\-]+\b')
 CAREOF_RE = re.compile(r'(?:C/O|c/o)\s*([A-Za-z .,\'\-]+)|(?:User[:\s]+)\n?\s*([A-Za-z .,\'\-]+)', re.IGNORECASE)
 
 PLACEHOLDER_SERIAL_RE = re.compile(r'no\s*plate\s*available|^n/?a$|^none$|^not\s*available$|^no\s*serial', re.IGNORECASE)
+
+# Sentinel personnel record used when a row has a document number (PAR/PTR) but
+# no resolvable owner, so assetassignments.EmployeeID (NOT NULL) is never left
+# unset. Rows using it are marked with a [MIGRATION FLAG: ...] note and logged
+# to migration_flags_report.csv for later manual review/reassignment.
+SENTINEL_EMPLOYEE_ID = 'PERS-00000'
+FLAG_UNRESOLVED_OWNER = '[MIGRATION FLAG: UNRESOLVED OWNER]'
+FLAG_DUPLICATE_IDENTIFIER = '[MIGRATION FLAG: DUPLICATE IDENTIFIER]'
 
 
 # ======================================================================
@@ -248,8 +264,11 @@ def classify_equipment(raw):
     key = re.sub(r'\s+', ' ', key).strip()
     if key in EQUIPMENT_MAP:
         return EQUIPMENT_MAP[key]
-    if HILUX_RE.match(key):
-        return (FLEET, 'Utility Van', 'Toyota', 'Hilux Tamaraw 2.4 UTILITY VAN DSL MT-UVR')
+    hilux_match = HILUX_RE.match(key)
+    if hilux_match:
+        digits = re.sub(r'\D', '', hilux_match.group(1) or '')
+        model = 'Hilux Tamaraw 2.4 UTILITY VAN DSL MT-UVR' + (f'-{digits}' if digits else '')
+        return (FLEET, 'Utility Van', 'Toyota', model)
     return None  # unrecognized model - handled by caller (logged, defaults to GENERAL/Other)
 
 
@@ -339,10 +358,15 @@ class Migration:
         self.accessories_log = []
         self.skipped = []
         self.warnings = []
+        self.flags = []            # rows that needed a sentinel owner or a duplicate-identifier fixup
 
         self._asset_tag_seq = 0
         self._vehicle_id_seq = 0
         self._survey_id_seq = 0
+
+        # per-field in-batch dedup trackers for columns that are UNIQUE in the target schema
+        self._dup_seen = {'assets_serial': set(), 'fleet_plate': set(), 'survey_serial': set()}
+        self._dup_counter = {'assets_serial': 0, 'fleet_plate': 0, 'survey_serial': 0}
 
     # ---------------- personnel ----------------
     def get_or_create_person(self, raw_name, designation=None, office=None):
@@ -373,6 +397,52 @@ class Migration:
             'RawName': name,
         }
         return emp_id
+
+    # ---------------- sentinel owner for unresolvable assetassignments ----------------
+    def get_sentinel_employee(self):
+        key = '__MIGRATION_SENTINEL__'
+        if key not in self.personnel:
+            self.personnel[key] = {
+                'EmployeeID': SENTINEL_EMPLOYEE_ID, 'FirstName': 'UNDEFINED', 'LastName': 'DURING MIGRATION',
+                'JobTitle': None, 'Department': None, 'RawName': 'UNDEFINED DURING MIGRATION',
+            }
+        return SENTINEL_EMPLOYEE_ID
+
+    def resolve_assignment_employee(self, emp_id, region, row_num, reference_type, reference_id):
+        """Returns (employee_id, flag_note_or_None). Substitutes the sentinel
+        personnel record instead of ever leaving EmployeeID unset (it's NOT NULL)."""
+        if emp_id:
+            return emp_id, None
+        sentinel = self.get_sentinel_employee()
+        self.flags.append({
+            'category': 'UNRESOLVED_OWNER', 'region': region, 'row': row_num,
+            'reference_type': reference_type, 'reference_id': reference_id,
+            'field': 'EmployeeID', 'original_value': None, 'applied_value': sentinel,
+            'note': 'No resolvable owner in source; assigned to migration sentinel personnel record for later reassignment.',
+        })
+        return sentinel, FLAG_UNRESOLVED_OWNER
+
+    # ---------------- in-batch dedup for UNIQUE columns ----------------
+    def dedupe_value(self, field_key, value, max_len, region, row_num, reference_type, reference_id, field_name):
+        """Returns value unchanged the first time it's seen for this field; every
+        later occurrence is disambiguated so it can't violate the column's UNIQUE
+        constraint, and logged to self.flags for the migration_flags_report.csv."""
+        if value is None:
+            return None
+        norm_val = value.strip().upper()
+        seen = self._dup_seen[field_key]
+        if norm_val in seen:
+            self._dup_counter[field_key] += 1
+            applied = f"MIGRATION DUPLICATE - {self._dup_counter[field_key]:03d} - {value}"[:max_len]
+            self.flags.append({
+                'category': 'DUPLICATE_IDENTIFIER', 'region': region, 'row': row_num,
+                'reference_type': reference_type, 'reference_id': reference_id,
+                'field': field_name, 'original_value': value, 'applied_value': applied,
+                'note': f"{field_name} duplicated in source data; disambiguated to remain unique.",
+            })
+            return applied
+        seen.add(norm_val)
+        return value
 
     # ---------------- locations ----------------
     def get_or_create_location(self, region, province, office):
@@ -525,18 +595,26 @@ class Migration:
             vid = self._vehicle_id_seq
             cat_id = self.get_or_create_catalog('fleetvehiclecatalog', category, manufacturer, model)
             plate_raw = norm(row['serial_or_plate'])
-            plate = None if (plate_raw and PLACEHOLDER_SERIAL_RE.search(plate_raw)) else plate_raw
+            plate_clean = None if (plate_raw and PLACEHOLDER_SERIAL_RE.search(plate_raw)) else plate_raw
+            plate = self.dedupe_value('fleet_plate', plate_clean, 255, sn, r, 'FLEETVEHICLE', str(vid), 'PlateNumber')
+            fleet_remarks = remarks_final
+            if plate != plate_clean:
+                fleet_remarks = (f"{fleet_remarks} | " if fleet_remarks else "") + FLAG_DUPLICATE_IDENTIFIER
             self.fleetvehicles.append({
                 'VehicleID': vid, 'PropertyNumber': propnum, 'CatalogID': cat_id,
                 'PlateNumber': plate, 'Cost': cost, 'AssignedDriverID': emp_id,
-                'Remarks': remarks_final, 'OperationalStatus': status_word, 'MaintenanceStatus': status_word,
+                'Remarks': fleet_remarks, 'OperationalStatus': status_word, 'MaintenanceStatus': status_word,
                 '_region': sn, '_row': r, '_ref': ('FLEETVEHICLE', str(vid)),
             })
             if doc_no or emp_id:
+                assign_emp_id, flag_note = self.resolve_assignment_employee(emp_id, sn, r, 'FLEETVEHICLE', str(vid))
+                condition_notes = f"Migrated from {sn} row {r}."
+                if flag_note:
+                    condition_notes = f"{flag_note} {condition_notes}"
                 self.assetassignments.append({
-                    'ReferenceType': 'FLEETVEHICLE', 'AssetTag': str(vid), 'EmployeeID': emp_id,
+                    'ReferenceType': 'FLEETVEHICLE', 'AssetTag': str(vid), 'EmployeeID': assign_emp_id,
                     'ActionType': 'INITIAL MIGRATION RECORD', 'DocumentNo': doc_no,
-                    'ConditionNotes': f"Migrated from {sn} row {r}.",
+                    'ConditionNotes': condition_notes,
                 })
 
         elif target == SURVEY:
@@ -544,39 +622,55 @@ class Migration:
             sid = self._survey_id_seq
             asset_tag = f"SRV-{sid:05d}"
             cat_id = self.get_or_create_catalog('surveyequipmentcatalog', category, manufacturer, model)
-            serial = clean_serial(row['serial_or_plate'])
+            serial_raw = clean_serial(row['serial_or_plate'])
+            serial = self.dedupe_value('survey_serial', serial_raw, 255, sn, r, 'SURVEYASSET', asset_tag, 'SerialNumber')
+            survey_remarks = remarks_final
+            if serial != serial_raw:
+                survey_remarks = (f"{survey_remarks} | " if survey_remarks else "") + FLAG_DUPLICATE_IDENTIFIER
             self.surveyassets.append({
                 'SurveyAssetID': sid, 'PropertyNumber': propnum, 'AssetTag': asset_tag,
                 'CatalogID': cat_id, 'SerialNumber': serial, 'Cost': cost,
-                'AssignedCustodianID': emp_id, 'Remarks': remarks_final,
+                'AssignedCustodianID': emp_id, 'Remarks': survey_remarks,
                 'OperationalStatus': status_word, 'ConditionStatus': status_word,
                 '_region': sn, '_row': r, '_ref': ('SURVEYASSET', str(sid)),
             })
             if doc_no or emp_id:
+                assign_emp_id, flag_note = self.resolve_assignment_employee(emp_id, sn, r, 'SURVEYASSET', asset_tag)
+                condition_notes = f"Migrated from {sn} row {r}."
+                if flag_note:
+                    condition_notes = f"{flag_note} {condition_notes}"
                 self.assetassignments.append({
-                    'ReferenceType': 'SURVEYASSET', 'AssetTag': str(sid), 'EmployeeID': emp_id,
+                    'ReferenceType': 'SURVEYASSET', 'AssetTag': str(sid), 'EmployeeID': assign_emp_id,
                     'ActionType': 'INITIAL MIGRATION RECORD', 'DocumentNo': doc_no,
-                    'ConditionNotes': f"Migrated from {sn} row {r}.",
+                    'ConditionNotes': condition_notes,
                 })
 
         else:  # GENERAL -> assets
             self._asset_tag_seq += 1
             asset_tag = f"AST-{self._asset_tag_seq:06d}"
             cat_id = self.get_or_create_catalog('equipmentcatalog', category, manufacturer, model)
-            serial = clean_serial(row['serial_or_plate'])
+            serial_raw = clean_serial(row['serial_or_plate'])
+            serial = self.dedupe_value('assets_serial', serial_raw, 100, sn, r, 'ASSET', asset_tag, 'SerialNumber')
             deployment = 'Deployed' if emp_id else 'Unassigned'
+            asset_remarks = remarks_final
+            if serial != serial_raw:
+                asset_remarks = (f"{asset_remarks} | " if asset_remarks else "") + FLAG_DUPLICATE_IDENTIFIER
             self.assets.append({
                 'AssetTag': asset_tag, 'PropertyNumber': propnum, 'BundledWithAssetTag': None,
                 'CatalogID': cat_id, 'SerialNumber': serial, 'PurchasePrice': cost,
-                'CurrentOwnerID': emp_id, 'Remarks': remarks_final,
+                'CurrentOwnerID': emp_id, 'Remarks': asset_remarks,
                 'DeploymentStatus': deployment, 'MaintenanceHealthStatus': status_word, 'LifecycleStatus': 'Active',
                 '_region': sn, '_row': r, '_ref': ('ASSET', asset_tag),
             })
             if doc_no or emp_id:
+                assign_emp_id, flag_note = self.resolve_assignment_employee(emp_id, sn, r, 'ASSET', asset_tag)
+                condition_notes = f"Migrated from {sn} row {r}."
+                if flag_note:
+                    condition_notes = f"{flag_note} {condition_notes}"
                 self.assetassignments.append({
-                    'ReferenceType': 'ASSET', 'AssetTag': asset_tag, 'EmployeeID': emp_id,
+                    'ReferenceType': 'ASSET', 'AssetTag': asset_tag, 'EmployeeID': assign_emp_id,
                     'ActionType': 'INITIAL MIGRATION RECORD', 'DocumentNo': doc_no,
-                    'ConditionNotes': f"Migrated from {sn} row {r}.",
+                    'ConditionNotes': condition_notes,
                 })
 
             # bundled accessories -> new linked `assets` rows (parent must be an `assets` row)
@@ -693,15 +787,12 @@ def build_sql(m: Migration):
     out.append("")
 
     out.append("-- ===================== assetassignments (initial migration record per row) =====================")
+    out.append("-- EmployeeID is never NULL here: rows with no resolvable owner are pointed at the")
+    out.append(f"-- sentinel personnel record ({SENTINEL_EMPLOYEE_ID}) and flagged - see migration_flags_report.csv.")
     for a in m.assetassignments:
         out.append(
             "INSERT INTO `assetassignments` (`ReferenceType`,`AssetTag`,`EmployeeID`,`ActionType`,`DocumentNo`,`ConditionNotes`) VALUES ("
             f"{sql_str(a['ReferenceType'])},{sql_str(a['AssetTag'])},{sql_str(a['EmployeeID'])},"
-            f"{sql_str(a['ActionType'])},{sql_str(a['DocumentNo'])},{sql_str(a['ConditionNotes'])});"
-        ) if a['EmployeeID'] else out.append(
-            "-- skipped assetassignments row with no resolvable EmployeeID and no DocumentNo would be a no-op; kept below for audit trail\n"
-            "INSERT INTO `assetassignments` (`ReferenceType`,`AssetTag`,`EmployeeID`,`ActionType`,`DocumentNo`,`ConditionNotes`) VALUES ("
-            f"{sql_str(a['ReferenceType'])},{sql_str(a['AssetTag'])},NULL,"
             f"{sql_str(a['ActionType'])},{sql_str(a['DocumentNo'])},{sql_str(a['ConditionNotes'])});"
         )
     out.append("")
@@ -761,6 +852,8 @@ def main():
     ap.add_argument('--out-log', default='migration_log.txt')
     ap.add_argument('--out-skipped', default='skipped_rows.csv')
     ap.add_argument('--out-accessories', default='accessories_created.csv')
+    ap.add_argument('--out-flags', default='migration_flags_report.csv',
+                     help='Rows given a sentinel owner or a disambiguated duplicate identifier, for later manual review')
     args = ap.parse_args()
 
     print(f"Loading {args.excel} ...")
@@ -775,24 +868,31 @@ def main():
     m.run(wb_v, wb_f)
 
     # ---- logs ----
-    with open(args.out_skipped, 'w', newline='') as f:
+    with open(args.out_skipped, 'w', newline='', encoding='utf-8') as f:
         w = csv.writer(f)
         w.writerow(['Region', 'Row', 'Reason'])
         for sn, r, reason in m.skipped:
             w.writerow([sn, r, reason])
 
-    with open(args.out_accessories, 'w', newline='') as f:
+    with open(args.out_accessories, 'w', newline='', encoding='utf-8') as f:
         cols = ['region', 'row', 'parent_asset_tag', 'accessory_asset_tag', 'keyword', 'status', 'property_number', 'careof_named', 'raw_segment']
         dw = csv.DictWriter(f, fieldnames=cols)
         dw.writeheader()
         for rec in m.accessories_log:
             dw.writerow(rec)
 
+    with open(args.out_flags, 'w', newline='', encoding='utf-8') as f:
+        cols = ['category', 'region', 'row', 'reference_type', 'reference_id', 'field', 'original_value', 'applied_value', 'note']
+        dw = csv.DictWriter(f, fieldnames=cols)
+        dw.writeheader()
+        for rec in m.flags:
+            dw.writerow(rec)
+
     sql_text = build_sql(m)
-    with open(args.out_sql, 'w') as f:
+    with open(args.out_sql, 'w', encoding='utf-8') as f:
         f.write(sql_text)
 
-    with open(args.out_log, 'w') as f:
+    with open(args.out_log, 'w', encoding='utf-8') as f:
         f.write("MIGRATION SUMMARY\n==================\n")
         f.write(f"Generated: {datetime.datetime.now().isoformat()}\n\n")
         f.write(f"assets rows (incl. bundled accessories): {len(m.assets)}\n")
@@ -805,7 +905,11 @@ def main():
         f.write(f"fleetvehiclecatalog new entries: {len(m.fleetvehiclecatalog)}\n")
         f.write(f"surveyequipmentcatalog new entries: {len(m.surveyequipmentcatalog)}\n")
         f.write(f"bundled accessory rows created: {len(m.accessories_log)}\n")
-        f.write(f"rows skipped (manual review required): {len(m.skipped)}\n\n")
+        f.write(f"rows skipped (manual review required): {len(m.skipped)}\n")
+        unresolved_owner_flags = sum(1 for fl in m.flags if fl['category'] == 'UNRESOLVED_OWNER')
+        duplicate_id_flags = sum(1 for fl in m.flags if fl['category'] == 'DUPLICATE_IDENTIFIER')
+        f.write(f"flagged - sentinel owner assigned (see {args.out_flags}): {unresolved_owner_flags}\n")
+        f.write(f"flagged - duplicate identifier disambiguated (see {args.out_flags}): {duplicate_id_flags}\n\n")
         f.write("SKIPPED ROWS\n------------\n")
         for sn, r, reason in m.skipped:
             f.write(f"  {sn} row {r}: {reason}\n")
@@ -813,10 +917,10 @@ def main():
         for w_ in m.warnings:
             f.write(f"  {w_}\n")
 
-    print(f"\nWrote {args.out_sql}, {args.out_log}, {args.out_skipped}, {args.out_accessories}")
+    print(f"\nWrote {args.out_sql}, {args.out_log}, {args.out_skipped}, {args.out_accessories}, {args.out_flags}")
     print(f"assets={len(m.assets)} fleetvehicles={len(m.fleetvehicles)} surveyassets={len(m.surveyassets)} "
           f"assetassignments={len(m.assetassignments)} personnel={len(m.personnel)} locations={len(m.locations)} "
-          f"skipped={len(m.skipped)} warnings={len(m.warnings)}")
+          f"skipped={len(m.skipped)} warnings={len(m.warnings)} flags={len(m.flags)}")
 
     if args.execute:
         print("\n--execute set: connecting to MySQL and running the migration...")

@@ -1,18 +1,20 @@
 MIGRATION SUMMARY
 ==================
-Generated: 2026-09-13T10:06:39.632565
+Generated: 2026-09-14T14:26:42.355337
 
 assets rows (incl. bundled accessories): 3495
 fleetvehicles rows: 1032
 surveyassets rows: 204
 assetassignments rows: 4258
-personnel rows (synthetic EmployeeIDs generated): 2759
+personnel rows (synthetic EmployeeIDs generated): 2760
 locations rows: 118
 equipmentcatalog new entries: 14
-fleetvehiclecatalog new entries: 3
+fleetvehiclecatalog new entries: 4
 surveyequipmentcatalog new entries: 4
 bundled accessory rows created: 167
 rows skipped (manual review required): 8
+flagged - sentinel owner assigned (see migration_flags_report.csv): 93
+flagged - duplicate identifier disambiguated (see migration_flags_report.csv): 139
 
 SKIPPED ROWS
 ------------
