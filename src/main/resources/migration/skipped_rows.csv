@@ -1,0 +1,9 @@
+Region,Row,Reason
+CAR,236,"No Equipment description, Region, or Province at all - cannot classify. See Inventory_Review_Flags_AllRegions.xlsx > Unclassified_Rows."
+CAR,237,"No Equipment description, Region, or Province at all - cannot classify. See Inventory_Review_Flags_AllRegions.xlsx > Unclassified_Rows."
+R-III,242,Two equipment names merged into one cell/cost ('PLOTTER (3IN1) / HP Designjet T908') - needs manual split into two line items. See report Section 3.6.
+R-III,243,Blank Equipment with no cost/property-number safety net caught earlier - skipped defensively.
+R-V,335,Blank Equipment with no cost/property-number safety net caught earlier - skipped defensively.
+R-VI,264,Blank Equipment with no cost/property-number safety net caught earlier - skipped defensively.
+R-VII,113,Blank Equipment with no cost/property-number safety net caught earlier - skipped defensively.
+R-VII,115,Blank Equipment with no cost/property-number safety net caught earlier - skipped defensively.
