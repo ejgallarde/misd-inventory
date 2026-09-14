@@ -8,9 +8,11 @@ import java.util.List;
 
 public interface FleetVehicleRepository extends JpaRepository<FleetVehicle, Integer> {
 
-        // Vehicle age is measured from AcquisitionYear, falling back to
-        // ManufactureYear when it is not recorded, so these queries agree with
-        // FleetService.USEFUL_LIFE_YEARS and the detail panel's depreciation flag.
+        // Vehicle age is measured from AcquisitionYear, falling back to the
+        // catalog's YearModel (joined via CatalogID) when it is not recorded, so
+        // these queries agree with FleetService.USEFUL_LIFE_YEARS and the detail
+        // panel's depreciation flag. YearModel moved from FleetVehicles onto
+        // FleetVehicleCatalog when the vehicle catalog was introduced.
         // "Missing" and "Stolen" are the values actually written; the combined
         // "Missing/Stolen" is retained only for rows predating the correction.
 
@@ -47,24 +49,26 @@ public interface FleetVehicleRepository extends JpaRepository<FleetVehicle, Inte
         @Query(value = "SELECT COUNT(*) FROM FleetVehicles WHERE RegistrationExpiry BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 30 DAY)", nativeQuery = true)
         long countExpiringRegistrations();
 
-        @Query(value = "SELECT COUNT(*) FROM FleetVehicles WHERE " +
-                        "COALESCE(AdminLegaltionalStatus, '') NOT IN ('Sold', 'Disposed', 'Decommissioned') AND (" +
-                        "(YEAR(CURDATE()) - COALESCE(AcquisitionYear, ManufactureYear)) >= 10 " +
-                        "OR RegistrationExpiry BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 30 DAY) " +
-                        "OR AdminLegaltionalStatus IN ('Registration Expired', 'Impounded') " +
-                        "OR OperationalStatus IN ('Grounded', 'Missing', 'Stolen', 'Missing/Stolen', 'Slated for Disposal') " +
-                        "OR MaintenanceStatus IN ('Scheduled Maintenance', 'Under Repair', 'Awaiting Parts', 'Beyond Economic Repair (BER)')"
+        @Query(value = "SELECT COUNT(*) FROM FleetVehicles fv " +
+                        "JOIN FleetVehicleCatalog fvc ON fv.CatalogID = fvc.CatalogID WHERE " +
+                        "COALESCE(fv.AdminLegaltionalStatus, '') NOT IN ('Sold', 'Disposed', 'Decommissioned') AND (" +
+                        "(YEAR(CURDATE()) - COALESCE(fv.AcquisitionYear, fvc.YearModel)) >= 10 " +
+                        "OR fv.RegistrationExpiry BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 30 DAY) " +
+                        "OR fv.AdminLegaltionalStatus IN ('Registration Expired', 'Impounded') " +
+                        "OR fv.OperationalStatus IN ('Grounded', 'Missing', 'Stolen', 'Missing/Stolen', 'Slated for Disposal') " +
+                        "OR fv.MaintenanceStatus IN ('Scheduled Maintenance', 'Under Repair', 'Awaiting Parts', 'Beyond Economic Repair (BER)')"
                         +
                         ")", nativeQuery = true)
         long countProblematicVehicles();
 
-        @Query(value = "SELECT * FROM FleetVehicles WHERE " +
-                        "COALESCE(AdminLegaltionalStatus, '') NOT IN ('Sold', 'Disposed', 'Decommissioned') AND (" +
-                        "(YEAR(CURDATE()) - COALESCE(AcquisitionYear, ManufactureYear)) >= 10 " +
-                        "OR RegistrationExpiry BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 30 DAY) " +
-                        "OR AdminLegaltionalStatus IN ('Registration Expired', 'Impounded') " +
-                        "OR OperationalStatus IN ('Grounded', 'Missing', 'Stolen', 'Missing/Stolen', 'Slated for Disposal') " +
-                        "OR MaintenanceStatus IN ('Scheduled Maintenance', 'Under Repair', 'Awaiting Parts', 'Beyond Economic Repair (BER)')"
+        @Query(value = "SELECT fv.* FROM FleetVehicles fv " +
+                        "JOIN FleetVehicleCatalog fvc ON fv.CatalogID = fvc.CatalogID WHERE " +
+                        "COALESCE(fv.AdminLegaltionalStatus, '') NOT IN ('Sold', 'Disposed', 'Decommissioned') AND (" +
+                        "(YEAR(CURDATE()) - COALESCE(fv.AcquisitionYear, fvc.YearModel)) >= 10 " +
+                        "OR fv.RegistrationExpiry BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 30 DAY) " +
+                        "OR fv.AdminLegaltionalStatus IN ('Registration Expired', 'Impounded') " +
+                        "OR fv.OperationalStatus IN ('Grounded', 'Missing', 'Stolen', 'Missing/Stolen', 'Slated for Disposal') " +
+                        "OR fv.MaintenanceStatus IN ('Scheduled Maintenance', 'Under Repair', 'Awaiting Parts', 'Beyond Economic Repair (BER)')"
                         +
                         ")", nativeQuery = true)
         List<FleetVehicle> findProblematicVehicles();

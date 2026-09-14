@@ -123,12 +123,16 @@ CREATE TABLE `assetassignments` (
 -- Fleet Management
 --
 -- Mirrors the IT/Survey Assets catalog/asset split: `fleetvehiclecatalog`
--- defines a reusable VehicleType+Make+Model (+ optional specs) once, and each
+-- defines a reusable VehicleType+Make+Model+YearModel+FuelType once, and each
 -- `fleetvehicles` row is one physical vehicle pointing at a catalog entry via
 -- CatalogID. Unlike IT/Survey, there is no batch/quantity receiving for
 -- vehicles -- PlateNumber, EngineNumber, ChassisNumberVIN and BodyNumber are
 -- all real-world unique identifiers issued externally, not internal tags that
 -- can be auto-generated, so vehicles are still registered one at a time.
+--
+-- Unlike IT/Survey's catalog, there is no free-form Specifications JSON here
+-- -- YearModel and FuelType are the only variable attributes vehicle catalog
+-- entries need, and both are typed fields rather than an open key/value list.
 --
 -- Anyone with an existing local dev DB from before this change needs to
 -- either drop and re-run this whole script, or apply by hand:
@@ -138,6 +142,8 @@ CREATE TABLE `assetassignments` (
 --     DROP COLUMN `VehicleType`,
 --     DROP COLUMN `Make`,
 --     DROP COLUMN `Model`,
+--     DROP COLUMN `ManufactureYear`,
+--     DROP COLUMN `FuelType`,
 --     ADD KEY `CatalogID` (`CatalogID`),
 --     ADD CONSTRAINT `fleetvehicles_ibfk_2` FOREIGN KEY (`CatalogID`)
 --       REFERENCES `fleetvehiclecatalog` (`CatalogID`) ON DELETE RESTRICT;
@@ -150,7 +156,8 @@ CREATE TABLE `fleetvehiclecatalog` (
   `Category` varchar(100) NOT NULL,
   `Manufacturer` varchar(100) NOT NULL,
   `ModelName` varchar(100) NOT NULL,
-  `Specifications` json DEFAULT NULL,
+  `YearModel` int NOT NULL,
+  `FuelType` varchar(50) NOT NULL,
   PRIMARY KEY (`CatalogID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
@@ -158,10 +165,8 @@ CREATE TABLE `fleetvehicles` (
   `VehicleID` int NOT NULL AUTO_INCREMENT,
   `CatalogID` int NOT NULL,
   `PlateNumber` varchar(255) DEFAULT NULL,
-  `ManufactureYear` int DEFAULT NULL,
   `EngineNumber` varchar(255) DEFAULT NULL,
   `ChassisNumberVIN` varchar(255) DEFAULT NULL,
-  `FuelType` varchar(255) DEFAULT NULL,
   `RegistrationExpiry` date DEFAULT NULL,
   `InsuranceExpiry` date DEFAULT NULL,
   `AssignedDriverID` varchar(20) DEFAULT NULL,

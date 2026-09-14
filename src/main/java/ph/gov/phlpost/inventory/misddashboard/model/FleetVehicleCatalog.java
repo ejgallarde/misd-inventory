@@ -20,9 +20,11 @@ public class FleetVehicleCatalog {
     @Column(name = "ModelName", nullable = false)
     private String modelName;
 
-    // We use String here to capture the JSON text from the HTML form
-    @Column(name = "Specifications", columnDefinition = "json")
-    private String specifications;
+    @Column(name = "YearModel", nullable = false)
+    private Integer yearModel;
+
+    @Column(name = "FuelType", nullable = false)
+    private String fuelType;
 
     public FleetVehicleCatalog() {}
 
@@ -38,6 +40,9 @@ public class FleetVehicleCatalog {
     public String getModelName() { return modelName; }
     public void setModelName(String modelName) { this.modelName = modelName; }
 
-    public String getSpecifications() { return specifications; }
-    public void setSpecifications(String specifications) { this.specifications = specifications; }
+    public Integer getYearModel() { return yearModel; }
+    public void setYearModel(Integer yearModel) { this.yearModel = yearModel; }
+
+    public String getFuelType() { return fuelType; }
+    public void setFuelType(String fuelType) { this.fuelType = fuelType; }
 }

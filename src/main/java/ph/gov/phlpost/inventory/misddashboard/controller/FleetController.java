@@ -24,14 +24,9 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.json.JsonMapper;
-
 @Controller
 @RequestMapping("/fleet")
 public class FleetController {
-
-    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(FleetController.class);
 
     private final FleetVehicleRepository fleetRepo;
     private final FleetVehicleCatalogRepository fleetCatalogRepo;
@@ -39,7 +34,6 @@ public class FleetController {
     private final RegistryService registryService;
     private final DocumentService documentService;
     private final AssetHistoryService assetHistoryService;
-    private final JsonMapper jsonMapper;
 
     @Value("${document.upload.max-size-mb:15}")
     private int documentUploadMaxSizeMb;
@@ -62,23 +56,18 @@ public class FleetController {
     @Value("#{'${dropdown.vehicle-years}'.split(',')}")
     private List<String> fleetVehicleYears;
 
-    @Value("#{'${dropdown.fuel-types}'.split(',')}")
-    private List<String> fleetFuelTypes;
-
     public FleetController(FleetVehicleRepository fleetRepo,
             FleetVehicleCatalogRepository fleetCatalogRepo,
             FleetService fleetService,
             RegistryService registryService,
             DocumentService documentService,
-            AssetHistoryService assetHistoryService,
-            JsonMapper jsonMapper) {
+            AssetHistoryService assetHistoryService) {
         this.fleetRepo = fleetRepo;
         this.fleetCatalogRepo = fleetCatalogRepo;
         this.fleetService = fleetService;
         this.registryService = registryService;
         this.documentService = documentService;
         this.assetHistoryService = assetHistoryService;
-        this.jsonMapper = jsonMapper;
     }
 
     @GetMapping
@@ -96,7 +85,6 @@ public class FleetController {
         model.addAttribute("fleetOperationalStatuses", fleetOperationalStatuses);
         model.addAttribute("fleetMaintenanceStatuses", fleetMaintenanceStatuses);
         model.addAttribute("fleetVehicleYears", fleetVehicleYears);
-        model.addAttribute("fleetFuelTypes", fleetFuelTypes);
         model.addAttribute("fleetCatalogMap", registryService.getFleetCatalogMap());
         return "fleet";
     }
@@ -105,6 +93,13 @@ public class FleetController {
     @CacheEvict(value = "fleetCatalogMap", allEntries = true)
     public String addFleetCatalog(@ModelAttribute FleetVehicleCatalog newCatalog,
             RedirectAttributes redirectAttributes) {
+        int currentYear = Year.now().getValue();
+        if (newCatalog.getYearModel() == null
+                || newCatalog.getYearModel() < 1980 || newCatalog.getYearModel() > currentYear + 1) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Year model is out of allowed range.");
+            return "redirect:/";
+        }
+
         fleetCatalogRepo.save(newCatalog);
         redirectAttributes.addFlashAttribute("successMessage", "Fleet vehicle catalog updated.");
         return "redirect:/";
@@ -161,16 +156,6 @@ public class FleetController {
     private String validateVehicleRegistration(FleetVehicle vehicle) {
         if (vehicle.getCatalogID() == null) {
             return "Vehicle model is required.";
-        }
-        if (vehicle.getManufactureYear() == null) {
-            return "Manufacture year is required.";
-        }
-        int currentYear = Year.now().getValue();
-        if (vehicle.getManufactureYear() < 1980 || vehicle.getManufactureYear() > currentYear + 1) {
-            return "Manufacture year is out of allowed range.";
-        }
-        if (TextUtils.isBlank(vehicle.getFuelType())) {
-            return "Fuel type is required.";
         }
         if (TextUtils.isBlank(vehicle.getEngineNumber())) {
             return "Engine number is required.";
@@ -334,15 +319,14 @@ public class FleetController {
                             catalog == null || catalog.getManufacturer() == null ? "" : catalog.getManufacturer()),
                     Map.entry("catalogModelName",
                             catalog == null || catalog.getModelName() == null ? "" : catalog.getModelName()),
-                    Map.entry("catalogSpecifications",
-                            formatSpecifications(catalog == null ? null : catalog.getSpecifications())),
-                    Map.entry("manufactureYear",
-                            vehicle.getManufactureYear() == null ? "" : vehicle.getManufactureYear()),
+                    Map.entry("catalogYearModel",
+                            catalog == null || catalog.getYearModel() == null ? "" : catalog.getYearModel()),
+                    Map.entry("catalogFuelType",
+                            catalog == null || catalog.getFuelType() == null ? "" : catalog.getFuelType()),
                     Map.entry("engineNumber",
                             vehicle.getEngineNumber() == null ? "" : vehicle.getEngineNumber()),
                     Map.entry("chassisNumberVIN",
                             vehicle.getChassisNumberVIN() == null ? "" : vehicle.getChassisNumberVIN()),
-                    Map.entry("fuelType", vehicle.getFuelType() == null ? "" : vehicle.getFuelType()),
                     Map.entry("registrationExpiry",
                             vehicle.getRegistrationExpiry() == null ? "" : vehicle.getRegistrationExpiry()),
                     Map.entry("insuranceExpiry",
@@ -379,19 +363,5 @@ public class FleetController {
         String performedBy = authentication != null ? authentication.getName() : "SYSTEM";
         fleetService.updateVehicleDetails(updatedVehicle, performedBy);
         return ResponseEntity.ok("Fleet vehicle details updated successfully");
-    }
-
-    private String formatSpecifications(String specifications) {
-        if (specifications == null || specifications.isBlank()) {
-            return null;
-        }
-
-        try {
-            JsonNode jsonNode = jsonMapper.readTree(specifications);
-            return jsonMapper.writerWithDefaultPrettyPrinter().writeValueAsString(jsonNode);
-        } catch (Exception ex) {
-            log.warn("Failed to pretty-print fleet catalog specifications JSON, returning raw value", ex);
-            return specifications;
-        }
     }
 }

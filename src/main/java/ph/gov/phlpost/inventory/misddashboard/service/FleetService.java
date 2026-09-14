@@ -177,17 +177,11 @@ public class FleetService {
         // managed entity field-by-field rather than overwriting it wholesale, so
         // simply never setting it keeps a registered vehicle's catalog
         // assignment permanent with no extra guard needed.
-        if (vehicle.getManufactureYear() == null && submitted.getManufactureYear() != null) {
-            vehicle.setManufactureYear(submitted.getManufactureYear());
-        }
         if (vehicle.getAcquisitionYear() == null && submitted.getAcquisitionYear() != null) {
             vehicle.setAcquisitionYear(submitted.getAcquisitionYear());
         }
         if (TextUtils.isBlank(vehicle.getBodyNumber()) && !TextUtils.isBlank(submitted.getBodyNumber())) {
             vehicle.setBodyNumber(submitted.getBodyNumber());
-        }
-        if (TextUtils.isBlank(vehicle.getFuelType()) && !TextUtils.isBlank(submitted.getFuelType())) {
-            vehicle.setFuelType(submitted.getFuelType());
         }
         if (TextUtils.isBlank(vehicle.getEngineNumber()) && !TextUtils.isBlank(submitted.getEngineNumber())) {
             vehicle.setEngineNumber(submitted.getEngineNumber());

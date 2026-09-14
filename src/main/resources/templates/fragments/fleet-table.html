@@ -19,10 +19,10 @@
         </thead>
         <tbody>
             <tr th:each="vehicle : ${vehicles}" class="fleet-table-row" th:data-vehicle-id="${vehicle.vehicleID}"
-                th:data-vehicle-manufacture-year="${vehicle.manufactureYear}"
+                th:data-vehicle-manufacture-year="${fleetCatalogMap[vehicle.catalogID] != null ? fleetCatalogMap[vehicle.catalogID].yearModel : ''}"
                 th:data-vehicle-make="${fleetCatalogMap[vehicle.catalogID] != null ? fleetCatalogMap[vehicle.catalogID].manufacturer : ''}"
                 th:data-vehicle-model="${fleetCatalogMap[vehicle.catalogID] != null ? fleetCatalogMap[vehicle.catalogID].modelName : ''}"
-                th:data-vehicle-fuel-type="${vehicle.fuelType}"
+                th:data-vehicle-fuel-type="${fleetCatalogMap[vehicle.catalogID] != null ? fleetCatalogMap[vehicle.catalogID].fuelType : ''}"
                 th:data-admin-status="${vehicle.adminLegaltionalStatus}"
                 th:data-operational-status="${vehicle.operationalStatus}"
                 th:data-maintenance-status="${vehicle.maintenanceStatus}"
@@ -43,10 +43,10 @@
                 </td>
                 <td>
                     <span class="fleet-type-info" tabindex="0"
-                        th:data-vehicle-manufacture-year="${vehicle.manufactureYear}"
+                        th:data-vehicle-manufacture-year="${fleetCatalogMap[vehicle.catalogID] != null ? fleetCatalogMap[vehicle.catalogID].yearModel : ''}"
                         th:data-vehicle-make="${fleetCatalogMap[vehicle.catalogID] != null ? fleetCatalogMap[vehicle.catalogID].manufacturer : ''}"
                         th:data-vehicle-model="${fleetCatalogMap[vehicle.catalogID] != null ? fleetCatalogMap[vehicle.catalogID].modelName : ''}"
-                        th:data-vehicle-fuel-type="${vehicle.fuelType}"
+                        th:data-vehicle-fuel-type="${fleetCatalogMap[vehicle.catalogID] != null ? fleetCatalogMap[vehicle.catalogID].fuelType : ''}"
                         th:aria-label="${'View vehicle details for ' + (fleetCatalogMap[vehicle.catalogID] != null ? fleetCatalogMap[vehicle.catalogID].category : 'Unknown')}"
                         th:text="${fleetCatalogMap[vehicle.catalogID] != null ? fleetCatalogMap[vehicle.catalogID].category : 'Unknown'}">
                     </span>

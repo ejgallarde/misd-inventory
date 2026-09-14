@@ -22,17 +22,11 @@ public class FleetVehicle {
     @Column(name = "BodyNumber", unique = true, nullable = true)
     private String bodyNumber;
 
-    @Column(name = "ManufactureYear")
-    private Integer manufactureYear;
-
     @Column(name = "EngineNumber", unique = true)
     private String engineNumber;
 
     @Column(name = "ChassisNumberVIN", unique = true)
     private String chassisNumberVIN;
-
-    @Column(name = "FuelType")
-    private String fuelType;
 
     @Column(name = "RegistrationExpiry")
     private LocalDate registrationExpiry;
@@ -93,14 +87,6 @@ public class FleetVehicle {
         this.catalogID = catalogID;
     }
 
-    public Integer getManufactureYear() {
-        return manufactureYear;
-    }
-
-    public void setManufactureYear(Integer manufactureYear) {
-        this.manufactureYear = manufactureYear;
-    }
-
     public String getEngineNumber() {
         return engineNumber;
     }
@@ -115,14 +101,6 @@ public class FleetVehicle {
 
     public void setChassisNumberVIN(String chassisNumberVIN) {
         this.chassisNumberVIN = chassisNumberVIN;
-    }
-
-    public String getFuelType() {
-        return fuelType;
-    }
-
-    public void setFuelType(String fuelType) {
-        this.fuelType = fuelType;
     }
 
     public LocalDate getRegistrationExpiry() {

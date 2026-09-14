@@ -31,16 +31,6 @@
                             class="form-control fleet-lockonce-input d-none" disabled placeholder="Enter plate number">
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label fw-bold text-muted small text-uppercase">Year Model</label>
-                        <div id="fleetDetailYear" class="form-control-plaintext" data-lockonce-view="manufactureYear">
-                        </div>
-                        <select id="editFleetManufactureYear" data-lockonce-input="manufactureYear"
-                            class="form-select fleet-lockonce-input d-none" disabled>
-                            <option value="" disabled selected>Select year model</option>
-                            <option th:each="year : ${fleetVehicleYears}" th:value="${year}" th:text="${year}"></option>
-                        </select>
-                    </div>
-                    <div class="col-md-6">
                         <label class="form-label fw-bold text-muted small text-uppercase">Year of Acquisition</label>
                         <div id="fleetDetailAcquisitionYear" class="form-control-plaintext"
                             data-lockonce-view="acquisitionYear"></div>
@@ -56,17 +46,6 @@
                         </div>
                         <input type="text" id="editFleetBodyNumber" data-lockonce-input="bodyNumber"
                             class="form-control fleet-lockonce-input d-none" disabled placeholder="Enter body number">
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label fw-bold text-muted small text-uppercase">Fuel Type</label>
-                        <div id="fleetDetailFuelType" class="form-control-plaintext" data-lockonce-view="fuelType">
-                        </div>
-                        <select id="editFleetFuelType" data-lockonce-input="fuelType"
-                            class="form-select fleet-lockonce-input d-none" disabled>
-                            <option value="" disabled selected>Select fuel type</option>
-                            <option th:each="fuelType : ${fleetFuelTypes}" th:value="${fuelType}" th:text="${fuelType}">
-                            </option>
-                        </select>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label fw-bold text-muted small text-uppercase">Engine Number</label>

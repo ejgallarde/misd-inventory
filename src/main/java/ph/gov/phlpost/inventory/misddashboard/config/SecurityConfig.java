@@ -27,7 +27,7 @@ public class SecurityConfig {
     @Value("${app.security.demo-mode:false}")
     private boolean demoMode;
 
-    @Value("${app.security.demo-user-email:admin@phlpost.gov.ph}")
+    @Value("${app.security.demo-user-email:admin@dar.gov.ph}")
     private String demoUserEmail;
 
     @Value("${app.security.demo-user-name:Administrator}")

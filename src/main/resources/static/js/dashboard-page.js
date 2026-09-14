@@ -121,20 +121,11 @@ $(document).ready(function () {
         formId: 'surveyCatalogForm',
         hiddenInputId: 'surveySpecifications',
         specOptions: [
-            'Accuracy', 'Measurement Range', 'Frequency/Channels', 'Battery Life',
-            'Data Storage', 'Connectivity', 'Operating Temperature', 'Weight',
-            'Included Accessories'
-        ]
-    });
-
-    wireCatalogSpecBuilder({
-        addBtnId: 'addFleetSpecBtn',
-        containerId: 'fleet-spec-rows-container',
-        formId: 'fleetCatalogForm',
-        hiddenInputId: 'fleetSpecifications',
-        specOptions: [
-            'Seating Capacity', 'Cargo Capacity', 'Transmission', 'Fuel Type',
-            'Engine Displacement', 'Drivetrain', 'Fuel Efficiency', 'Gross Vehicle Weight'
+            'Horizontal Accuracy (RTK)', 'Vertical Accuracy (RTK)', 'Angular Accuracy (Total Station)',
+            'EDM Range (Reflectorless)', 'EDM Range (with Prism)', 'Number of Channels',
+            'Satellite Constellations Supported', 'Update Rate (Hz)', 'IP Rating (Dust/Water Resistance)',
+            'Battery Life', 'Operating Temperature Range', 'Onboard Memory/Storage',
+            'Connectivity (Bluetooth/Wi-Fi/Radio)', 'Display/Screen', 'Warranty Period'
         ]
     });
 

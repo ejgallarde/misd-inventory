@@ -53,8 +53,8 @@ $(document).ready(function () {
     }
 
     const LOCKONCE_FIELDS = [
-        'plateNumber', 'manufactureYear', 'bodyNumber',
-        'fuelType', 'engineNumber', 'chassisNumberVIN', 'cost', 'acquisitionYear'
+        'plateNumber', 'bodyNumber',
+        'engineNumber', 'chassisNumberVIN', 'cost', 'acquisitionYear'
     ];
 
     function escapeValue(value) {
@@ -66,7 +66,8 @@ $(document).ready(function () {
             <div><span class="text-muted fw-semibold">Vehicle Type:</span> ${escapeValue(data.catalogCategory)}</div>
             <div><span class="text-muted fw-semibold">Make:</span> ${escapeValue(data.catalogManufacturer)}</div>
             <div><span class="text-muted fw-semibold">Model:</span> ${escapeValue(data.catalogModelName)}</div>
-            <div><span class="text-muted fw-semibold">Specifications:</span>${MISDCommon.renderCatalogSpecifications(data.catalogSpecifications)}</div>
+            <div><span class="text-muted fw-semibold">Year Model:</span> ${escapeValue(data.catalogYearModel)}</div>
+            <div><span class="text-muted fw-semibold">Fuel Type:</span> ${escapeValue(data.catalogFuelType)}</div>
         </div>`;
     }
 
@@ -89,10 +90,8 @@ $(document).ready(function () {
         $('#editFleetVehicleID').val(data.vehicleID || '');
         // Lock-once inputs — pre-populated; visibility controlled by applyLockonceVisibility
         $('#editFleetPlateNumber').val(data.plateNumber || '');
-        $('#editFleetManufactureYear').val(data.manufactureYear || '');
         $('#editFleetAcquisitionYear').val(data.acquisitionYear || '');
         $('#editFleetBodyNumber').val(data.bodyNumber || '');
-        $('#editFleetFuelType').val(data.fuelType || '');
         $('#editFleetEngineNumber').val(data.engineNumber || '');
         $('#editFleetChassisVin').val(data.chassisNumberVIN || '');
         $('#editFleetCost').val(data.cost || '');
@@ -107,16 +106,13 @@ $(document).ready(function () {
 
     function buildFleetUpdatePayload() {
         const vehicleID = Number($('#editFleetVehicleID').val());
-        const mfgYear = $('#editFleetManufactureYear').val();
         const acqYear = $('#editFleetAcquisitionYear').val();
         return {
             vehicleID: Number.isNaN(vehicleID) ? null : vehicleID,
             // Lock-once fields (backend ignores if already set in DB)
             plateNumber: $('#editFleetPlateNumber').val() || null,
-            manufactureYear: mfgYear ? Number(mfgYear) : null,
             acquisitionYear: acqYear ? Number(acqYear) : null,
             bodyNumber: $('#editFleetBodyNumber').val() || null,
-            fuelType: $('#editFleetFuelType').val() || null,
             engineNumber: $('#editFleetEngineNumber').val() || null,
             chassisNumberVIN: $('#editFleetChassisVin').val() || null,
             cost: MISDCommon.normalizeDecimalInput($('#editFleetCost').val()),
@@ -171,7 +167,7 @@ $(document).ready(function () {
         $.fn.dataTable.ext.search.push(function (settings, _data, dataIndex) {
             if (settings.nTable.id !== 'fleetTable' || !activeFleetFilter) return true;
             const row = settings.aoData[dataIndex].nTr;
-            const manufactureYear = Number(row.dataset.manufactureYear);
+            const manufactureYear = Number(row.dataset.vehicleManufactureYear);
             const adminStatus = row.dataset.adminStatus || '';
             const operationalStatus = row.dataset.operationalStatus || '';
             const maintenanceStatus = row.dataset.maintenanceStatus || '';
@@ -355,10 +351,8 @@ $(document).ready(function () {
             currentFleetData = data;
             $('#fleetCatalogSummary').html(renderFleetCatalogSummary(data));
             $('#fleetDetailPlate').text(data.plateNumber || 'N/A');
-            $('#fleetDetailYear').text(data.manufactureYear || 'N/A');
             $('#fleetDetailAcquisitionYear').text(data.acquisitionYear || 'N/A');
             $('#fleetDetailBodyNumber').text(data.bodyNumber || 'N/A');
-            $('#fleetDetailFuelType').text(data.fuelType || 'N/A');
             $('#fleetDetailEngineNumber').text(data.engineNumber || 'N/A');
             $('#fleetDetailChassisVin').text(data.chassisNumberVIN || 'N/A');
             $('#fleetDetailDriver').text(data.assignedDriverName || 'Unassigned');

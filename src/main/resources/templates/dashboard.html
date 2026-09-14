@@ -599,12 +599,24 @@
                             aria-hidden="true">*</span></label>
                     <input type="text" class="form-control" name="modelName" placeholder="e.g. Hiace" required>
                 </div>
-                <div class="mb-4 bg-light p-3 border rounded">
-                    <label class="form-label fw-bold mb-2">Technical Specifications</label>
-                    <input type="hidden" id="fleetSpecifications" name="specifications" value="{}">
-                    <div id="fleet-spec-rows-container"></div>
-                    <button type="button" class="btn btn-sm btn-outline-primary mt-2" id="addFleetSpecBtn">+ Add
-                        Detail</button>
+                <div class="row mb-3">
+                    <div class="col-6">
+                        <label class="form-label fw-bold">Year Model <span class="required-indicator"
+                                aria-hidden="true">*</span></label>
+                        <select class="form-select" name="yearModel" required>
+                            <option value="" selected disabled>Select year model</option>
+                            <option th:each="year : ${vehicleYears}" th:value="${year}" th:text="${year}"></option>
+                        </select>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label fw-bold">Fuel Type <span class="required-indicator"
+                                aria-hidden="true">*</span></label>
+                        <select class="form-select" name="fuelType" required>
+                            <option value="" selected disabled>Select fuel type</option>
+                            <option th:each="fuelType : ${fuelTypes}" th:value="${fuelType}" th:text="${fuelType}">
+                            </option>
+                        </select>
+                    </div>
                 </div>
                 <div class="d-grid gap-2 mt-4">
                     <button type="submit" class="btn btn-primary">Save to Catalog</button>
@@ -638,20 +650,6 @@
                             </optgroup>
                         </select>
                     </div>
-                </div>
-                <div class="row mb-3">
-                    <div class="col-6"><label class="form-label fw-bold">Year Model <span class="required-indicator"
-                                aria-hidden="true">*</span></label><select class="form-select" name="manufactureYear"
-                            required>
-                            <option value="" selected disabled>Select year model</option>
-                            <option th:each="year : ${vehicleYears}" th:value="${year}" th:text="${year}"></option>
-                        </select></div>
-                    <div class="col-6"><label class="form-label fw-bold">Fuel Type <span class="required-indicator"
-                                aria-hidden="true">*</span></label><select class="form-select" name="fuelType" required>
-                            <option value="" selected disabled>Select fuel type</option>
-                            <option th:each="fuelType : ${fuelTypes}" th:value="${fuelType}"
-                                th:text="${fuelType == 'Gas' ? 'Gasoline' : fuelType}"></option>
-                        </select></div>
                 </div>
                 <div class="mb-3"><label class="form-label fw-bold">Engine Number <span class="required-indicator"
                             aria-hidden="true">*</span></label><input type="text" class="form-control"
