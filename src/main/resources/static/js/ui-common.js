@@ -50,7 +50,8 @@ window.MISDCommon = (function (jqueryGlobal) {
         errorToastDelay = 4000,
         initializeSelect2Modals = false,
         select2ModalSelector = '.modal',
-        select2DropdownSelector = '.select2-dropdown'
+        select2DropdownSelector = '.select2-dropdown',
+        select2OffcanvasSelector = null
     } = {}) {
         if (setupTheme && themeToggleId) {
             setupThemeToggle(themeToggleId);
@@ -66,6 +67,10 @@ window.MISDCommon = (function (jqueryGlobal) {
 
         if (initializeSelect2Modals) {
             initSelect2Modals(select2ModalSelector, select2DropdownSelector);
+        }
+
+        if (select2OffcanvasSelector) {
+            initSelect2Offcanvas(select2OffcanvasSelector, select2DropdownSelector);
         }
 
         initAssetTableInteractions();
@@ -295,61 +300,87 @@ window.MISDCommon = (function (jqueryGlobal) {
         });
     }
 
+    function attachPersonnelSelect2($container, dropdownSelector) {
+        const $dropdowns = $container.find(dropdownSelector);
+        if (!$dropdowns.length) {
+            return;
+        }
+
+        $dropdowns.each(function () {
+            const $dropdown = $(this);
+            const jobTitle = $dropdown.attr('data-personnel-job-title');
+
+            $dropdown.select2({
+                theme: 'bootstrap-5',
+                dropdownParent: $container,
+                placeholder: jobTitle ? 'Select a technician...' : 'Type a name to search...',
+                minimumInputLength: jobTitle ? 0 : 2,
+                allowClear: $dropdown.attr('data-allow-clear') === 'true',
+                ajax: {
+                    url: '/api/personnel/search',
+                    dataType: 'json',
+                    delay: 250,
+                    data: function (params) {
+                        const requestData = {
+                            q: params.term || '',
+                            page: (params.page || 1) - 1
+                        };
+                        if (jobTitle) {
+                            requestData.jobTitle = jobTitle;
+                        }
+                        return requestData;
+                    },
+                    processResults: function (data) {
+                        return {
+                            results: data.results,
+                            pagination: { more: data.pagination.more }
+                        };
+                    },
+                    cache: true
+                }
+            });
+        });
+    }
+
+    function detachSelect2($container, dropdownSelector) {
+        $container.find(dropdownSelector).each(function () {
+            const $dropdown = $(this);
+            if ($dropdown.hasClass('select2-hidden-accessible')) {
+                $dropdown.select2('destroy');
+            }
+        });
+    }
+
     function initSelect2Modals(modalSelector = '.modal', dropdownSelector = '.select2-dropdown') {
         if (!$) {
             return;
         }
 
         $(document).on('shown.bs.modal', modalSelector, function () {
-            const $modal = $(this);
-            const $dropdowns = $modal.find(dropdownSelector);
-
-            if (!$dropdowns.length) {
-                return;
-            }
-
-            $dropdowns.each(function () {
-                const $dropdown = $(this);
-                const jobTitle = $dropdown.attr('data-personnel-job-title');
-
-                $dropdown.select2({
-                    theme: 'bootstrap-5',
-                    dropdownParent: $modal,
-                    placeholder: jobTitle ? 'Select a technician...' : 'Type a name to search...',
-                    minimumInputLength: jobTitle ? 0 : 2,
-                    ajax: {
-                        url: '/api/personnel/search',
-                        dataType: 'json',
-                        delay: 250,
-                        data: function (params) {
-                            const requestData = {
-                                q: params.term || '',
-                                page: (params.page || 1) - 1
-                            };
-                            if (jobTitle) {
-                                requestData.jobTitle = jobTitle;
-                            }
-                            return requestData;
-                        },
-                        processResults: function (data) {
-                            return {
-                                results: data.results,
-                                pagination: { more: data.pagination.more }
-                            };
-                        },
-                        cache: true
-                    }
-                });
-            });
+            attachPersonnelSelect2($(this), dropdownSelector);
         });
 
         $(document).on('hidden.bs.modal', modalSelector, function () {
-            $(this).find(dropdownSelector).each(function () {
-                const $dropdown = $(this);
-                if ($dropdown.hasClass('select2-hidden-accessible')) {
-                    $dropdown.select2('destroy');
-                }
-            });
+            detachSelect2($(this), dropdownSelector);
+        });
+    }
+
+    /**
+     * Same personnel-search Select2 wiring as initSelect2Modals, but for a
+     * Bootstrap offcanvas (e.g. a detail panel's edit form) instead of a modal -
+     * offcanvas open/close fire bs.offcanvas events, not bs.modal ones.
+     */
+    function initSelect2Offcanvas(offcanvasSelector, dropdownSelector = '.select2-dropdown') {
+        if (!$) {
+            return;
+        }
+
+        $(document).on('shown.bs.offcanvas', offcanvasSelector, function () {
+            attachPersonnelSelect2($(this), dropdownSelector);
+        });
+
+        $(document).on('hidden.bs.offcanvas', offcanvasSelector, function () {
+            detachSelect2($(this), dropdownSelector);
         });
     }
 
@@ -1345,6 +1376,7 @@ window.MISDCommon = (function (jqueryGlobal) {
         showToast: showToast,
         initPageUI: initPageUI,
         initSelect2Modals: initSelect2Modals,
+        initSelect2Offcanvas: initSelect2Offcanvas,
         bindClick: bindClick,
         bindModalShow: bindModalShow,
         populateModalFields: populateModalFields,

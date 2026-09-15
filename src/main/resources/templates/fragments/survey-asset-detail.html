@@ -76,8 +76,14 @@
                         <div id="surveyAssetDetailCustodian" class="form-control-plaintext"></div>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label fw-bold text-muted small text-uppercase">Custodian's Manager</label>
-                        <div id="surveyAssetDetailCustodianManager" class="form-control-plaintext"></div>
+                        <label class="form-label fw-bold text-muted small text-uppercase">End User</label>
+                        <div id="surveyAssetDetailEndUser" class="form-control-plaintext survey-asset-detail-view-only">
+                        </div>
+                        <div class="survey-asset-detail-edit-only d-none">
+                            <select id="editSurveyAssetEndUserID" name="endUserID"
+                                class="form-select select2-dropdown survey-asset-field" data-allow-clear="true"
+                                disabled style="width: 100%;"></select>
+                        </div>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label fw-bold text-muted small text-uppercase">Last Calibration

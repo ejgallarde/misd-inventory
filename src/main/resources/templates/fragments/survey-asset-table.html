@@ -13,7 +13,7 @@
                 <th>Type</th>
                 <th>Last Calibration</th>
                 <th>Calibration Due</th>
-                <th>Manager</th>
+                <th>End User</th>
                 <th>Status Overview</th>
                 <th>Action</th>
             </tr>
@@ -60,7 +60,7 @@
                     th:text="${surveyAsset.calibrationDueDate != null ? #temporals.format(surveyAsset.calibrationDueDate, 'MMM d, yyyy') : 'N/A'}">
                 </td>
                 <td
-                    th:text="${surveyAsset.assignedCustodianID != null and managerNameMap[surveyAsset.assignedCustodianID] != null ? managerNameMap[surveyAsset.assignedCustodianID] : 'No Manager'}">
+                    th:text="${surveyAsset.endUserID != null and employeeMap[surveyAsset.endUserID] != null ? employeeMap[surveyAsset.endUserID] : 'N/A'}">
                 </td>
                 <td>
                     <div class="d-flex flex-column gap-1 small">

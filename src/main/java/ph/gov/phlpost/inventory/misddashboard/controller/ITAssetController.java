@@ -2,10 +2,8 @@ package ph.gov.phlpost.inventory.misddashboard.controller;
 
 import ph.gov.phlpost.inventory.misddashboard.model.Asset;
 import ph.gov.phlpost.inventory.misddashboard.model.EquipmentCatalog;
-import ph.gov.phlpost.inventory.misddashboard.model.Personnel;
 import ph.gov.phlpost.inventory.misddashboard.repository.AssetRepository;
 import ph.gov.phlpost.inventory.misddashboard.repository.EquipmentCatalogRepository;
-import ph.gov.phlpost.inventory.misddashboard.repository.PersonnelRepository;
 import ph.gov.phlpost.inventory.misddashboard.service.DocumentService;
 import ph.gov.phlpost.inventory.misddashboard.service.AssetHistoryService;
 import ph.gov.phlpost.inventory.misddashboard.service.ITAssetService;
@@ -40,7 +38,6 @@ public class ITAssetController {
 
     private final AssetRepository assetRepo;
     private final EquipmentCatalogRepository catalogRepo;
-    private final PersonnelRepository personnelRepo;
     private final ITAssetService assetService;
     private final RegistryService registryService;
     private final DocumentService documentService;
@@ -73,7 +70,6 @@ public class ITAssetController {
             RegistryService registryService,
             DocumentService documentService,
             AssetHistoryService assetHistoryService,
-            PersonnelRepository personnelRepo,
             JsonMapper jsonMapper) {
         this.assetRepo = assetRepo;
         this.catalogRepo = catalogRepo;
@@ -81,7 +77,6 @@ public class ITAssetController {
         this.registryService = registryService;
         this.documentService = documentService;
         this.assetHistoryService = assetHistoryService;
-        this.personnelRepo = personnelRepo;
         this.jsonMapper = jsonMapper;
     }
 
@@ -95,7 +90,6 @@ public class ITAssetController {
         model.addAttribute("departmentMap", registryService.getDepartmentMap());
         model.addAttribute("divisionMap", registryService.getDivisionMap());
         model.addAttribute("personnelLocationMap", registryService.getPersonnelLocationMap());
-        model.addAttribute("managerNameMap", registryService.getManagerNameMap());
         model.addAttribute("documentUploadMaxSizeMb", documentUploadMaxSizeMb);
         model.addAttribute("documentUploadAllowedExtensions", documentUploadAllowedExtensions);
         model.addAttribute("itDocumentUploadCategories", TextUtils.splitCsv(itDocumentUploadCategoriesCsv).stream()
@@ -321,6 +315,9 @@ public class ITAssetController {
         if (TextUtils.normalizeBlank(asset.getCurrentOwnerID()).isEmpty()) {
             asset.setCurrentOwnerID(null);
         }
+        if (TextUtils.normalizeBlank(asset.getEndUserID()).isEmpty()) {
+            asset.setEndUserID(null);
+        }
         if (TextUtils.normalizeBlank(asset.getRemarks()).isEmpty()) {
             asset.setRemarks(null);
         }
@@ -329,7 +326,7 @@ public class ITAssetController {
     private AssetDetailResponse toAssetDetailResponse(Asset asset) {
         EquipmentCatalog catalog = registryService.getCatalogMap().get(asset.getCatalogID());
         String ownerId = asset.getCurrentOwnerID();
-        Personnel personnel = ownerId == null ? null : personnelRepo.findById(ownerId).orElse(null);
+        String endUserId = asset.getEndUserID();
 
         return new AssetDetailResponse(
                 asset.getAssetTag(),
@@ -352,8 +349,11 @@ public class ITAssetController {
                 ownerId == null ? null : registryService.getEmployeeNameMap().get(ownerId),
                 ownerId == null ? null : registryService.getDepartmentMap().get(ownerId),
                 ownerId == null ? null : registryService.getDivisionMap().get(ownerId),
-                resolveManagerId(personnel),
-                resolveManagerFullName(personnel));
+                endUserId,
+                endUserId == null ? null : registryService.getEmployeeNameMap().get(endUserId),
+                asset.getCurrentValue(),
+                asset.getDepreciationAmount(),
+                asset.getValuationAsOfDate());
     }
 
     private void applyStatusTransitions(Asset asset) {
@@ -383,49 +383,6 @@ public class ITAssetController {
                 && (lifecycle.isBlank() || "Procured / Pre-Deployment".equals(lifecycle))) {
             asset.setLifecycleStatus("Active");
         }
-    }
-
-    private String buildFullName(Personnel personnel) {
-        String lastName = TextUtils.normalizeBlank(personnel.getLastName());
-        String firstName = TextUtils.normalizeBlank(personnel.getFirstName());
-
-        if (lastName.isBlank() && firstName.isBlank()) {
-            return null;
-        }
-
-        if (lastName.isBlank()) {
-            return firstName;
-        }
-
-        if (firstName.isBlank()) {
-            return lastName;
-        }
-
-        return firstName + " " + lastName;
-    }
-
-    private String resolveManagerId(Personnel personnel) {
-        if (personnel == null) {
-            return null;
-        }
-
-        String managerId = TextUtils.normalizeBlank(personnel.getManagerID());
-        return managerId.isBlank() ? null : managerId;
-    }
-
-    private String resolveManagerFullName(Personnel personnel) {
-        String managerId = resolveManagerId(personnel);
-        if (managerId == null) {
-            return null;
-        }
-
-        Personnel manager = personnelRepo.findById(managerId).orElse(null);
-        if (manager == null) {
-            return managerId;
-        }
-
-        String managerName = buildFullName(manager);
-        return managerName == null || managerName.isBlank() ? managerId : managerName;
     }
 
     private String formatSpecifications(String specifications) {
@@ -463,7 +420,10 @@ public class ITAssetController {
             String assigneeFullName,
             String assigneeDepartment,
             String assigneeDivision,
-            String assigneeManagerID,
-            String assigneeManagerFullName) {
+            String endUserID,
+            String endUserName,
+            java.math.BigDecimal currentValue,
+            java.math.BigDecimal depreciationAmount,
+            LocalDate valuationAsOfDate) {
     }
 }

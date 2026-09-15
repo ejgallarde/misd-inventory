@@ -13,7 +13,7 @@
                 <th>Type</th>
                 <th>Insurance Expiry</th>
                 <th>Reg. Expiry</th>
-                <th>Manager</th>
+                <th>End User</th>
                 <th>Status Overview</th>
                 <th>Action</th>
             </tr>
@@ -63,7 +63,7 @@
                     th:text="${vehicle.registrationExpiry != null ? #temporals.format(vehicle.registrationExpiry, 'MMM d, yyyy') : 'N/A'}">
                 </td>
                 <td
-                    th:text="${vehicle.assignedDriverID != null and managerNameMap[vehicle.assignedDriverID] != null ? managerNameMap[vehicle.assignedDriverID] : 'No Manager'}">
+                    th:text="${vehicle.endUserID != null and employeeMap[vehicle.endUserID] != null ? employeeMap[vehicle.endUserID] : 'N/A'}">
                 </td>
                 <td>
                     <div class="d-flex flex-column gap-1 small">

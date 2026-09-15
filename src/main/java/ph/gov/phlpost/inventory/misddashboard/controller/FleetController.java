@@ -77,7 +77,6 @@ public class FleetController {
         model.addAttribute("allVehicles", fleetRepo.findAll());
         model.addAttribute("filter", filter);
         model.addAttribute("employeeMap", registryService.getEmployeeNameMap());
-        model.addAttribute("managerNameMap", registryService.getManagerNameMap());
         model.addAttribute("documentUploadMaxSizeMb", documentUploadMaxSizeMb);
         model.addAttribute("documentUploadAllowedExtensions", documentUploadAllowedExtensions);
         model.addAttribute("vehicleDocumentUploadCategories", TextUtils.splitCsv(vehicleDocumentUploadCategoriesCsv).stream()
@@ -307,9 +306,10 @@ public class FleetController {
 
             String assignedDriverId = vehicle.getAssignedDriverID();
             String assignedDriverName = registryService.resolveDisplayName(assignedDriverId);
-            String assignedDriverManagerName = assignedDriverId == null || assignedDriverId.isBlank()
-                    ? "N/A"
-                    : registryService.getManagerNameByEmployeeId(assignedDriverId);
+            String endUserId = vehicle.getEndUserID();
+            String endUserName = endUserId == null || endUserId.isBlank()
+                    ? ""
+                    : registryService.resolveDisplayName(endUserId);
 
             Map<String, Object> response = Map.ofEntries(
                     Map.entry("vehicleID", vehicle.getVehicleID()),
@@ -336,7 +336,8 @@ public class FleetController {
                             vehicle.getInsuranceExpiry() == null ? "" : vehicle.getInsuranceExpiry()),
                     Map.entry("assignedDriverID", assignedDriverId == null ? "" : assignedDriverId),
                     Map.entry("assignedDriverName", assignedDriverName),
-                    Map.entry("assignedDriverManagerName", assignedDriverManagerName),
+                    Map.entry("endUserID", endUserId == null ? "" : endUserId),
+                    Map.entry("endUserName", endUserName),
                     Map.entry("adminLegaltionalStatus", vehicle.getAdminLegaltionalStatus() == null ? ""
                             : vehicle.getAdminLegaltionalStatus()),
                     Map.entry("operationalStatus",
@@ -346,6 +347,11 @@ public class FleetController {
                     Map.entry("cost", vehicle.getCost() == null ? "" : vehicle.getCost()),
                     Map.entry("acquisitionYear",
                             vehicle.getAcquisitionYear() == null ? "" : vehicle.getAcquisitionYear()),
+                    Map.entry("currentValue", vehicle.getCurrentValue() == null ? "" : vehicle.getCurrentValue()),
+                    Map.entry("depreciationAmount",
+                            vehicle.getDepreciationAmount() == null ? "" : vehicle.getDepreciationAmount()),
+                    Map.entry("valuationAsOfDate",
+                            vehicle.getValuationAsOfDate() == null ? "" : vehicle.getValuationAsOfDate()),
                     Map.entry("isFullyDepreciated", statusFlags.fullyDepreciated()),
                     Map.entry("isRegistrationExpired", statusFlags.registrationExpired()),
                     Map.entry("remarks", vehicle.getRemarks() == null ? "" : vehicle.getRemarks()));

@@ -29,7 +29,8 @@ public class FleetService {
         vehicle.setAssignedDriverID(employeeId);
         vehicle.setOperationalStatus("Dispatched");
         fleetRepo.save(vehicle);
-        auditService.logAssignment(auditReferenceId(vehicle), employeeId, "Vehicle Checkout", notes);
+        auditService.logAssignment("FLEETVEHICLE", auditReferenceId(vehicle), employeeId, vehicle.getEndUserID(),
+                "Vehicle Checkout", null, notes);
     }
 
     @Transactional
@@ -43,7 +44,8 @@ public class FleetService {
         fleetRepo.save(vehicle);
 
         if (previousDriver != null) {
-            auditService.logAssignment(auditReferenceId(vehicle), previousDriver, "Vehicle Returned", notes);
+            auditService.logAssignment("FLEETVEHICLE", auditReferenceId(vehicle), previousDriver,
+                    vehicle.getEndUserID(), "Vehicle Returned", null, notes);
         } else {
             auditService.logLifecycleEvent(auditReferenceId(vehicle), "MOTORPOOL", "Vehicle Returned", notes);
         }
@@ -168,6 +170,9 @@ public class FleetService {
         vehicle.setOperationalStatus(submitted.getOperationalStatus());
         vehicle.setMaintenanceStatus(submitted.getMaintenanceStatus());
         vehicle.setRemarks(submitted.getRemarks());
+        // Unlike AssignedDriverID (a formal checkout/return lifecycle action), the
+        // end user is day-to-day information and freely editable here.
+        vehicle.setEndUserID(submitted.getEndUserID());
 
         // Lock-once fields: only applied when the current database value is blank
         if (TextUtils.isBlank(vehicle.getPropertyNumber()) && !TextUtils.isBlank(submitted.getPropertyNumber())) {
@@ -244,8 +249,11 @@ public class FleetService {
      * Number of years an asset is depreciated over, measured from acquisition.
      * Also the age at which a vehicle is surfaced on the dashboard as needing
      * attention, so the detail panel and the "requires attention" list agree.
+     * COA Circular 2003-007, Annex A: Motor Vehicles = 7 years. The native
+     * queries in FleetVehicleRepository can't reference this constant and must
+     * be kept in sync with it by hand.
      */
-    public static final int USEFUL_LIFE_YEARS = 10;
+    public static final int USEFUL_LIFE_YEARS = DepreciationService.FLEET_USEFUL_LIFE_YEARS;
 
     /** Display-only conclusions drawn from a vehicle's stored values. */
     public record VehicleStatusFlags(boolean fullyDepreciated, boolean registrationExpired) {

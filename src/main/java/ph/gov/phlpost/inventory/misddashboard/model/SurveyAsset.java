@@ -52,6 +52,20 @@ public class SurveyAsset {
     @Column(name = "AssignedCustodianID")
     private String assignedCustodianID;
 
+    /** The person actually using the asset day-to-day, distinct from the accountable custodian above. */
+    @Size(max = 20)
+    @Column(name = "EndUserID")
+    private String endUserID;
+
+    @Column(name = "CurrentValue")
+    private BigDecimal currentValue;
+
+    @Column(name = "DepreciationAmount")
+    private BigDecimal depreciationAmount;
+
+    @Column(name = "ValuationAsOfDate")
+    private LocalDate valuationAsOfDate;
+
     @Size(max = 255)
     @Column(name = "AdminLegalStatus")
     private String adminLegalStatus;
@@ -148,6 +162,38 @@ public class SurveyAsset {
 
     public void setAssignedCustodianID(String assignedCustodianID) {
         this.assignedCustodianID = assignedCustodianID;
+    }
+
+    public String getEndUserID() {
+        return endUserID;
+    }
+
+    public void setEndUserID(String endUserID) {
+        this.endUserID = endUserID;
+    }
+
+    public BigDecimal getCurrentValue() {
+        return currentValue;
+    }
+
+    public void setCurrentValue(BigDecimal currentValue) {
+        this.currentValue = currentValue;
+    }
+
+    public BigDecimal getDepreciationAmount() {
+        return depreciationAmount;
+    }
+
+    public void setDepreciationAmount(BigDecimal depreciationAmount) {
+        this.depreciationAmount = depreciationAmount;
+    }
+
+    public LocalDate getValuationAsOfDate() {
+        return valuationAsOfDate;
+    }
+
+    public void setValuationAsOfDate(LocalDate valuationAsOfDate) {
+        this.valuationAsOfDate = valuationAsOfDate;
     }
 
     public String getAdminLegalStatus() {

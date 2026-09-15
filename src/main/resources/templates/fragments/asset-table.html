@@ -12,7 +12,7 @@
                 <th>Accountable Owner</th>
                 <th>Location of the Accountable Owner</th>
                 <th>Office/Department</th>
-                <th>Manager</th>
+                <th>End User</th>
                 <th>Status Overview</th>
                 <th>Action</th>
             </tr>
@@ -45,7 +45,7 @@
                     th:text="${asset.currentOwnerID != null and departmentMap[asset.currentOwnerID] != null ? departmentMap[asset.currentOwnerID] : 'MISD - Unassigned'}">
                 </td>
                 <td
-                    th:text="${asset.currentOwnerID != null and managerNameMap[asset.currentOwnerID] != null ? managerNameMap[asset.currentOwnerID] : 'No Manager'}">
+                    th:text="${asset.endUserID != null and employeeMap[asset.endUserID] != null ? employeeMap[asset.endUserID] : 'N/A'}">
                 </td>
                 <td>
                     <div class="d-flex flex-column gap-1 small">

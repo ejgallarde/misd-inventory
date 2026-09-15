@@ -36,13 +36,34 @@ class AuditLogServiceTest {
 
     @Test
     void logAssignmentSavesEveryFieldPassedIn() {
-        auditLogService.logAssignment("VEHICLE-17", "PERS-0001", "Checkout", "Handed over at motorpool");
+        auditLogService.logAssignment("FLEETVEHICLE", "VEHICLE-17", "PERS-0001", "Checkout",
+                "Handed over at motorpool");
 
         verify(assignmentLogRepo).save(assignmentCaptor.capture());
         AssetAssignmentLog saved = assignmentCaptor.getValue();
+        assertThat(saved.getReferenceType()).isEqualTo("FLEETVEHICLE");
         assertThat(saved.getAssetTag()).isEqualTo("VEHICLE-17");
         assertThat(saved.getEmployeeID()).isEqualTo("PERS-0001");
+        assertThat(saved.getEndUserID()).isNull();
         assertThat(saved.getActionType()).isEqualTo("Checkout");
+        assertThat(saved.getDocumentNo()).isNull();
+        assertThat(saved.getConditionNotes()).isEqualTo("Handed over at motorpool");
+        assertThat(saved.getTransactionDate()).isNotNull();
+    }
+
+    @Test
+    void logAssignmentWithEndUserAndDocumentNoSavesEveryFieldPassedIn() {
+        auditLogService.logAssignment("FLEETVEHICLE", "VEHICLE-17", "PERS-0001", "PERS-0002", "Checkout",
+                "PAR-2026-001", "Handed over at motorpool");
+
+        verify(assignmentLogRepo).save(assignmentCaptor.capture());
+        AssetAssignmentLog saved = assignmentCaptor.getValue();
+        assertThat(saved.getReferenceType()).isEqualTo("FLEETVEHICLE");
+        assertThat(saved.getAssetTag()).isEqualTo("VEHICLE-17");
+        assertThat(saved.getEmployeeID()).isEqualTo("PERS-0001");
+        assertThat(saved.getEndUserID()).isEqualTo("PERS-0002");
+        assertThat(saved.getActionType()).isEqualTo("Checkout");
+        assertThat(saved.getDocumentNo()).isEqualTo("PAR-2026-001");
         assertThat(saved.getConditionNotes()).isEqualTo("Handed over at motorpool");
         assertThat(saved.getTransactionDate()).isNotNull();
     }

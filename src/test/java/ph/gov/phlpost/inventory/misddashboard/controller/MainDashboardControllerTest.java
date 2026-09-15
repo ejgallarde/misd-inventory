@@ -108,7 +108,6 @@ class MainDashboardControllerTest {
         when(registryService.getDepartmentMap()).thenReturn(Map.of());
         when(registryService.getDivisionMap()).thenReturn(Map.of());
         when(registryService.getPersonnelLocationMap()).thenReturn(Map.of());
-        when(registryService.getManagerNameMap()).thenReturn(Map.of());
 
         EquipmentCatalog laptop = new EquipmentCatalog();
         laptop.setCatalogID(1);
@@ -144,7 +143,6 @@ class MainDashboardControllerTest {
         when(registryService.getDepartmentMap()).thenReturn(Map.of());
         when(registryService.getDivisionMap()).thenReturn(Map.of());
         when(registryService.getPersonnelLocationMap()).thenReturn(Map.of());
-        when(registryService.getManagerNameMap()).thenReturn(Map.of());
         when(catalogRepo.findAll()).thenReturn(List.of());
         when(fleetCatalogRepo.findAll()).thenReturn(List.of());
         when(surveyCatalogRepo.findAll()).thenReturn(List.of());

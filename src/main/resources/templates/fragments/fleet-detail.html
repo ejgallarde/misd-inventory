@@ -75,8 +75,13 @@
                         <div id="fleetDetailDriver" class="form-control-plaintext"></div>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label fw-bold text-muted small text-uppercase">Driver's Manager</label>
-                        <div id="fleetDetailDriverManager" class="form-control-plaintext"></div>
+                        <label class="form-label fw-bold text-muted small text-uppercase">End User</label>
+                        <div id="fleetDetailEndUser" class="form-control-plaintext fleet-detail-view-only"></div>
+                        <div class="fleet-detail-edit-only d-none">
+                            <select id="editFleetEndUserID" name="endUserID"
+                                class="form-select select2-dropdown fleet-field" data-allow-clear="true" disabled
+                                style="width: 100%;"></select>
+                        </div>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label fw-bold text-muted small text-uppercase">Registration Expiry</label>
@@ -104,7 +109,7 @@
                     <div class="col-md-6">
                         <label class="form-label fw-bold text-muted small text-uppercase">Current Valuation
                             <span class="text-muted fw-normal text-lowercase ms-1" style="font-size: 0.75em;"
-                                title="Straight-line depreciation per COA Circular 2003-007 (GAM): 10-year useful life, 10% residual value, 9% annual depreciation rate."
+                                title="Straight-line depreciation per COA Circular 2003-007 Annex A (Motor Vehicles): 7-year useful life, 10% residual value, ~12.86% annual depreciation rate."
                                 data-bs-toggle="tooltip" data-bs-placement="top">(GAM, straight-line)</span>
                         </label>
                         <div id="fleetDetailCurrentValuation" class="form-control-plaintext fw-bold text-primary"></div>

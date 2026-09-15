@@ -97,7 +97,12 @@ DUPLICATE_IDENTIFIER,DARCO,716,ASSET,AST-000670,SerialNumber,k24003n0163072,MIGR
 DUPLICATE_IDENTIFIER,DARCO,718,ASSET,AST-000672,SerialNumber,k24003n0163072,MIGRATION DUPLICATE - 012 - k24003n0163072,SerialNumber duplicated in source data; disambiguated to remain unique.
 DUPLICATE_IDENTIFIER,DARCO,720,ASSET,AST-000674,SerialNumber,k24003n0163072,MIGRATION DUPLICATE - 013 - k24003n0163072,SerialNumber duplicated in source data; disambiguated to remain unique.
 UNRESOLVED_OWNER,CAR,37,ASSET,AST-000714,EmployeeID,,PERS-00000,No resolvable owner in source; assigned to migration sentinel personnel record for later reassignment.
+UNRESOLVED_OWNER,CAR,38,ASSET,AST-000715,EmployeeID,,PERS-00000,No resolvable owner in source; assigned to migration sentinel personnel record for later reassignment.
+UNRESOLVED_OWNER,CAR,40,ASSET,AST-000717,EmployeeID,,PERS-00000,No resolvable owner in source; assigned to migration sentinel personnel record for later reassignment.
+UNRESOLVED_OWNER,CAR,42,ASSET,AST-000719,EmployeeID,,PERS-00000,No resolvable owner in source; assigned to migration sentinel personnel record for later reassignment.
 UNRESOLVED_OWNER,CAR,43,ASSET,AST-000722,EmployeeID,,PERS-00000,No resolvable owner in source; assigned to migration sentinel personnel record for later reassignment.
+UNRESOLVED_OWNER,CAR,46,ASSET,AST-000727,EmployeeID,,PERS-00000,No resolvable owner in source; assigned to migration sentinel personnel record for later reassignment.
+UNRESOLVED_OWNER,CAR,47,ASSET,AST-000728,EmployeeID,,PERS-00000,No resolvable owner in source; assigned to migration sentinel personnel record for later reassignment.
 DUPLICATE_IDENTIFIER,R-II,19,ASSET,AST-001052,SerialNumber,0,MIGRATION DUPLICATE - 014 - 0,SerialNumber duplicated in source data; disambiguated to remain unique.
 DUPLICATE_IDENTIFIER,R-II,20,ASSET,AST-001053,SerialNumber,0,MIGRATION DUPLICATE - 015 - 0,SerialNumber duplicated in source data; disambiguated to remain unique.
 DUPLICATE_IDENTIFIER,R-II,21,ASSET,AST-001054,SerialNumber,0,MIGRATION DUPLICATE - 016 - 0,SerialNumber duplicated in source data; disambiguated to remain unique.

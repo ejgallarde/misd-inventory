@@ -12,14 +12,25 @@ public class AssetAssignmentLog {
     @Column(name = "TransactionID")
     private Integer transactionID;
 
+    @Column(name = "ReferenceType", nullable = false)
+    private String referenceType;
+
     @Column(name = "AssetTag", nullable = false)
     private String assetTag;
 
     @Column(name = "EmployeeID", nullable = false)
     private String employeeID;
 
+    /** The person actually using the asset at the time of this transaction, distinct from EmployeeID (the accountable person). */
+    @Column(name = "EndUserID")
+    private String endUserID;
+
     @Column(name = "ActionType", nullable = false)
     private String actionType;
+
+    /** PAR/PTR/ICS document number backing this assignment, when one exists. */
+    @Column(name = "DocumentNo")
+    private String documentNo;
 
     @Column(name = "TransactionDate")
     private LocalDateTime transactionDate;
@@ -72,5 +83,29 @@ public class AssetAssignmentLog {
 
     public void setConditionNotes(String conditionNotes) {
         this.conditionNotes = conditionNotes;
+    }
+
+    public String getReferenceType() {
+        return referenceType;
+    }
+
+    public void setReferenceType(String referenceType) {
+        this.referenceType = referenceType;
+    }
+
+    public String getEndUserID() {
+        return endUserID;
+    }
+
+    public void setEndUserID(String endUserID) {
+        this.endUserID = endUserID;
+    }
+
+    public String getDocumentNo() {
+        return documentNo;
+    }
+
+    public void setDocumentNo(String documentNo) {
+        this.documentNo = documentNo;
     }
 }

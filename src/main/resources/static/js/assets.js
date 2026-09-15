@@ -5,7 +5,8 @@ $(document).ready(function () {
     MISDCommon.initPageUI({
         themeToggleId: 'themeToggleBtn',
         successToastId: 'successToast',
-        initializeSelect2Modals: true
+        initializeSelect2Modals: true,
+        select2OffcanvasSelector: '#itDetailOffcanvas'
     });
 
     document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function (element) {

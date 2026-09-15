@@ -54,7 +54,7 @@ public class ITAssetService {
         }
         assetRepo.save(asset);
         String actionType = previousOwner == null || previousOwner.isBlank() ? "Checkout" : "Reassignment";
-        auditService.logAssignment(assetTag, employeeId, actionType, notes);
+        auditService.logAssignment("ASSET", assetTag, employeeId, actionType, notes);
         auditService.logLifecycleEvent(assetTag, "SYSTEM", actionType,
                 statusSummary(asset) + appendNotes(notes));
     }
@@ -82,7 +82,7 @@ public class ITAssetService {
         asset.setCurrentOwnerID(supplierOwnerId);
         applyRepairState(asset, "With Service Center");
         assetRepo.save(asset);
-        auditService.logAssignment(assetTag, supplierOwnerId, "Warranty Repair", notes);
+        auditService.logAssignment("ASSET", assetTag, supplierOwnerId, "Warranty Repair", notes);
         auditService.logLifecycleEvent(assetTag, "SYSTEM", "Sent for Warranty Repair", notes);
     }
 
@@ -100,7 +100,7 @@ public class ITAssetService {
         asset.setCurrentOwnerID(technician.getEmployeeID());
         applyRepairState(asset, "With MISD Technician");
         assetRepo.save(asset);
-        auditService.logAssignment(assetTag, technician.getEmployeeID(), "MISD Maintenance", notes);
+        auditService.logAssignment("ASSET", assetTag, technician.getEmployeeID(), "MISD Maintenance", notes);
         auditService.logLifecycleEvent(assetTag, technician.getEmployeeID(), "Sent for MISD Maintenance", notes);
     }
 
@@ -295,7 +295,8 @@ public class ITAssetService {
 
     private void logAssignmentForExistingOwner(String assetTag, String ownerId, String actionType, String notes) {
         if (ownerId != null && !ownerId.isBlank() && personnelRepo.existsById(ownerId)) {
-            auditService.logAssignment(assetTag, ownerId, actionType, notes);
+            String endUserId = assetRepo.findById(assetTag).map(Asset::getEndUserID).orElse(null);
+            auditService.logAssignment("ASSET", assetTag, ownerId, endUserId, actionType, null, notes);
         }
     }
 

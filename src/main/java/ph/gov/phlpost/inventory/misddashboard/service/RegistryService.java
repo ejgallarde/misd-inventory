@@ -2,7 +2,6 @@ package ph.gov.phlpost.inventory.misddashboard.service;
 
 import ph.gov.phlpost.inventory.misddashboard.model.EquipmentCatalog;
 import ph.gov.phlpost.inventory.misddashboard.model.FleetVehicleCatalog;
-import ph.gov.phlpost.inventory.misddashboard.model.Personnel;
 import ph.gov.phlpost.inventory.misddashboard.model.PersonnelBaseLocation;
 import ph.gov.phlpost.inventory.misddashboard.model.SurveyEquipmentCatalog;
 import ph.gov.phlpost.inventory.misddashboard.repository.EquipmentCatalogRepository;
@@ -16,7 +15,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -142,35 +140,13 @@ public class RegistryService {
         return locations;
     }
 
-    @Cacheable("managerNameMap")
-    public Map<String, String> getManagerNameMap() {
-        List<Personnel> personnel = personnelRepository.findAll();
-        Map<String, String> employeeNames = personnel.stream()
-                .collect(Collectors.toMap(
-                        employee -> employee.getEmployeeID(),
-                        employee -> employee.getLastName() + ", " + employee.getFirstName(),
-                        (existing, replacement) -> existing,
-                        LinkedHashMap::new));
-
-        Map<String, String> managerNames = personnel.stream()
-                .collect(Collectors.toMap(
-                        employee -> employee.getEmployeeID(),
-                        employee -> employee.getManagerID() == null || employee.getManagerID().isBlank()
-                                ? "No Manager"
-                                : employeeNames.getOrDefault(employee.getManagerID(), "Unknown Manager"),
-                        (existing, replacement) -> existing,
-                        LinkedHashMap::new));
-        managerNames.put(supplierOwnerId, "No Manager");
-        return managerNames;
-    }
-
     /**
      * Drops every cached personnel-derived map so the next lookup re-reads the
-     * database. Without this, a new hire, a transfer, or a manager change is
+     * database. Without this, a new hire, a transfer, or a department change is
      * invisible until the application restarts.
      */
     @CacheEvict(cacheNames = { "allPersonnel", "employeeMap", "departmentMap", "divisionMap",
-            "personnelLocationMap", "managerNameMap" }, allEntries = true)
+            "personnelLocationMap" }, allEntries = true)
     public void evictReferenceDataCaches() {
         // Annotation-driven; the body is intentionally empty.
     }
@@ -180,21 +156,6 @@ public class RegistryService {
             return "Unassigned";
         }
         return getEmployeeNameMap().getOrDefault(employeeId, employeeId);
-    }
-
-    public String getManagerNameByEmployeeId(String employeeId) {
-        if (employeeId == null || employeeId.isBlank()) {
-            return "No Manager";
-        }
-        return personnelRepository.findById(employeeId)
-                .map(employee -> {
-                    String managerID = employee.getManagerID();
-                    if (managerID == null || managerID.isBlank()) {
-                        return "No Manager";
-                    }
-                    return getEmployeeNameMap().getOrDefault(managerID, "Unknown Manager");
-                })
-                .orElse("No Manager");
     }
 
     private String normalize(String value) {

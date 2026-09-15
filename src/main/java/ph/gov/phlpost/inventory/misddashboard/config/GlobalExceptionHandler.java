@@ -58,9 +58,12 @@ public class GlobalExceptionHandler {
         messages.put("fleetvehicles.body_number", "A vehicle with this body number is already registered.");
         messages.put("assets_ibfk_1", "The selected catalog item no longer exists. Refresh the page and try again.");
         messages.put("assets_ibfk_2", "The selected accountable owner is not a known employee.");
+        messages.put("assets_ibfk_4", "The selected end user is not a known employee.");
         messages.put("assetassignments_ibfk_2", "The selected employee is not in the personnel registry.");
+        messages.put("assetassignments_ibfk_3", "The selected end user is not a known employee.");
         messages.put("fleetvehicles_ibfk_1", "The selected driver is not a known employee.");
-        messages.put("personnel_ibfk_1", "The selected manager is not a known employee.");
+        messages.put("fleetvehicles_ibfk_3", "The selected end user is not a known employee.");
+        messages.put("surveyassets_ibfk_3", "The selected end user is not a known employee.");
         messages.put("personnel_ibfk_2", "The selected base location no longer exists.");
         return messages;
     }

@@ -67,7 +67,7 @@
                     <div class="col-md-6">
                         <label class="form-label fw-bold text-muted small text-uppercase">Current Valuation
                             <span class="text-muted fw-normal text-lowercase ms-1" style="font-size: 0.75em;"
-                                title="Straight-line depreciation based on purchase date and purchase price."
+                                title="Straight-line depreciation per COA Circular 2003-007 Annex A (IT Equipment - Hardware): 5-year useful life, 10% residual value, 18% annual depreciation rate."
                                 data-bs-toggle="tooltip" data-bs-placement="top">(straight-line)</span>
                         </label>
                         <div id="assetCurrentValuation" class="form-control-plaintext fw-bold text-primary"></div>
@@ -100,6 +100,15 @@
                         </select>
                     </div>
                     <input type="hidden" id="editCurrentOwnerID" name="currentOwnerID">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-muted small text-uppercase">End User</label>
+                        <div id="assetDetailEndUser" class="form-control-plaintext asset-detail-view-only"></div>
+                        <div class="asset-detail-edit-only d-none">
+                            <select id="editEndUserID" name="endUserID"
+                                class="form-select select2-dropdown it-field" data-allow-clear="true" disabled
+                                style="width: 100%;"></select>
+                        </div>
+                    </div>
                     <div class="col-12">
                         <label class="form-label fw-bold text-muted small text-uppercase">Remarks</label>
                         <textarea id="editRemarks" name="remarks" class="form-control it-field bg-white" rows="3"

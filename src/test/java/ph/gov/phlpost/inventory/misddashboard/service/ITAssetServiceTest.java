@@ -62,7 +62,7 @@ class ITAssetServiceTest {
         assertThat(asset.getLifecycleStatus()).isEqualTo("Inactive");
         verify(personnelRepository).saveAndFlush(org.mockito.ArgumentMatchers.any(Personnel.class));
         verify(assetRepository).save(asset);
-        verify(auditLogService).logAssignment("TAG-1", "SUPPLIER", "Warranty Repair", "RMA-100");
+        verify(auditLogService).logAssignment("ASSET", "TAG-1", "SUPPLIER", "Warranty Repair", "RMA-100");
     }
 
     @ParameterizedTest
@@ -87,7 +87,7 @@ class ITAssetServiceTest {
         assertThat(asset.getLifecycleStatus()).isEqualTo("Inactive");
         verify(assetRepository).save(asset);
         verify(auditLogService).logAssignment(
-                "TAG-2", "TECH-1", "MISD Maintenance", "Replace power supply");
+                "ASSET", "TAG-2", "TECH-1", "MISD Maintenance", "Replace power supply");
     }
 
     @Test
@@ -114,7 +114,7 @@ class ITAssetServiceTest {
         service.assignAsset("TAG-REASSIGN", "EMP-NEW", "Transferred to new user");
 
         verify(auditLogService).logAssignment(
-                "TAG-REASSIGN", "EMP-NEW", "Reassignment", "Transferred to new user");
+                "ASSET", "TAG-REASSIGN", "EMP-NEW", "Reassignment", "Transferred to new user");
         verify(auditLogService).logLifecycleEvent(
                 org.mockito.ArgumentMatchers.eq("TAG-REASSIGN"),
                 org.mockito.ArgumentMatchers.eq("SYSTEM"),
@@ -158,7 +158,8 @@ class ITAssetServiceTest {
         assertThat(asset.getCurrentOwnerID()).isNull();
         assertThat(asset.getDeploymentStatus()).isEqualTo("Unavailable");
         assertThat(asset.getMaintenanceHealthStatus()).isEqualTo("Beyond Economic Repair (BER)");
-        verify(auditLogService).logAssignment("TAG-BER-DEPLOYED", "EMP-9", "Returned - Unserviceable", "Water damage");
+        verify(auditLogService).logAssignment("ASSET", "TAG-BER-DEPLOYED", "EMP-9", null,
+                "Returned - Unserviceable", null, "Water damage");
     }
 
     @Test
@@ -246,6 +247,7 @@ class ITAssetServiceTest {
         assertThat(asset.getMaintenanceHealthStatus()).isEqualTo("Operational");
         assertThat(asset.getLifecycleStatus()).isEqualTo("Active");
         verify(auditLogService, never()).logAssignment(
+                org.mockito.ArgumentMatchers.anyString(),
                 org.mockito.ArgumentMatchers.anyString(),
                 org.mockito.ArgumentMatchers.anyString(),
                 org.mockito.ArgumentMatchers.anyString(),

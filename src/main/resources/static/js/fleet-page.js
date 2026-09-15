@@ -96,6 +96,13 @@ $(document).ready(function () {
         $('#editFleetEngineNumber').val(data.engineNumber || '');
         $('#editFleetChassisVin').val(data.chassisNumberVIN || '');
         $('#editFleetCost').val(data.cost || '');
+        // End user: seed a single pre-selected option so Select2 shows the
+        // current value on open; the AJAX search takes over once the user types.
+        const $endUserSelect = $('#editFleetEndUserID');
+        $endUserSelect.empty();
+        if (data.endUserID) {
+            $endUserSelect.append(new Option(data.endUserName || data.endUserID, data.endUserID, true, true));
+        }
         // Always-editable fields
         $('#editFleetRegistrationExpiry').val(formatDateInput(data.registrationExpiry));
         $('#editFleetInsuranceExpiry').val(formatDateInput(data.insuranceExpiry));
@@ -124,6 +131,7 @@ $(document).ready(function () {
             adminLegaltionalStatus: $('#editFleetAdminLegalStatus').val() || null,
             operationalStatus: $('#editFleetOperationalStatus').val() || null,
             maintenanceStatus: $('#editFleetMaintenanceStatus').val() || null,
+            endUserID: $('#editFleetEndUserID').val() || null,
             remarks: $('#editFleetRemarks').val() || null
         };
     }
@@ -134,7 +142,8 @@ $(document).ready(function () {
         MISDCommon.initPageUI({
             themeToggleId: 'themeToggleBtn',
             successToastId: 'successToast',
-            initializeSelect2Modals: true
+            initializeSelect2Modals: true,
+            select2OffcanvasSelector: '#fleetDetailOffcanvas'
         });
     }
 
@@ -359,7 +368,7 @@ $(document).ready(function () {
             $('#fleetDetailEngineNumber').text(data.engineNumber || 'N/A');
             $('#fleetDetailChassisVin').text(data.chassisNumberVIN || 'N/A');
             $('#fleetDetailDriver').text(data.assignedDriverName || 'Unassigned');
-            $('#fleetDetailDriverManager').text(data.assignedDriverManagerName || 'N/A');
+            $('#fleetDetailEndUser').text(data.endUserName || 'N/A');
             $('#fleetDetailRegExpiry').text(MISDCommon.formatDate(data.registrationExpiry));
             // The detail endpoint no longer rewrites the legal status when a
             // registration has lapsed; it reports the fact and the panel shows it.
@@ -367,9 +376,14 @@ $(document).ready(function () {
             $('#fleetDetailInsuranceExpiry').text(MISDCommon.formatDate(data.insuranceExpiry));
             $('#fleetDetailCost').text(MISDCommon.formatPesoCurrency(data.cost));
 
-            const valuation = MISDCommon.computeStraightLineValuation(data.cost, data.acquisitionYear);
+            // Prefer the server-persisted value (COA-aligned, 7-year useful life for
+            // vehicles, refreshed via the /admin/depreciation recompute action);
+            // fall back to a live client-side estimate if it hasn't been computed yet.
+            const valuation = data.currentValue !== '' && data.currentValue != null
+                ? Number(data.currentValue)
+                : MISDCommon.computeStraightLineValuation(data.cost, data.acquisitionYear, 7);
             const $valuationElement = $('#fleetDetailCurrentValuation');
-            if (valuation !== null) {
+            if (valuation !== null && !Number.isNaN(valuation)) {
                 const formatted = MISDCommon.formatPesoCurrency(valuation);
                 const note = data.isFullyDepreciated ? ' (fully depreciated — residual value only)' : '';
                 $valuationElement.text(formatted + note);

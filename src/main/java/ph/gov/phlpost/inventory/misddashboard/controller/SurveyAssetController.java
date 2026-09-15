@@ -82,7 +82,6 @@ public class SurveyAssetController {
         model.addAttribute("allSurveyAssets", surveyAssetRepo.findAll());
         model.addAttribute("filter", filter);
         model.addAttribute("employeeMap", registryService.getEmployeeNameMap());
-        model.addAttribute("managerNameMap", registryService.getManagerNameMap());
         model.addAttribute("documentUploadMaxSizeMb", documentUploadMaxSizeMb);
         model.addAttribute("documentUploadAllowedExtensions", documentUploadAllowedExtensions);
         model.addAttribute("surveyAssetDocumentUploadCategories",
@@ -275,9 +274,10 @@ public class SurveyAssetController {
 
             String assignedCustodianId = asset.getAssignedCustodianID();
             String assignedCustodianName = registryService.resolveDisplayName(assignedCustodianId);
-            String assignedCustodianManagerName = assignedCustodianId == null || assignedCustodianId.isBlank()
-                    ? "N/A"
-                    : registryService.getManagerNameByEmployeeId(assignedCustodianId);
+            String endUserId = asset.getEndUserID();
+            String endUserName = endUserId == null || endUserId.isBlank()
+                    ? ""
+                    : registryService.resolveDisplayName(endUserId);
 
             String catalogSpecifications = formatSpecifications(catalog == null ? null : catalog.getSpecifications());
             Map<String, Object> response = Map.ofEntries(
@@ -305,13 +305,19 @@ public class SurveyAssetController {
                             asset.getLastCalibrationDate() == null ? "" : asset.getLastCalibrationDate()),
                     Map.entry("assignedCustodianID", assignedCustodianId == null ? "" : assignedCustodianId),
                     Map.entry("assignedCustodianName", assignedCustodianName),
-                    Map.entry("assignedCustodianManagerName", assignedCustodianManagerName),
+                    Map.entry("endUserID", endUserId == null ? "" : endUserId),
+                    Map.entry("endUserName", endUserName),
                     Map.entry("adminLegalStatus",
                             asset.getAdminLegalStatus() == null ? "" : asset.getAdminLegalStatus()),
                     Map.entry("operationalStatus",
                             asset.getOperationalStatus() == null ? "" : asset.getOperationalStatus()),
                     Map.entry("conditionStatus",
                             asset.getConditionStatus() == null ? "" : asset.getConditionStatus()),
+                    Map.entry("currentValue", asset.getCurrentValue() == null ? "" : asset.getCurrentValue()),
+                    Map.entry("depreciationAmount",
+                            asset.getDepreciationAmount() == null ? "" : asset.getDepreciationAmount()),
+                    Map.entry("valuationAsOfDate",
+                            asset.getValuationAsOfDate() == null ? "" : asset.getValuationAsOfDate()),
                     Map.entry("isFullyDepreciated", statusFlags.fullyDepreciated()),
                     Map.entry("isCalibrationOverdue", statusFlags.calibrationOverdue()),
                     Map.entry("remarks", asset.getRemarks() == null ? "" : asset.getRemarks()));

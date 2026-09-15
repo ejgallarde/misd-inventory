@@ -50,6 +50,20 @@ public class FleetVehicle {
     @Column(name = "AssignedDriverID")
     private String assignedDriverID;
 
+    /** The person actually using the vehicle day-to-day, distinct from the accountable driver above. */
+    @Size(max = 20)
+    @Column(name = "EndUserID")
+    private String endUserID;
+
+    @Column(name = "CurrentValue")
+    private BigDecimal currentValue;
+
+    @Column(name = "DepreciationAmount")
+    private BigDecimal depreciationAmount;
+
+    @Column(name = "ValuationAsOfDate")
+    private LocalDate valuationAsOfDate;
+
     // No @NotBlank: the column allows NULL and /fleet/add leaves this blank on
     // the incoming form, defaulting it server-side after binding completes.
     @Size(max = 255)
@@ -152,6 +166,38 @@ public class FleetVehicle {
 
     public void setAssignedDriverID(String assignedDriverID) {
         this.assignedDriverID = assignedDriverID;
+    }
+
+    public String getEndUserID() {
+        return endUserID;
+    }
+
+    public void setEndUserID(String endUserID) {
+        this.endUserID = endUserID;
+    }
+
+    public BigDecimal getCurrentValue() {
+        return currentValue;
+    }
+
+    public void setCurrentValue(BigDecimal currentValue) {
+        this.currentValue = currentValue;
+    }
+
+    public BigDecimal getDepreciationAmount() {
+        return depreciationAmount;
+    }
+
+    public void setDepreciationAmount(BigDecimal depreciationAmount) {
+        this.depreciationAmount = depreciationAmount;
+    }
+
+    public LocalDate getValuationAsOfDate() {
+        return valuationAsOfDate;
+    }
+
+    public void setValuationAsOfDate(LocalDate valuationAsOfDate) {
+        this.valuationAsOfDate = valuationAsOfDate;
     }
 
     public String getAdminLegaltionalStatus() {

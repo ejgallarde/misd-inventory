@@ -92,6 +92,13 @@ $(document).ready(function () {
         $('#editSurveyAssetSerialNumber').val(data.serialNumber || '');
         $('#editSurveyAssetAcquisitionDate').val(formatDateInput(data.acquisitionDate));
         $('#editSurveyAssetCost').val(data.cost || '');
+        // End user: seed a single pre-selected option so Select2 shows the
+        // current value on open; the AJAX search takes over once the user types.
+        const $endUserSelect = $('#editSurveyAssetEndUserID');
+        $endUserSelect.empty();
+        if (data.endUserID) {
+            $endUserSelect.append(new Option(data.endUserName || data.endUserID, data.endUserID, true, true));
+        }
         // Always-editable fields
         $('#editSurveyAssetLastCalibrationDate').val(formatDateInput(data.lastCalibrationDate));
         $('#editSurveyAssetCalibrationDueDate').val(formatDateInput(data.calibrationDueDate));
@@ -117,6 +124,7 @@ $(document).ready(function () {
             adminLegalStatus: $('#editSurveyAssetAdminLegalStatus').val() || null,
             operationalStatus: $('#editSurveyAssetOperationalStatus').val() || null,
             conditionStatus: $('#editSurveyAssetConditionStatus').val() || null,
+            endUserID: $('#editSurveyAssetEndUserID').val() || null,
             remarks: $('#editSurveyAssetRemarks').val() || null
         };
     }
@@ -127,7 +135,8 @@ $(document).ready(function () {
         MISDCommon.initPageUI({
             themeToggleId: 'themeToggleBtn',
             successToastId: 'successToast',
-            initializeSelect2Modals: true
+            initializeSelect2Modals: true,
+            select2OffcanvasSelector: '#surveyAssetDetailOffcanvas'
         });
     }
 
@@ -345,16 +354,21 @@ $(document).ready(function () {
             $('#surveyAssetDetailSerialNumber').text(data.serialNumber || 'N/A');
             $('#surveyAssetDetailAcquisitionDate').text(MISDCommon.formatDate(data.acquisitionDate));
             $('#surveyAssetDetailCustodian').text(data.assignedCustodianName || 'Unassigned');
-            $('#surveyAssetDetailCustodianManager').text(data.assignedCustodianManagerName || 'N/A');
+            $('#surveyAssetDetailEndUser').text(data.endUserName || 'N/A');
             $('#surveyAssetDetailLastCalibrationDate').text(MISDCommon.formatDate(data.lastCalibrationDate));
             $('#surveyAssetDetailCalibrationDueDate').text(MISDCommon.formatDate(data.calibrationDueDate));
             $('#surveyAssetDetailCalibrationOverdueNote').toggleClass('d-none', !data.isCalibrationOverdue);
             $('#surveyAssetDetailCost').text(MISDCommon.formatPesoCurrency(data.cost));
 
-            const valuation = MISDCommon.computeStraightLineValuation(data.cost,
-                data.acquisitionDate ? new Date(data.acquisitionDate).getFullYear() : null);
+            // Prefer the server-persisted value (COA-aligned, 10-year useful life
+            // for survey equipment, refreshed via the /admin/depreciation
+            // recompute action); fall back to a live client-side estimate.
+            const valuation = data.currentValue !== '' && data.currentValue != null
+                ? Number(data.currentValue)
+                : MISDCommon.computeStraightLineValuation(data.cost,
+                    data.acquisitionDate ? new Date(data.acquisitionDate).getFullYear() : null, 10);
             const $valuationElement = $('#surveyAssetDetailCurrentValuation');
-            if (valuation !== null) {
+            if (valuation !== null && !Number.isNaN(valuation)) {
                 const formatted = MISDCommon.formatPesoCurrency(valuation);
                 const note = data.isFullyDepreciated ? ' (fully depreciated — residual value only)' : '';
                 $valuationElement.text(formatted + note);

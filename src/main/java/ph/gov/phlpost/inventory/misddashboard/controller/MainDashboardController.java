@@ -201,7 +201,6 @@ public class MainDashboardController {
                 model.addAttribute("departmentMap", registryService.getDepartmentMap());
                 model.addAttribute("divisionMap", registryService.getDivisionMap());
                 model.addAttribute("personnelLocationMap", registryService.getPersonnelLocationMap());
-                model.addAttribute("managerNameMap", registryService.getManagerNameMap());
                 model.addAttribute("equipmentCategories", equipmentCategories.stream()
                                 .sorted(String.CASE_INSENSITIVE_ORDER)
                                 .toList());

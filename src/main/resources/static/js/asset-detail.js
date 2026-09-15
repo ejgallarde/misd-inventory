@@ -54,22 +54,27 @@
             <div><span class="text-muted fw-semibold">Full Name:</span> ${escapeValue(data.assigneeFullName)}</div>
             <div><span class="text-muted fw-semibold">Department:</span> ${escapeValue(data.assigneeDepartment)}</div>
             <div><span class="text-muted fw-semibold">Division:</span> ${escapeValue(data.assigneeDivision)}</div>
-            <div><span class="text-muted fw-semibold">Manager's Full Name:</span> ${escapeValue(data.assigneeManagerFullName)}</div>
         </div>`;
     }
 
     function updateCurrentValuation(data) {
-        const valuation = MISDCommon.computeStraightLineValuation(data.purchasePrice, data.purchaseDate);
+        // Prefer the server-persisted value (COA-aligned, 5-year useful life for
+        // IT equipment, refreshed via the /admin/depreciation recompute action);
+        // fall back to a live client-side estimate if it hasn't been computed yet.
+        const hasServerValue = data.currentValue !== '' && data.currentValue != null;
+        const valuation = hasServerValue
+            ? Number(data.currentValue)
+            : MISDCommon.computeStraightLineValuation(data.purchasePrice, data.purchaseDate, 5);
         const valueElement = $('#assetCurrentValuation');
 
-        if (valuation == null) {
+        if (valuation == null || Number.isNaN(valuation)) {
             valueElement.text('N/A — original cost and purchase date required');
             valueElement.removeClass('text-danger fw-bold').addClass('text-primary');
             return;
         }
 
         const yearsUsed = Math.max(0, new Date().getFullYear() - new Date(data.purchaseDate).getFullYear());
-        const fullyDepreciated = yearsUsed >= 10;
+        const fullyDepreciated = yearsUsed >= 5;
         const formatted = MISDCommon.formatPesoCurrency(valuation);
         const note = fullyDepreciated ? ' (fully depreciated — residual value only)' : '';
         valueElement.text(formatted + note);
@@ -120,6 +125,12 @@
             $('#editPurchasePrice').val(data.purchasePrice);
             updateCurrentValuation(data);
             $('#editCurrentOwnerID').val(data.currentOwnerID);
+            $('#assetDetailEndUser').text(data.endUserName || 'N/A');
+            const $endUserSelect = $('#editEndUserID');
+            $endUserSelect.empty();
+            if (data.endUserID) {
+                $endUserSelect.append(new Option(data.endUserName || data.endUserID, data.endUserID, true, true));
+            }
             $('#editDeploymentStatus').val(data.deploymentStatus);
             $('#editMaintenanceHealthStatus').val(data.maintenanceHealthStatus);
             $('#editLifecycleStatus').val(data.lifecycleStatus);

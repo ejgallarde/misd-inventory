@@ -21,11 +21,26 @@ public class AuditLogService {
     }
 
     @Transactional
-    public void logAssignment(String referenceId, String employeeId, String actionType, String notes) {
+    public void logAssignment(String referenceType, String referenceId, String employeeId, String actionType,
+            String notes) {
+        logAssignment(referenceType, referenceId, employeeId, null, actionType, null, notes);
+    }
+
+    /**
+     * @param endUserId  the person actually using the asset at the time of this transaction (may differ from
+     *                   employeeId, the accountable person); null when not known/applicable.
+     * @param documentNo PAR/PTR/ICS number backing this assignment; null when not known/applicable.
+     */
+    @Transactional
+    public void logAssignment(String referenceType, String referenceId, String employeeId, String endUserId,
+            String actionType, String documentNo, String notes) {
         AssetAssignmentLog log = new AssetAssignmentLog();
+        log.setReferenceType(referenceType);
         log.setAssetTag(referenceId);
         log.setEmployeeID(employeeId);
+        log.setEndUserID(endUserId);
         log.setActionType(actionType);
+        log.setDocumentNo(documentNo);
         log.setTransactionDate(LocalDateTime.now());
         log.setConditionNotes(notes);
         assignmentLogRepo.save(log);

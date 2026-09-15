@@ -13,6 +13,9 @@ public interface FleetVehicleRepository extends JpaRepository<FleetVehicle, Inte
         // these queries agree with FleetService.USEFUL_LIFE_YEARS and the detail
         // panel's depreciation flag. YearModel moved from FleetVehicles onto
         // FleetVehicleCatalog when the vehicle catalog was introduced.
+        // The ">= 7" literals below are native SQL and cannot reference the Java
+        // constant directly - keep them equal to FleetService.USEFUL_LIFE_YEARS
+        // (COA Circular 2003-007 Annex A: Motor Vehicles = 7 years) by hand.
         // "Missing" and "Stolen" are the values actually written; the combined
         // "Missing/Stolen" is retained only for rows predating the correction.
 
@@ -52,7 +55,7 @@ public interface FleetVehicleRepository extends JpaRepository<FleetVehicle, Inte
         @Query(value = "SELECT COUNT(*) FROM FleetVehicles fv " +
                         "JOIN FleetVehicleCatalog fvc ON fv.CatalogID = fvc.CatalogID WHERE " +
                         "COALESCE(fv.AdminLegaltionalStatus, '') NOT IN ('Sold', 'Disposed', 'Decommissioned') AND (" +
-                        "(YEAR(CURDATE()) - COALESCE(fv.AcquisitionYear, fvc.YearModel)) >= 10 " +
+                        "(YEAR(CURDATE()) - COALESCE(fv.AcquisitionYear, fvc.YearModel)) >= 7 " +
                         "OR fv.RegistrationExpiry BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 30 DAY) " +
                         "OR fv.AdminLegaltionalStatus IN ('Registration Expired', 'Impounded') " +
                         "OR fv.OperationalStatus IN ('Grounded', 'Missing', 'Stolen', 'Missing/Stolen', 'Slated for Disposal') " +
@@ -64,7 +67,7 @@ public interface FleetVehicleRepository extends JpaRepository<FleetVehicle, Inte
         @Query(value = "SELECT fv.* FROM FleetVehicles fv " +
                         "JOIN FleetVehicleCatalog fvc ON fv.CatalogID = fvc.CatalogID WHERE " +
                         "COALESCE(fv.AdminLegaltionalStatus, '') NOT IN ('Sold', 'Disposed', 'Decommissioned') AND (" +
-                        "(YEAR(CURDATE()) - COALESCE(fv.AcquisitionYear, fvc.YearModel)) >= 10 " +
+                        "(YEAR(CURDATE()) - COALESCE(fv.AcquisitionYear, fvc.YearModel)) >= 7 " +
                         "OR fv.RegistrationExpiry BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 30 DAY) " +
                         "OR fv.AdminLegaltionalStatus IN ('Registration Expired', 'Impounded') " +
                         "OR fv.OperationalStatus IN ('Grounded', 'Missing', 'Stolen', 'Missing/Stolen', 'Slated for Disposal') " +

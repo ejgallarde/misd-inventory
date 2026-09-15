@@ -38,7 +38,8 @@ public class SurveyAssetService {
         asset.setAssignedCustodianID(employeeId);
         asset.setOperationalStatus("Deployed/Field Use");
         surveyAssetRepo.save(asset);
-        auditService.logAssignment(auditReferenceId(asset), employeeId, "Survey Asset Checkout", notes);
+        auditService.logAssignment("SURVEYASSET", auditReferenceId(asset), employeeId, asset.getEndUserID(),
+                "Survey Asset Checkout", null, notes);
     }
 
     @Transactional
@@ -52,7 +53,8 @@ public class SurveyAssetService {
         surveyAssetRepo.save(asset);
 
         if (previousCustodian != null) {
-            auditService.logAssignment(auditReferenceId(asset), previousCustodian, "Survey Asset Returned", notes);
+            auditService.logAssignment("SURVEYASSET", auditReferenceId(asset), previousCustodian,
+                    asset.getEndUserID(), "Survey Asset Returned", null, notes);
         } else {
             auditService.logLifecycleEvent(auditReferenceId(asset), "EQUIPMENT ROOM", "Survey Asset Returned", notes);
         }
@@ -234,6 +236,9 @@ public class SurveyAssetService {
         asset.setOperationalStatus(submitted.getOperationalStatus());
         asset.setConditionStatus(submitted.getConditionStatus());
         asset.setRemarks(submitted.getRemarks());
+        // Unlike AssignedCustodianID (a formal checkout/return lifecycle action), the
+        // end user is day-to-day information and freely editable here.
+        asset.setEndUserID(submitted.getEndUserID());
 
         // Lock-once fields: only applied when the current database value is blank
         if (TextUtils.isBlank(asset.getPropertyNumber()) && !TextUtils.isBlank(submitted.getPropertyNumber())) {
@@ -289,7 +294,7 @@ public class SurveyAssetService {
      * needing attention, so the detail panel and the "requires attention" list
      * agree.
      */
-    public static final int USEFUL_LIFE_YEARS = 10;
+    public static final int USEFUL_LIFE_YEARS = DepreciationService.SURVEY_USEFUL_LIFE_YEARS;
 
     /** Display-only conclusions drawn from a survey asset's stored values. */
     public record SurveyAssetStatusFlags(boolean fullyDepreciated, boolean calibrationOverdue) {

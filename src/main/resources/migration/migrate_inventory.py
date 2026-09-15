@@ -3,8 +3,8 @@
 migrate_inventory.py
 =====================
 Migrates "Inventory ICT_PPE CY 2022-2024 duplicate.xlsx" (19 region/agency tabs)
-into the dar_inventory MySQL schema, AFTER dar_inventory_schema_updates.sql has
-been applied.
+into the dar_inventory MySQL schema, AFTER
+src/main/resources/db/dar_inventory_schema.sql has been applied.
 
 SCOPE / WHAT THIS SCRIPT DOES NOT TOUCH
 ----------------------------------------
@@ -17,12 +17,13 @@ Everything else in the two review workbooks (CAR_Migration_Review_Flags.xlsx,
 Inventory_Review_Flags_AllRegions.xlsx) is a flag for LATER correction, not a
 migration blocker, and is handled here with a documented, conservative default:
 
-  - Strikethrough cells (9 CAR rows): the struck field is never used to assign
-    CurrentOwnerID. Where the OTHER (non-struck) holder field on the same row
-    is usable, that value is used instead - this is not a guess about which
-    name is "current", it only avoids the field that was flagged unreliable.
-    Where BOTH holder fields on a row are struck (CAR rows 37 and 43),
-    CurrentOwnerID is left NULL and both raw values are kept in Remarks.
+  - Strikethrough cells (9 CAR rows): ISSUED TO (MATERIAL REQUISITION) and
+    NAME OF END USER are resolved independently into two separate fields -
+    the accountable person (CurrentOwnerID/AssignedDriverID/AssignedCustodianID)
+    and the new EndUserID - with no fallback between them. A struck-through
+    cell is never trusted for its own value: that field is left NULL and the
+    raw value is kept in Remarks for manual review, regardless of whether the
+    other column is usable.
   - DARCO's composite Plate/Body/Chassis field (26 rows): stored as-is, unsplit,
     in fleetvehicles.PlateNumber. No segment is guessed to be the "real" plate.
   - DARCO's informal Remarks nicknames (14 rows): stored as-is in Remarks.
@@ -38,8 +39,12 @@ migration blocker, and is handled here with a documented, conservative default:
     where it's the sole item on its row], HP PRINTER, SERVER, etc.): mapped to
     catalog entries below using the same "Unspecified manufacturer" convention
     already used for CAR's ambiguous models.
-  - Province/Office casing (e.g. "KALINGA" vs "Kalinga"): normalized to Title
-    Case automatically - deterministic, not a judgment call.
+  - Province/Office/equipment/name casing: migrated exactly as it appears in
+    the source cell - no case normalization of any kind is applied.
+  - Acquisition date: the source spreadsheet has no acquisition-date column at
+    all. A best-effort date is derived from the YYYY-MM-DD prefix already
+    embedded in PropertyNumber (see derive_acquisition_date) and flagged in
+    Remarks as an estimate; rows without a usable prefix are left NULL.
   - PAR/PTR/ICS No. anomalies: Excel-auto-converted dates are rendered back to
     plain date strings; multi-document cells (e.g. "PTR:...\nPAR:...") are
     stored in full, newline replaced with " / ", in assetassignments.DocumentNo.
@@ -200,26 +205,36 @@ def parse_par_ptr(v):
     return s[:100] if s else None
 
 
+ACQUISITION_DATE_RE = re.compile(r'^(\d{4})-(\d{2})-(\d{2})-')
+
+
+def derive_acquisition_date(property_number):
+    """Best-effort acquisition date, approximated from the YYYY-MM-DD prefix
+    already embedded in PropertyNumber (e.g. '2023-05-03-10202SP01-01' ->
+    2023-05-03). There is no dedicated acquisition-date column anywhere in the
+    source spreadsheet. This prefix is very likely the physical-tagging/
+    inventory-count date rather than the true purchase date - every row that
+    uses it gets an explicit remark flagging it as an estimate (see
+    process_row), so it is never silently mistaken for a verified fact."""
+    if not property_number:
+        return None
+    match = ACQUISITION_DATE_RE.match(str(property_number).strip())
+    if not match:
+        return None
+    year, month, day = (int(g) for g in match.groups())
+    try:
+        return datetime.date(year, month, day)
+    except ValueError:
+        return None
+
+
 def title_case_place(s):
-    """Deterministic canonicalization for PROVINCE/OFFICE casing variants."""
-    if not s:
-        return s
-    s = norm(s)
-    # keep common all-caps admin abbreviations as-is (DARRO, DARPO, STOD, etc.)
-    if re.fullmatch(r'[A-Z0-9\'\.\-/ ]+', s) and any(tok.isupper() and len(tok) >= 3 for tok in s.split()):
-        small_words = {'of', 'the', 'and', 'de', 'del', 'la'}
-        words = s.split(' ')
-        out = []
-        for w in words:
-            wl = w.lower()
-            if wl in small_words:
-                out.append(wl)
-            elif re.fullmatch(r"(mc|dar|os|lto|lgu|denr|lra|dar[a-z]*)", wl, re.IGNORECASE) and len(w) <= 6:
-                out.append(w.upper())
-            else:
-                out.append(w[:1].upper() + w[1:].lower() if w else w)
-        return ' '.join(out)
-    return s
+    """Deliberately a no-op (aside from whitespace normalization): source values
+    are migrated with their case exactly as they appear in the spreadsheet, per
+    explicit instruction. Kept as a named pass-through (rather than replacing
+    its 4 call sites with bare norm() calls) so the intent stays documented at
+    every call site."""
+    return norm(s)
 
 
 def clean_serial(v):
@@ -497,40 +512,44 @@ class Migration:
             return 'Serviceable'
         return 'Unverified'
 
-    # ---------------- owner resolution respecting strikethrough ----------------
-    def resolve_owner(self, row):
-        """
-        Returns (employee_id_or_None, remarks_addendum_list)
-        Never uses a struck field's OWN value to set the owner; falls back to the
-        other holder field when only one side is struck; leaves owner None (with
-        both raw values preserved in Remarks) when both are struck.
-        """
+    # ---------------- accountable person / end user resolution ----------------
+    # ISSUED TO (MATERIAL REQUISITION) and NAME OF END USER are independent
+    # source columns and are resolved independently below - never as a
+    # fallback for one another. In PH government practice these are often
+    # different people (e.g. a COS worker uses an asset day-to-day but carries
+    # no formal accountability; their supervisor is accountable and is who a
+    # PAR/ICS would name).
+    def _resolve_person_field(self, raw_val, is_struck, field_label, row):
+        """Resolves a single named-person column. A struck-through cell is
+        never trusted for its own value: the field is left None and the raw
+        value is preserved in Remarks with a manual-review flag, rather than
+        being swapped for the other column's value."""
         addenda = []
-        issued_struck = COL_ISSUEDTO in row['struck']
-        enduser_struck = COL_ENDUSER in row['struck']
-        issued_val = row['issued_to']
-        enduser_val = row['end_user']
-
-        if issued_struck and enduser_struck:
-            addenda.append(f"NEEDS MANUAL REVIEW (strikethrough, both fields flagged) - ISSUED TO: {norm(issued_val)!r}; NAME OF END USER: {norm(enduser_val)!r}. See Strikethrough_Review tab.")
+        if is_struck:
+            addenda.append(
+                f"NEEDS MANUAL REVIEW (strikethrough) - {field_label} on file: {norm(raw_val)!r}. "
+                "Left unset; verify and assign manually.")
             return None, addenda
-        if issued_struck and not enduser_struck:
-            addenda.append(f"NEEDS MANUAL REVIEW (strikethrough) - ISSUED TO on file: {norm(issued_val)!r}. Owner set from NAME OF END USER instead.")
-            names = split_names(enduser_val)
-        elif enduser_struck and not issued_struck:
-            addenda.append(f"NEEDS MANUAL REVIEW (strikethrough) - NAME OF END USER on file: {norm(enduser_val)!r}. Owner set from ISSUED TO instead.")
-            names = split_names(issued_val)
-        else:
-            # neither struck: prefer NAME OF END USER (actual user) then ISSUED TO
-            names = split_names(enduser_val) or split_names(issued_val)
 
+        names = split_names(raw_val)
         if not names:
             return None, addenda
         primary = names[0]
         emp_id = self.get_or_create_person(primary, row['designation'], row['office'])
         if len(names) > 1:
-            addenda.append(f"Also associated: {', '.join(names[1:])}")
+            addenda.append(f"Also associated ({field_label}): {', '.join(names[1:])}")
         return emp_id, addenda
+
+    def resolve_accountable(self, row):
+        """Accountable person - from ISSUED TO (MATERIAL REQUISITION) only."""
+        return self._resolve_person_field(
+            row['issued_to'], COL_ISSUEDTO in row['struck'], 'ISSUED TO', row)
+
+    def resolve_end_user(self, row):
+        """Day-to-day end user - from NAME OF END USER only. May differ from
+        the accountable person; never inferred from ISSUED TO."""
+        return self._resolve_person_field(
+            row['end_user'], COL_ENDUSER in row['struck'], 'NAME OF END USER', row)
 
     # ---------------- accessory extraction ----------------
     def extract_accessories(self, remarks):
@@ -593,13 +612,19 @@ class Migration:
         cost = parse_cost(row['unit_cost'])
         propnum = norm(row['property_number'])
         location_id = self.get_or_create_location(row['region'] or sn, row['province'], row['office'])
-        emp_id, addenda = self.resolve_owner(row)
+        emp_id, accountable_addenda = self.resolve_accountable(row)
+        end_user_id, end_user_addenda = self.resolve_end_user(row)
+        acquisition_date = derive_acquisition_date(propnum)
         status_word = self.map_status(row['status'])
 
         remarks_parts = []
         if row['remarks']:
             remarks_parts.append(norm(str(row['remarks'])))
-        remarks_parts.extend(addenda)
+        remarks_parts.extend(accountable_addenda)
+        remarks_parts.extend(end_user_addenda)
+        if acquisition_date:
+            remarks_parts.append(
+                "Acquisition date estimated from PropertyNumber tagging-date prefix; verify against source records.")
         remarks_final = ' | '.join(remarks_parts) if remarks_parts else None
 
         doc_no = parse_par_ptr(row['par_ptr'])
@@ -616,7 +641,8 @@ class Migration:
                 fleet_remarks = (f"{fleet_remarks} | " if fleet_remarks else "") + FLAG_IDENTIFIER_ADJUSTED
             self.fleetvehicles.append({
                 'VehicleID': vid, 'PropertyNumber': propnum, 'CatalogID': cat_id,
-                'PlateNumber': plate, 'Cost': cost, 'AssignedDriverID': emp_id,
+                'PlateNumber': plate, 'Cost': cost, 'AssignedDriverID': emp_id, 'EndUserID': end_user_id,
+                'AcquisitionYear': acquisition_date.year if acquisition_date else None,
                 'Remarks': fleet_remarks, 'OperationalStatus': status_word, 'MaintenanceStatus': status_word,
                 '_region': sn, '_row': r, '_ref': ('FLEETVEHICLE', str(vid)),
             })
@@ -627,7 +653,7 @@ class Migration:
                     condition_notes = f"{flag_note} {condition_notes}"
                 self.assetassignments.append({
                     'ReferenceType': 'FLEETVEHICLE', 'AssetTag': str(vid), 'EmployeeID': assign_emp_id,
-                    'ActionType': 'INITIAL MIGRATION RECORD', 'DocumentNo': doc_no,
+                    'EndUserID': end_user_id, 'ActionType': 'INITIAL MIGRATION RECORD', 'DocumentNo': doc_no,
                     'ConditionNotes': condition_notes,
                 })
 
@@ -644,7 +670,8 @@ class Migration:
             self.surveyassets.append({
                 'SurveyAssetID': sid, 'PropertyNumber': propnum, 'AssetTag': asset_tag,
                 'CatalogID': cat_id, 'SerialNumber': serial, 'Cost': cost,
-                'AssignedCustodianID': emp_id, 'Remarks': survey_remarks,
+                'AcquisitionDate': acquisition_date,
+                'AssignedCustodianID': emp_id, 'EndUserID': end_user_id, 'Remarks': survey_remarks,
                 'OperationalStatus': status_word, 'ConditionStatus': status_word,
                 '_region': sn, '_row': r, '_ref': ('SURVEYASSET', str(sid)),
             })
@@ -655,7 +682,7 @@ class Migration:
                     condition_notes = f"{flag_note} {condition_notes}"
                 self.assetassignments.append({
                     'ReferenceType': 'SURVEYASSET', 'AssetTag': str(sid), 'EmployeeID': assign_emp_id,
-                    'ActionType': 'INITIAL MIGRATION RECORD', 'DocumentNo': doc_no,
+                    'EndUserID': end_user_id, 'ActionType': 'INITIAL MIGRATION RECORD', 'DocumentNo': doc_no,
                     'ConditionNotes': condition_notes,
                 })
 
@@ -671,8 +698,8 @@ class Migration:
                 asset_remarks = (f"{asset_remarks} | " if asset_remarks else "") + FLAG_IDENTIFIER_ADJUSTED
             self.assets.append({
                 'AssetTag': asset_tag, 'PropertyNumber': propnum, 'BundledWithAssetTag': None,
-                'CatalogID': cat_id, 'SerialNumber': serial, 'PurchasePrice': cost,
-                'CurrentOwnerID': emp_id, 'Remarks': asset_remarks,
+                'CatalogID': cat_id, 'SerialNumber': serial, 'PurchaseDate': acquisition_date, 'PurchasePrice': cost,
+                'CurrentOwnerID': emp_id, 'EndUserID': end_user_id, 'Remarks': asset_remarks,
                 'DeploymentStatus': deployment, 'MaintenanceHealthStatus': status_word, 'LifecycleStatus': 'Active',
                 '_region': sn, '_row': r, '_ref': ('ASSET', asset_tag),
             })
@@ -683,7 +710,7 @@ class Migration:
                     condition_notes = f"{flag_note} {condition_notes}"
                 self.assetassignments.append({
                     'ReferenceType': 'ASSET', 'AssetTag': asset_tag, 'EmployeeID': assign_emp_id,
-                    'ActionType': 'INITIAL MIGRATION RECORD', 'DocumentNo': doc_no,
+                    'EndUserID': end_user_id, 'ActionType': 'INITIAL MIGRATION RECORD', 'DocumentNo': doc_no,
                     'ConditionNotes': condition_notes,
                 })
 
@@ -700,8 +727,9 @@ class Migration:
                     acc_remarks_parts.append(f"Remark named a specific user ({acc['careof']}) - owner NOT reassigned; kept on parent's owner per migration policy.")
                 self.assets.append({
                     'AssetTag': acc_tag, 'PropertyNumber': acc['property_number'], 'BundledWithAssetTag': asset_tag,
-                    'CatalogID': acc_cat_id, 'SerialNumber': None, 'PurchasePrice': None,
-                    'CurrentOwnerID': emp_id, 'Remarks': ' | '.join(acc_remarks_parts),
+                    'CatalogID': acc_cat_id, 'SerialNumber': None, 'PurchaseDate': acquisition_date,
+                    'PurchasePrice': None,
+                    'CurrentOwnerID': emp_id, 'EndUserID': end_user_id, 'Remarks': ' | '.join(acc_remarks_parts),
                     'DeploymentStatus': deployment, 'MaintenanceHealthStatus': acc['status'], 'LifecycleStatus': 'Active',
                     '_region': sn, '_row': r, '_ref': ('ASSET', acc_tag),
                 })
@@ -723,7 +751,7 @@ class Migration:
 def build_sql(m: Migration):
     out = []
     out.append("-- Auto-generated by migrate_inventory.py. Review before running against production.")
-    out.append("-- Assumes dar_inventory_schema_updates.sql has already been applied.")
+    out.append("-- Assumes src/main/resources/db/dar_inventory_schema.sql has already been applied.")
     out.append(f"-- Generated: {datetime.datetime.now().isoformat()}")
     out.append("START TRANSACTION;")
     out.append("")
@@ -775,41 +803,41 @@ def build_sql(m: Migration):
     for a in m.assets:
         out.append(
             "INSERT INTO `assets` (`AssetTag`,`PropertyNumber`,`BundledWithAssetTag`,`CatalogID`,`SerialNumber`,"
-            "`PurchaseDate`,`PurchasePrice`,`CurrentOwnerID`,`Remarks`,`DeploymentStatus`,`MaintenanceHealthStatus`,`LifecycleStatus`) VALUES ("
+            "`PurchaseDate`,`PurchasePrice`,`CurrentOwnerID`,`EndUserID`,`Remarks`,`DeploymentStatus`,`MaintenanceHealthStatus`,`LifecycleStatus`) VALUES ("
             f"{sql_str(a['AssetTag'])},{sql_str(a['PropertyNumber'])},{sql_str(a['BundledWithAssetTag'])},"
             f"(SELECT CatalogID FROM equipmentcatalog WHERE Category={sql_str(_cat_lookup(m,'equipmentcatalog',a['CatalogID'])[0])} "
             f"AND Manufacturer={sql_str(_cat_lookup(m,'equipmentcatalog',a['CatalogID'])[1])} "
             f"AND ModelName={sql_str(_cat_lookup(m,'equipmentcatalog',a['CatalogID'])[2])} LIMIT 1),"
-            f"{sql_str(a['SerialNumber'])},NULL,{sql_num(a['PurchasePrice'])},{sql_str(a['CurrentOwnerID'])},"
-            f"{sql_str(a['Remarks'])},{sql_str(a['DeploymentStatus'])},{sql_str(a['MaintenanceHealthStatus'])},{sql_str(a['LifecycleStatus'])});"
+            f"{sql_str(a['SerialNumber'])},{sql_str(a['PurchaseDate'])},{sql_num(a['PurchasePrice'])},{sql_str(a['CurrentOwnerID'])},"
+            f"{sql_str(a['EndUserID'])},{sql_str(a['Remarks'])},{sql_str(a['DeploymentStatus'])},{sql_str(a['MaintenanceHealthStatus'])},{sql_str(a['LifecycleStatus'])});"
         )
     out.append("")
 
     out.append("-- ===================== fleetvehicles =====================")
     for v in m.fleetvehicles:
         out.append(
-            "INSERT INTO `fleetvehicles` (`PropertyNumber`,`CatalogID`,`PlateNumber`,`Cost`,`AssignedDriverID`,"
+            "INSERT INTO `fleetvehicles` (`PropertyNumber`,`CatalogID`,`PlateNumber`,`Cost`,`AcquisitionYear`,`AssignedDriverID`,`EndUserID`,"
             "`Remarks`,`OperationalStatus`,`MaintenanceStatus`) VALUES ("
             f"{sql_str(v['PropertyNumber'])},"
             f"(SELECT CatalogID FROM fleetvehiclecatalog WHERE Category={sql_str(_cat_lookup(m,'fleetvehiclecatalog',v['CatalogID'])[0])} "
             f"AND Manufacturer={sql_str(_cat_lookup(m,'fleetvehiclecatalog',v['CatalogID'])[1])} "
             f"AND ModelName={sql_str(_cat_lookup(m,'fleetvehiclecatalog',v['CatalogID'])[2])} LIMIT 1),"
-            f"{sql_str(v['PlateNumber'])},{sql_num(v['Cost'])},{sql_str(v['AssignedDriverID'])},"
-            f"{sql_str(v['Remarks'])},{sql_str(v['OperationalStatus'])},{sql_str(v['MaintenanceStatus'])});"
+            f"{sql_str(v['PlateNumber'])},{sql_num(v['Cost'])},{sql_num(v['AcquisitionYear'])},{sql_str(v['AssignedDriverID'])},"
+            f"{sql_str(v['EndUserID'])},{sql_str(v['Remarks'])},{sql_str(v['OperationalStatus'])},{sql_str(v['MaintenanceStatus'])});"
         )
     out.append("")
 
     out.append("-- ===================== surveyassets =====================")
     for s in m.surveyassets:
         out.append(
-            "INSERT INTO `surveyassets` (`PropertyNumber`,`AssetTag`,`CatalogID`,`SerialNumber`,`Cost`,"
-            "`AssignedCustodianID`,`Remarks`,`OperationalStatus`,`ConditionStatus`) VALUES ("
+            "INSERT INTO `surveyassets` (`PropertyNumber`,`AssetTag`,`CatalogID`,`SerialNumber`,`AcquisitionDate`,`Cost`,"
+            "`AssignedCustodianID`,`EndUserID`,`Remarks`,`OperationalStatus`,`ConditionStatus`) VALUES ("
             f"{sql_str(s['PropertyNumber'])},{sql_str(s['AssetTag'])},"
             f"(SELECT CatalogID FROM surveyequipmentcatalog WHERE Category={sql_str(_cat_lookup(m,'surveyequipmentcatalog',s['CatalogID'])[0])} "
             f"AND Manufacturer={sql_str(_cat_lookup(m,'surveyequipmentcatalog',s['CatalogID'])[1])} "
             f"AND ModelName={sql_str(_cat_lookup(m,'surveyequipmentcatalog',s['CatalogID'])[2])} LIMIT 1),"
-            f"{sql_str(s['SerialNumber'])},{sql_num(s['Cost'])},{sql_str(s['AssignedCustodianID'])},"
-            f"{sql_str(s['Remarks'])},{sql_str(s['OperationalStatus'])},{sql_str(s['ConditionStatus'])});"
+            f"{sql_str(s['SerialNumber'])},{sql_str(s['AcquisitionDate'])},{sql_num(s['Cost'])},{sql_str(s['AssignedCustodianID'])},"
+            f"{sql_str(s['EndUserID'])},{sql_str(s['Remarks'])},{sql_str(s['OperationalStatus'])},{sql_str(s['ConditionStatus'])});"
         )
     out.append("")
 
@@ -818,8 +846,8 @@ def build_sql(m: Migration):
     out.append(f"-- sentinel personnel record ({SENTINEL_EMPLOYEE_ID}) and flagged - see migration_flags_report.csv.")
     for a in m.assetassignments:
         out.append(
-            "INSERT INTO `assetassignments` (`ReferenceType`,`AssetTag`,`EmployeeID`,`ActionType`,`DocumentNo`,`ConditionNotes`) VALUES ("
-            f"{sql_str(a['ReferenceType'])},{sql_str(a['AssetTag'])},{sql_str(a['EmployeeID'])},"
+            "INSERT INTO `assetassignments` (`ReferenceType`,`AssetTag`,`EmployeeID`,`EndUserID`,`ActionType`,`DocumentNo`,`ConditionNotes`) VALUES ("
+            f"{sql_str(a['ReferenceType'])},{sql_str(a['AssetTag'])},{sql_str(a['EmployeeID'])},{sql_str(a['EndUserID'])},"
             f"{sql_str(a['ActionType'])},{sql_str(a['DocumentNo'])},{sql_str(a['ConditionNotes'])});"
         )
     out.append("")

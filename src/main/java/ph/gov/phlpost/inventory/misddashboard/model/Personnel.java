@@ -31,9 +31,6 @@ public class Personnel {
     @Column(name = "JobTitle")
     private String jobTitle;
 
-    @Column(name = "ManagerID")
-    private String managerID;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "BaseLocationID", referencedColumnName = "LocationID", insertable = false, updatable = false)
     private PersonnelBaseLocation baseLocation;
@@ -87,10 +84,6 @@ public class Personnel {
 
     public void setJobTitle(String jobTitle) {
         this.jobTitle = jobTitle;
-    }
-
-    public String getManagerID() {
-        return managerID;
     }
 
     public PersonnelBaseLocation getBaseLocation() {

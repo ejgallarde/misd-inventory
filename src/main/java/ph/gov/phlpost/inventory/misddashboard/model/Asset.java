@@ -54,6 +54,20 @@ public class Asset {
     @Column(name = "CurrentOwnerID")
     private String currentOwnerID;
 
+    /** The person actually using the asset day-to-day, distinct from the accountable person above. */
+    @Size(max = 20)
+    @Column(name = "EndUserID")
+    private String endUserID;
+
+    @Column(name = "CurrentValue")
+    private BigDecimal currentValue;
+
+    @Column(name = "DepreciationAmount")
+    private BigDecimal depreciationAmount;
+
+    @Column(name = "ValuationAsOfDate")
+    private LocalDate valuationAsOfDate;
+
     @NotBlank
     @Size(max = 255)
     @Column(name = "DeploymentStatus")
@@ -137,6 +151,38 @@ public class Asset {
 
     public void setCurrentOwnerID(String currentOwnerID) {
         this.currentOwnerID = currentOwnerID;
+    }
+
+    public String getEndUserID() {
+        return endUserID;
+    }
+
+    public void setEndUserID(String endUserID) {
+        this.endUserID = endUserID;
+    }
+
+    public BigDecimal getCurrentValue() {
+        return currentValue;
+    }
+
+    public void setCurrentValue(BigDecimal currentValue) {
+        this.currentValue = currentValue;
+    }
+
+    public BigDecimal getDepreciationAmount() {
+        return depreciationAmount;
+    }
+
+    public void setDepreciationAmount(BigDecimal depreciationAmount) {
+        this.depreciationAmount = depreciationAmount;
+    }
+
+    public LocalDate getValuationAsOfDate() {
+        return valuationAsOfDate;
+    }
+
+    public void setValuationAsOfDate(LocalDate valuationAsOfDate) {
+        this.valuationAsOfDate = valuationAsOfDate;
     }
 
     public String getDeploymentStatus() {

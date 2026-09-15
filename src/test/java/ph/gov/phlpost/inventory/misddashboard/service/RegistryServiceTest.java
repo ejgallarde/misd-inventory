@@ -43,14 +43,13 @@ class RegistryServiceTest {
     }
 
     private Personnel personnel(String id, String first, String last, String department, String division,
-            String managerId, PersonnelBaseLocation location) {
+            PersonnelBaseLocation location) {
         Personnel personnel = new Personnel();
         personnel.setEmployeeID(id);
         personnel.setFirstName(first);
         personnel.setLastName(last);
         personnel.setDepartment(department);
         personnel.setDivision(division);
-        ReflectionTestUtils.setField(personnel, "managerID", managerId);
         ReflectionTestUtils.setField(personnel, "baseLocation", location);
         return personnel;
     }
@@ -59,7 +58,7 @@ class RegistryServiceTest {
     void employeeNameMapAddsASyntheticSupplierEntry() {
         createService();
         when(personnelRepository.findAll())
-                .thenReturn(List.of(personnel("PERS-0001", "Juan", "Dela Cruz", null, null, null, null)));
+                .thenReturn(List.of(personnel("PERS-0001", "Juan", "Dela Cruz", null, null, null)));
 
         Map<String, String> names = registryService.getEmployeeNameMap();
 
@@ -93,7 +92,7 @@ class RegistryServiceTest {
     void departmentAndDivisionDefaultToUnassignedWhenNull() {
         createService();
         when(personnelRepository.findAll())
-                .thenReturn(List.of(personnel("PERS-0002", "Ana", "Reyes", null, null, null, null)));
+                .thenReturn(List.of(personnel("PERS-0002", "Ana", "Reyes", null, null, null)));
 
         assertThat(registryService.getDepartmentMap()).containsEntry("PERS-0002", "Unassigned");
         assertThat(registryService.getDivisionMap()).containsEntry("PERS-0002", "Unassigned");
@@ -107,8 +106,8 @@ class RegistryServiceTest {
         ReflectionTestUtils.setField(location, "province", "Ilocos Norte");
         ReflectionTestUtils.setField(location, "officeAddress", "");
         when(personnelRepository.findAll()).thenReturn(List.of(
-                personnel("PERS-0003", "Mia", "Santos", null, null, null, location),
-                personnel("PERS-0004", "Leo", "Cruz", null, null, null, null)));
+                personnel("PERS-0003", "Mia", "Santos", null, null, location),
+                personnel("PERS-0004", "Leo", "Cruz", null, null, null)));
 
         Map<String, String> locations = registryService.getPersonnelLocationMap();
 
@@ -117,44 +116,14 @@ class RegistryServiceTest {
     }
 
     @Test
-    void managerNameMapResolvesKnownManagersAndFallsBackForUnknownOrMissingOnes() {
-        createService();
-        Personnel manager = personnel("PERS-0010", "Boss", "One", null, null, null, null);
-        Personnel withKnownManager = personnel("PERS-0011", "Rank", "File", null, null, "PERS-0010", null);
-        Personnel withUnknownManager = personnel("PERS-0012", "Lost", "Report", null, null, "PERS-9999", null);
-        Personnel withNoManager = personnel("PERS-0013", "Solo", "Worker", null, null, null, null);
-        when(personnelRepository.findAll())
-                .thenReturn(List.of(manager, withKnownManager, withUnknownManager, withNoManager));
-
-        Map<String, String> managerNames = registryService.getManagerNameMap();
-
-        assertThat(managerNames).containsEntry("PERS-0011", "One, Boss");
-        assertThat(managerNames).containsEntry("PERS-0012", "Unknown Manager");
-        assertThat(managerNames).containsEntry("PERS-0013", "No Manager");
-        assertThat(managerNames).containsEntry("SUPPLIER", "No Manager");
-    }
-
-    @Test
     void resolveDisplayNameFallsBackToTheRawIdWhenUnknownAndToUnassignedWhenBlank() {
         createService();
         when(personnelRepository.findAll())
-                .thenReturn(List.of(personnel("PERS-0020", "Known", "Employee", null, null, null, null)));
+                .thenReturn(List.of(personnel("PERS-0020", "Known", "Employee", null, null, null)));
 
         assertThat(registryService.resolveDisplayName(null)).isEqualTo("Unassigned");
         assertThat(registryService.resolveDisplayName("  ")).isEqualTo("Unassigned");
         assertThat(registryService.resolveDisplayName("PERS-0020")).isEqualTo("Employee, Known");
         assertThat(registryService.resolveDisplayName("PERS-9999")).isEqualTo("PERS-9999");
-    }
-
-    @Test
-    void managerNameByEmployeeIdCoversBlankUnknownAndManagerlessEmployees() {
-        createService();
-        Personnel noManager = personnel("PERS-0030", "Alone", "Worker", null, null, null, null);
-        when(personnelRepository.findById("PERS-0030")).thenReturn(java.util.Optional.of(noManager));
-        when(personnelRepository.findById("PERS-9999")).thenReturn(java.util.Optional.empty());
-
-        assertThat(registryService.getManagerNameByEmployeeId(null)).isEqualTo("No Manager");
-        assertThat(registryService.getManagerNameByEmployeeId("PERS-0030")).isEqualTo("No Manager");
-        assertThat(registryService.getManagerNameByEmployeeId("PERS-9999")).isEqualTo("No Manager");
     }
 }
