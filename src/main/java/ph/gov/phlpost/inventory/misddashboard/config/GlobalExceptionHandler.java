@@ -50,16 +50,12 @@ public class GlobalExceptionHandler {
 
     private static Map<String, String> buildConstraintMessages() {
         Map<String, String> messages = new LinkedHashMap<>();
-        messages.put("uk_realestateproperties_taxdeclarationnumber",
-                "A property with this Tax Declaration number is already registered.");
         messages.put("assets.serialnumber", "An asset with this serial number is already registered.");
         messages.put("fleetvehicles.platenumber", "A vehicle with this plate number is already registered.");
         messages.put("fleetvehicles.enginenumber", "A vehicle with this engine number is already registered.");
         messages.put("fleetvehicles.chassisnumbervin", "A vehicle with this chassis number / VIN is already registered.");
         messages.put("fleetvehicles.bodynumber", "A vehicle with this body number is already registered.");
         messages.put("fleetvehicles.body_number", "A vehicle with this body number is already registered.");
-        messages.put("realestateproperties.titlenumber",
-                "A property with this Title Number / TCT is already registered.");
         messages.put("assets_ibfk_1", "The selected catalog item no longer exists. Refresh the page and try again.");
         messages.put("assets_ibfk_2", "The selected accountable owner is not a known employee.");
         messages.put("assetassignments_ibfk_2", "The selected employee is not in the personnel registry.");

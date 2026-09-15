@@ -11,18 +11,17 @@ import org.springframework.web.bind.annotation.InitBinder;
  *
  * <p>
  * Several columns are both optional and {@code UNIQUE} — Assets.SerialNumber,
- * FleetVehicles.PlateNumber / BodyNumber / EngineNumber / ChassisNumberVIN,
- * RealEstateProperties.TitleNumber / TaxDeclarationNumber. MySQL permits many
- * {@code NULL}s in a unique index but only one {@code ''}, so binding a blank
- * field to an empty string made the *second* record with that field left blank
- * fail on a duplicate-key error. Assets.CurrentOwnerID has the same problem
- * against its foreign key to Personnel.
+ * FleetVehicles.PlateNumber / BodyNumber / EngineNumber / ChassisNumberVIN.
+ * MySQL permits many {@code NULL}s in a unique index but only one {@code ''},
+ * so binding a blank field to an empty string made the *second* record with
+ * that field left blank fail on a duplicate-key error. Assets.CurrentOwnerID
+ * has the same problem against its foreign key to Personnel.
  *
  * <p>
  * This only covers {@code @ModelAttribute} and {@code @RequestParam} binding.
  * JSON request bodies are deserialized by Jackson and never reach a
- * {@link WebDataBinder}, so the {@code /assets/update}, {@code /fleet/update}
- * and {@code /properties/update} endpoints normalize blanks themselves.
+ * {@link WebDataBinder}, so the {@code /assets/update} and
+ * {@code /fleet/update} endpoints normalize blanks themselves.
  */
 @ControllerAdvice
 public class WebBindingAdvice {

@@ -153,8 +153,7 @@ body[data-theme="dark"] .table td.text-danger {
 }
 
 #assetHistoryModal .asset-history-modal-header,
-#fleetHistoryModal .fleet-history-modal-header,
-#propertyHistoryModal .property-history-modal-header {
+#fleetHistoryModal .fleet-history-modal-header {
     background-color: #1d2939 !important;
     color: #ffffff !important;
 }
@@ -162,18 +161,14 @@ body[data-theme="dark"] .table td.text-danger {
 #assetHistoryModal .asset-history-modal-header .modal-title,
 #assetHistoryModal .asset-history-modal-header .small,
 #fleetHistoryModal .fleet-history-modal-header .modal-title,
-#fleetHistoryModal .fleet-history-modal-header .small,
-#propertyHistoryModal .property-history-modal-header .modal-title,
-#propertyHistoryModal .property-history-modal-header .small {
+#fleetHistoryModal .fleet-history-modal-header .small {
     color: #ffffff !important;
 }
 
 #assetHistoryTable thead,
 #assetHistoryTable thead th,
 #fleetHistoryTable thead,
-#fleetHistoryTable thead th,
-#propertyHistoryTable thead,
-#propertyHistoryTable thead th {
+#fleetHistoryTable thead th {
     --bs-table-bg: var(--app-accent);
     --bs-table-color: #ffffff;
     background-color: var(--app-accent) !important;
@@ -229,8 +224,7 @@ body[data-theme="dark"] .table td.text-danger {
 }
 
 .asset-table-row,
-.fleet-table-row,
-.property-table-row {
+.fleet-table-row {
     cursor: pointer;
 }
 
@@ -239,19 +233,15 @@ body[data-theme="dark"] .table td.text-danger {
 .asset-table-row a,
 .fleet-table-row .dropdown-menu,
 .fleet-table-row button,
-.fleet-table-row a,
-.property-table-row .dropdown-menu,
-.property-table-row button,
-.property-table-row a {
+.fleet-table-row a {
     cursor: pointer;
 }
 
-/* Identifier-column links (Asset Tag, Vehicle ID/Plate No., Land Title, Tax
-   Declaration No.) stay a plain blue with no hover/focus color shift or
-   underline, since the whole row is already clickable. */
+/* Identifier-column links (Asset Tag, Vehicle ID/Plate No.) stay a plain blue
+   with no hover/focus color shift or underline, since the whole row is
+   already clickable. */
 a.asset-detail-link,
-a.fleet-detail-link,
-a.property-detail-link {
+a.fleet-detail-link {
     color: var(--app-accent);
     text-decoration: none;
 }
@@ -259,9 +249,7 @@ a.property-detail-link {
 a.asset-detail-link:hover,
 a.asset-detail-link:focus,
 a.fleet-detail-link:hover,
-a.fleet-detail-link:focus,
-a.property-detail-link:hover,
-a.property-detail-link:focus {
+a.fleet-detail-link:focus {
     color: var(--app-accent);
     text-decoration: none;
 }
@@ -678,8 +666,7 @@ body[data-theme="dark"] #itDetailOffcanvas.asset-edit-mode-active .it-field:disa
     display: none !important;
 }
 
-#fleetDetailOffcanvas.fleet-edit-mode-active .fleet-field:disabled,
-#propertyDetailOffcanvas.property-edit-mode-active .property-field:disabled {
+#fleetDetailOffcanvas.fleet-edit-mode-active .fleet-field:disabled {
     background-color: #edf3f9 !important;
     color: #6a7b8d !important;
     border-color: #b8c7d9 !important;
@@ -688,30 +675,25 @@ body[data-theme="dark"] #itDetailOffcanvas.asset-edit-mode-active .it-field:disa
     cursor: not-allowed;
 }
 
-body[data-theme="dark"] #fleetDetailOffcanvas.fleet-edit-mode-active .fleet-field:disabled,
-body[data-theme="dark"] #propertyDetailOffcanvas.property-edit-mode-active .property-field:disabled {
+body[data-theme="dark"] #fleetDetailOffcanvas.fleet-edit-mode-active .fleet-field:disabled {
     background-color: #182435 !important;
     color: #8ea2b8 !important;
     border-color: #304459 !important;
 }
 
-#fleetDetailOffcanvas.fleet-edit-mode-active .fleet-field:disabled::placeholder,
-#propertyDetailOffcanvas.property-edit-mode-active .property-field:disabled::placeholder {
+#fleetDetailOffcanvas.fleet-edit-mode-active .fleet-field:disabled::placeholder {
     color: #8797a8 !important;
 }
 
-body[data-theme="dark"] #fleetDetailOffcanvas.fleet-edit-mode-active .fleet-field:disabled::placeholder,
-body[data-theme="dark"] #propertyDetailOffcanvas.property-edit-mode-active .property-field:disabled::placeholder {
+body[data-theme="dark"] #fleetDetailOffcanvas.fleet-edit-mode-active .fleet-field:disabled::placeholder {
     color: #6f8096 !important;
 }
 
-#fleetDetailOffcanvas:not(.fleet-edit-mode-active) .fleet-detail-edit-only,
-#propertyDetailOffcanvas:not(.property-edit-mode-active) .property-detail-edit-only {
+#fleetDetailOffcanvas:not(.fleet-edit-mode-active) .fleet-detail-edit-only {
     display: none !important;
 }
 
-#fleetDetailOffcanvas.fleet-edit-mode-active .fleet-detail-view-only,
-#propertyDetailOffcanvas.property-edit-mode-active .property-detail-view-only {
+#fleetDetailOffcanvas.fleet-edit-mode-active .fleet-detail-view-only {
     display: none !important;
 }
 

@@ -36,14 +36,6 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
-    void taxDeclarationConstraintWinsOverTheBareColumnName() {
-        String message = handler.describeConstraintViolation(
-                "Duplicate entry 'TD-1' for key 'UK_RealEstateProperties_TaxDeclarationNumber'");
-
-        assertEquals("A property with this Tax Declaration number is already registered.", message);
-    }
-
-    @Test
     void ownerForeignKeyFailureNamesTheEmployeeLookup() {
         String message = handler.describeConstraintViolation(
                 "Cannot add or update a child row: a foreign key constraint fails "

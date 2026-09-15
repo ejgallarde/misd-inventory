@@ -6,11 +6,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.multipart.MultipartFile;
 
 import ph.gov.phlpost.inventory.misddashboard.model.Document;
-import ph.gov.phlpost.inventory.misddashboard.model.RealEstateProperty;
 import ph.gov.phlpost.inventory.misddashboard.model.SurveyAsset;
 import ph.gov.phlpost.inventory.misddashboard.repository.DocumentRepository;
 import ph.gov.phlpost.inventory.misddashboard.repository.FleetVehicleRepository;
-import ph.gov.phlpost.inventory.misddashboard.repository.RealEstatePropertyRepository;
 import ph.gov.phlpost.inventory.misddashboard.repository.SurveyAssetRepository;
 
 import java.io.IOException;
@@ -30,7 +28,6 @@ public class DocumentService {
     private final DocumentStorageService storageService;
     private final DocumentRepository documentRepository;
     private final FleetVehicleRepository fleetVehicleRepository;
-    private final RealEstatePropertyRepository realEstatePropertyRepository;
     private final SurveyAssetRepository surveyAssetRepository;
     private final long maxFileSizeBytes;
     private final int maxFileCount;
@@ -39,19 +36,16 @@ public class DocumentService {
 
     public DocumentService(DocumentStorageService storageService, DocumentRepository documentRepository,
             FleetVehicleRepository fleetVehicleRepository,
-            RealEstatePropertyRepository realEstatePropertyRepository,
             SurveyAssetRepository surveyAssetRepository,
             @Value("${document.upload.max-size-mb:15}") long maxFileSizeMb,
             @Value("${document.upload.max-files:25}") int maxFileCount,
             @Value("${document.upload.allowed-extensions:pdf,jpg,jpeg,png,doc,docx,xls,xlsx}") String allowedExtensionsConfig,
             @Value("${document.upload.categories.it:Official Receipt / Invoice,Inspection Report,Acceptance Report,Serial Number Label,Photographs,Equipment Specification Sheet,Repair or Service Report}") String itCategoriesConfig,
             @Value("${document.upload.categories.vehicle:Delivery Receipt,Original Receipt (OR),Certificate of Registration (CR),PMS Report,Car Insurance Policy,Stencil,TPL,Driver's License,Warranty Certificate}") String vehicleCategoriesConfig,
-            @Value("${document.upload.categories.property:Title,Tax Declaration,Property Photo,Deed of Sale,Appendix 71}") String propertyCategoriesConfig,
             @Value("${document.upload.categories.surveyasset:Official Receipt / Invoice,Calibration Certificate,Equipment Specification Sheet,Photographs,Warranty Certificate,Repair or Service Report}") String surveyAssetCategoriesConfig) {
         this.storageService = storageService;
         this.documentRepository = documentRepository;
         this.fleetVehicleRepository = fleetVehicleRepository;
-        this.realEstatePropertyRepository = realEstatePropertyRepository;
         this.surveyAssetRepository = surveyAssetRepository;
         this.maxFileSizeBytes = Math.max(1L, maxFileSizeMb) * 1024L * 1024L;
         this.maxFileCount = Math.max(1, maxFileCount);
@@ -64,7 +58,6 @@ public class DocumentService {
         this.allowedCategoriesByReferenceType = new HashMap<>();
         this.allowedCategoriesByReferenceType.put("IT_EQUIPMENT", toCategorySet(itCategoriesConfig));
         this.allowedCategoriesByReferenceType.put("VEHICLE", toCategorySet(vehicleCategoriesConfig));
-        this.allowedCategoriesByReferenceType.put("PROPERTY", toCategorySet(propertyCategoriesConfig));
         this.allowedCategoriesByReferenceType.put("SURVEY_ASSET", toCategorySet(surveyAssetCategoriesConfig));
     }
 
@@ -296,7 +289,6 @@ public class DocumentService {
     private String toStorageFolder(String referenceType) {
         return switch (referenceType) {
             case "VEHICLE" -> "vehicles";
-            case "PROPERTY" -> "properties";
             case "IT_EQUIPMENT" -> "it-equipment";
             case "SURVEY_ASSET" -> "survey-assets";
             default -> throw new IllegalArgumentException("Unsupported reference type: " + referenceType);
@@ -306,7 +298,6 @@ public class DocumentService {
     private String resolveStorageEntityId(String normalizedReferenceType, String normalizedReferenceId) {
         return switch (normalizedReferenceType) {
             case "VEHICLE" -> resolveVehicleStorageId(normalizedReferenceId);
-            case "PROPERTY" -> resolvePropertyStorageId(normalizedReferenceId);
             case "SURVEY_ASSET" -> resolveSurveyAssetStorageId(normalizedReferenceId);
             default -> normalizedReferenceId;
         };
@@ -322,17 +313,6 @@ public class DocumentService {
                 .map(vehicle -> vehicle.getPlateNumber())
                 .filter(value -> value != null && !value.isBlank())
                 .map(value -> value.trim())
-                .orElse(normalizedReferenceId);
-    }
-
-    private String resolvePropertyStorageId(String normalizedReferenceId) {
-        Integer propertyId = parseInteger(normalizedReferenceId);
-        if (propertyId == null) {
-            return normalizedReferenceId;
-        }
-
-        return realEstatePropertyRepository.findById(propertyId)
-                .map(this::resolvePropertyIdentifier)
                 .orElse(normalizedReferenceId);
     }
 
@@ -360,21 +340,6 @@ public class DocumentService {
 
         Integer surveyAssetId = asset.getSurveyAssetID();
         return surveyAssetId == null ? "survey-asset" : "survey-asset-" + surveyAssetId;
-    }
-
-    private String resolvePropertyIdentifier(RealEstateProperty property) {
-        String titleNumber = property.getTitleNumber();
-        if (titleNumber != null && !titleNumber.isBlank()) {
-            return titleNumber.trim();
-        }
-
-        String taxDeclarationNumber = property.getTaxDeclarationNumber();
-        if (taxDeclarationNumber != null && !taxDeclarationNumber.isBlank()) {
-            return taxDeclarationNumber.trim();
-        }
-
-        Integer propertyId = property.getPropertyID();
-        return propertyId == null ? "property" : "property-" + propertyId;
     }
 
     private Integer parseInteger(String value) {

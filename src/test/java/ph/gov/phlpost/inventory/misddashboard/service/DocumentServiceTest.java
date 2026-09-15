@@ -22,7 +22,6 @@ import org.springframework.mock.web.MockMultipartFile;
 import ph.gov.phlpost.inventory.misddashboard.model.Document;
 import ph.gov.phlpost.inventory.misddashboard.repository.DocumentRepository;
 import ph.gov.phlpost.inventory.misddashboard.repository.FleetVehicleRepository;
-import ph.gov.phlpost.inventory.misddashboard.repository.RealEstatePropertyRepository;
 import ph.gov.phlpost.inventory.misddashboard.repository.SurveyAssetRepository;
 
 @ExtendWith(MockitoExtension.class)
@@ -38,9 +37,6 @@ class DocumentServiceTest {
         private FleetVehicleRepository fleetVehicleRepository;
 
         @Mock
-        private RealEstatePropertyRepository realEstatePropertyRepository;
-
-        @Mock
         private SurveyAssetRepository surveyAssetRepository;
 
         private DocumentService documentService;
@@ -51,14 +47,12 @@ class DocumentServiceTest {
                                 storageService,
                                 documentRepository,
                                 fleetVehicleRepository,
-                                realEstatePropertyRepository,
                                 surveyAssetRepository,
                                 15,
                                 3,
                                 "pdf,jpg,jpeg,png,doc,docx,xls,xlsx",
                                 "Official Receipt / Invoice,Inspection Report,Acceptance Report,Serial Number Label,Photographs,Equipment Specification Sheet,Repair or Service Report,Service Report",
                                 "Delivery Receipt,Original Receipt (OR),Certificate of Registration (CR),PMS Report,Car Insurance Policy,Stencil,TPL,Driver's License,Warranty Certificate",
-                                "Title,Tax Declaration,Property Photo,Deed of Sale,Appendix 71",
                                 "Official Receipt / Invoice,Calibration Certificate,Equipment Specification Sheet,Photographs,Warranty Certificate,Repair or Service Report");
         }
 

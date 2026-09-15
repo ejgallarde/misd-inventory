@@ -8,7 +8,7 @@ Purpose: Track controller endpoint ownership and internal callers (template form
 - Included: Internal callers from Thymeleaf templates and static JS.
 - Excluded: Framework-managed routes (for example Spring Security's POST /login and /logout, and /error), unless noted.
 
-60 mappings across 9 controllers. This is the DAR deployment branch: the Properties routes below are no longer linked from `dashboard.html` (see the Properties section) even though `PropertiesController` is still present and mapped.
+53 mappings across 8 controllers. This is the DAR deployment branch: `PropertiesController` and the entire real estate/buildings/facilities module (model, repository, templates, JS) were removed outright — see "Changed" below. Land, building, and facility assets are out of scope for this branch.
 
 ## Main dashboard
 
@@ -75,28 +75,14 @@ Added for this DAR deployment. Modeled directly on Fleet (see CLAUDE.md).
 | GET | /survey-assets/{id}/history | SurveyAssetController | JS AJAX | static/js/survey-assets-page.js (View History modal) | Active |
 | POST | /survey-assets/update | SurveyAssetController | JS AJAX | static/js/survey-assets-page.js (detail panel save) | Active |
 
-## Properties (dormant in this DAR deployment)
-
-`PropertiesController` and its routes below are unchanged in code, but as of this DAR customization pass `dashboard.html` no longer has the Land Assets / Buildings & Facilities tabs, the Add Property offcanvas, or the property detail-offcanvas include — so none of these routes have a live internal caller from `dashboard.html` anymore. `properties.html` (the standalone page) still calls them if visited directly, but nothing in `dashboard.html` links to `properties.html` either. The DAR database (`db/dar_inventory_schema.sql`) has no `realestateproperties` table, so hitting these routes against it will fail. Left in place per the "hide, don't delete" decision for this branch — see CLAUDE.md.
-
-| Method | Route | Owning Controller | Internal Caller Type | Internal Callers | Status |
-|---|---|---|---|---|---|
-| GET | /properties | PropertiesController | Link | templates/properties.html only (no longer linked from dashboard.html) | Dormant |
-| POST | /properties/add | PropertiesController | Form submit | None (Add Property offcanvas removed from dashboard.html) | Dormant |
-| POST | /properties/assign-custodian | PropertiesController | Form submit | templates/properties.html (Custodian modal) | Dormant |
-| POST | /properties/update-tax | PropertiesController | Form submit | templates/properties.html (Tax modal) | Dormant |
-| GET | /properties/{id} | PropertiesController | JS AJAX | static/js/properties-page.js (property detail load) | Dormant |
-| GET | /properties/{id}/history | PropertiesController | JS AJAX | static/js/properties-page.js (View Property History modal) | Dormant |
-| POST | /properties/update | PropertiesController | JS AJAX | static/js/properties-page.js (detail panel save) | Dormant |
-
 ## Documents
 
 | Method | Route | Owning Controller | Internal Caller Type | Internal Callers | Status |
 |---|---|---|---|---|---|
 | GET | /documents/list | DocumentController | JS AJAX | static/js/ui-common.js (loadDocumentsForReference) | Active |
-| POST | /documents/add | DocumentController | JS AJAX | static/js/asset-detail.js, fleet-page.js, survey-assets-page.js, properties-page.js | Active |
+| POST | /documents/add | DocumentController | JS AJAX | static/js/asset-detail.js, fleet-page.js, survey-assets-page.js | Active |
 | DELETE | /documents/{id} | DocumentController | JS AJAX | static/js/ui-common.js (deleteDocumentById) | Active |
-| GET | /documents/{id}/view | DocumentController | JS action | static/js/ui-common.js (print), asset-detail.js, fleet-page.js, survey-assets-page.js, properties-page.js | Active |
+| GET | /documents/{id}/view | DocumentController | JS action | static/js/ui-common.js (print), asset-detail.js, fleet-page.js, survey-assets-page.js | Active |
 | GET | /documents/{id}/download | DocumentController | JS-rendered link | static/js/ui-common.js (documents table download link) | Active |
 
 ## Locations and authentication
@@ -118,6 +104,10 @@ Added for this DAR deployment. Modeled directly on Fleet (see CLAUDE.md).
 2. `POST /api/locations/import/psgc-single` — single-file PSGC import, duplicated by the `POST /admin/locations/import-psgc` form route the admin page actually uses.
 
 Both are REST variants of an import the UI performs through `LocationAdminController`. They are referenced in the comments of `db/psgc-schema.sql` as the documented import API, so they may have external callers. Not removed.
+
+## Changed in the 2026-09-15 review (real estate/buildings/facilities removed)
+
+Land, building, and facility assets are out of scope for the `temp-dar-split-branding` branch. `PropertiesController` and its 7 routes (`/properties`, `/properties/add`, `/properties/assign-custodian`, `/properties/update-tax`, `/properties/{id}`, `/properties/{id}/history`, `/properties/update`) were deleted outright, along with `RealEstateProperty`/`RealEstatePropertyRepository`, `properties.html` and its fragments (`properties-detail.html`, `properties-history.html`, `land-assets-table.html`, `building-facilities-table.html`), and `static/js/properties-page.js`. This supersedes the 2026-09-10 "dormant, not deleted" decision below — the module is now gone rather than hidden.
 
 ## Changed in the 2026-09-10 review (DAR customization)
 

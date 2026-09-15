@@ -259,24 +259,4 @@
         createController: createController,
         clearCache: clearCascadeCache
     };
-
-    $(document).ready(function () {
-        const dashboardController = createController({
-            provinceSelector: '#propertyProvince',
-            citySelector: '#propertyCity',
-            barangaySelector: '#propertyBarangay',
-            zipSelector: '#propertyZipCode'
-        });
-
-        if (dashboardController) {
-            dashboardController.initializeEmpty();
-
-            const addPropertyOffcanvas = document.getElementById('addPropertyOffcanvas');
-            if (addPropertyOffcanvas) {
-                addPropertyOffcanvas.addEventListener('hidden.bs.offcanvas', function () {
-                    dashboardController.initializeEmpty();
-                });
-            }
-        }
-    });
 })(window);
