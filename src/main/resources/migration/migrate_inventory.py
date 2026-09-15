@@ -652,7 +652,7 @@ class Migration:
                 if flag_note:
                     condition_notes = f"{flag_note} {condition_notes}"
                 self.assetassignments.append({
-                    'ReferenceType': 'FLEETVEHICLE', 'AssetTag': str(vid), 'EmployeeID': assign_emp_id,
+                    'ReferenceType': 'FLEETVEHICLE', 'AssetTag': f'VEHICLE-{vid}', 'EmployeeID': assign_emp_id,
                     'EndUserID': end_user_id, 'ActionType': 'INITIAL MIGRATION RECORD', 'DocumentNo': doc_no,
                     'ConditionNotes': condition_notes,
                 })
@@ -681,7 +681,7 @@ class Migration:
                 if flag_note:
                     condition_notes = f"{flag_note} {condition_notes}"
                 self.assetassignments.append({
-                    'ReferenceType': 'SURVEYASSET', 'AssetTag': str(sid), 'EmployeeID': assign_emp_id,
+                    'ReferenceType': 'SURVEYASSET', 'AssetTag': f'SURVEYASSET-{sid}', 'EmployeeID': assign_emp_id,
                     'EndUserID': end_user_id, 'ActionType': 'INITIAL MIGRATION RECORD', 'DocumentNo': doc_no,
                     'ConditionNotes': condition_notes,
                 })

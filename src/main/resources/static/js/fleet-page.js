@@ -240,6 +240,7 @@ $(document).ready(function () {
                 { data: 'logType', render: $.fn.dataTable.render.text() },
                 { data: 'actionType', render: $.fn.dataTable.render.text() },
                 { data: 'recordedBy', render: $.fn.dataTable.render.text() },
+                { data: 'documentNo', defaultContent: '', render: $.fn.dataTable.render.text() },
                 { data: 'notes', defaultContent: '', render: $.fn.dataTable.render.text() }
             ],
             order: [[0, 'desc']],
@@ -291,6 +292,7 @@ $(document).ready(function () {
                     `<td>${MISDCommon.escapeHtml(entry.logType || '')}</td>` +
                     `<td>${MISDCommon.escapeHtml(entry.actionType || '')}</td>` +
                     `<td>${MISDCommon.escapeHtml(entry.recordedBy || '')}</td>` +
+                    `<td>${MISDCommon.escapeHtml(entry.documentNo || '')}</td>` +
                     `<td>${MISDCommon.escapeHtml(entry.notes || '')}</td></tr>`;
             }).join('');
             const printWindow = window.open('', '_blank', 'width=1100,height=700');
@@ -305,7 +307,7 @@ $(document).ready(function () {
                 `</head><body><h1>Vehicle History</h1><p>Vehicle ID: ${MISDCommon.escapeHtml(vehicleId)} | ` +
                 `Plate No.: ${MISDCommon.escapeHtml(plateNumber)}</p>` +
                 '<table><thead><tr><th>Date and Time</th><th>Log Type</th><th>Action</th>' +
-                `<th>Recorded By / Employee</th><th>Notes</th></tr></thead><tbody>${rowMarkup}</tbody></table>` +
+                `<th>Recorded By / Employee</th><th>PAR/PTR/ICS No.</th><th>Notes</th></tr></thead><tbody>${rowMarkup}</tbody></table>` +
                 '</body></html>');
             printWindow.document.close();
             printWindow.focus();

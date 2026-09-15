@@ -30,12 +30,12 @@ public class AssetHistoryService {
                 assignmentLogRepository.findByAssetTagOrderByTransactionDateDescTransactionIDDesc(assetTag)
                                 .forEach(log -> history.add(new AssetHistoryEntry(
                                                 log.getTransactionDate(), "Assignment", log.getActionType(),
-                                                log.getEmployeeID(), log.getConditionNotes())));
+                                                log.getEmployeeID(), log.getDocumentNo(), log.getConditionNotes())));
 
                 lifecycleLogRepository.findByReferenceIDOrderByTransactionDateDescLogIDDesc(assetTag)
                                 .forEach(log -> history.add(new AssetHistoryEntry(
                                                 log.getTransactionDate(), "Lifecycle", log.getActionType(),
-                                                log.getPerformedBy(), log.getNotes())));
+                                                log.getPerformedBy(), null, log.getNotes())));
 
                 history.sort(Comparator.comparing(
                                 entry -> entry.transactionDate(),
@@ -48,6 +48,7 @@ public class AssetHistoryService {
                         String logType,
                         String actionType,
                         String recordedBy,
+                        String documentNo,
                         String notes) {
         }
 }

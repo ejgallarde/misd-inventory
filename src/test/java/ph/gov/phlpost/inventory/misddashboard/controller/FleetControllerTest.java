@@ -60,7 +60,7 @@ class FleetControllerTest {
         vehicle.setPlateNumber("ABC-1234");
         var entry = new AssetHistoryService.AssetHistoryEntry(
                 LocalDateTime.of(2026, 8, 1, 9, 30),
-                "Lifecycle", "Vehicle Returned", "MOTORPOOL", "Returned in good condition");
+                "Lifecycle", "Vehicle Returned", "MOTORPOOL", null, "Returned in good condition");
 
         when(fleetRepo.findById(17)).thenReturn(Optional.of(vehicle));
         when(assetHistoryService.getHistory("VEHICLE-17")).thenReturn(List.of(entry));
@@ -92,7 +92,7 @@ class FleetControllerTest {
         vehicle.setPlateNumber("   ");
         var entry = new AssetHistoryService.AssetHistoryEntry(
                 LocalDateTime.of(2026, 8, 14, 11, 0),
-                "Lifecycle", "Marked Impounded", "SYSTEM", "Held pending clearance");
+                "Lifecycle", "Marked Impounded", "SYSTEM", null, "Held pending clearance");
 
         when(fleetRepo.findById(21)).thenReturn(Optional.of(vehicle));
         when(assetHistoryService.getHistory("VEHICLE-21")).thenReturn(List.of(entry));

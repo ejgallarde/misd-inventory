@@ -1,6 +1,6 @@
 MIGRATION SUMMARY
 ==================
-Generated: 2026-09-16T01:27:44.613265
+Generated: 2026-09-16T02:30:00.339028
 
 assets rows (incl. bundled accessories): 3495
 fleetvehicles rows: 1032

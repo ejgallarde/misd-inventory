@@ -60,7 +60,7 @@ class SurveyAssetControllerTest {
         asset.setAssetTag("SA-0017");
         var entry = new AssetHistoryService.AssetHistoryEntry(
                 LocalDateTime.of(2026, 8, 1, 9, 30),
-                "Lifecycle", "Survey Asset Returned", "EQUIPMENT ROOM", "Returned in good condition");
+                "Lifecycle", "Survey Asset Returned", "EQUIPMENT ROOM", null, "Returned in good condition");
 
         when(surveyAssetRepo.findById(17)).thenReturn(Optional.of(asset));
         when(assetHistoryService.getHistory("SURVEYASSET-17")).thenReturn(List.of(entry));
@@ -89,7 +89,7 @@ class SurveyAssetControllerTest {
         asset.setAssetTag("   ");
         var entry = new AssetHistoryService.AssetHistoryEntry(
                 LocalDateTime.of(2026, 8, 14, 11, 0),
-                "Lifecycle", "Marked Missing", "SYSTEM", "Not found after field trip");
+                "Lifecycle", "Marked Missing", "SYSTEM", null, "Not found after field trip");
 
         when(surveyAssetRepo.findById(21)).thenReturn(Optional.of(asset));
         when(assetHistoryService.getHistory("SURVEYASSET-21")).thenReturn(List.of(entry));
