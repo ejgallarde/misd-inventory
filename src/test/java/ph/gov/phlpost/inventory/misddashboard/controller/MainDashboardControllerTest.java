@@ -32,6 +32,7 @@ import ph.gov.phlpost.inventory.misddashboard.repository.FleetVehicleRepository;
 import ph.gov.phlpost.inventory.misddashboard.repository.PersonnelRepository;
 import ph.gov.phlpost.inventory.misddashboard.repository.SurveyAssetRepository;
 import ph.gov.phlpost.inventory.misddashboard.repository.SurveyEquipmentCatalogRepository;
+import ph.gov.phlpost.inventory.misddashboard.service.AssetHistoryService;
 import ph.gov.phlpost.inventory.misddashboard.service.RegistryService;
 
 @ExtendWith(MockitoExtension.class)
@@ -63,6 +64,9 @@ class MainDashboardControllerTest {
 
     @Mock
     private RegistryService registryService;
+
+    @Mock
+    private AssetHistoryService assetHistoryService;
 
     @InjectMocks
     private MainDashboardController controller;

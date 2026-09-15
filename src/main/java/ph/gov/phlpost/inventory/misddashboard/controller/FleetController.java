@@ -77,6 +77,7 @@ public class FleetController {
         model.addAttribute("allVehicles", fleetRepo.findAll());
         model.addAttribute("filter", filter);
         model.addAttribute("employeeMap", registryService.getEmployeeNameMap());
+        model.addAttribute("documentNoMap", assetHistoryService.getLatestDocumentNoMap());
         model.addAttribute("documentUploadMaxSizeMb", documentUploadMaxSizeMb);
         model.addAttribute("documentUploadAllowedExtensions", documentUploadAllowedExtensions);
         model.addAttribute("vehicleDocumentUploadCategories", TextUtils.splitCsv(vehicleDocumentUploadCategoriesCsv).stream()

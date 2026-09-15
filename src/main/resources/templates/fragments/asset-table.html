@@ -8,6 +8,7 @@
             <tr>
                 <th>System Tag</th>
                 <th>Property Number</th>
+                <th>PAR/PTR/ICS No.</th>
                 <th>Category</th>
                 <th>Accountable Owner</th>
                 <th>Location of the Accountable Owner</th>
@@ -25,6 +26,9 @@
                 </td>
                 <td
                     th:text="${asset.propertyNumber != null and !#strings.isEmpty(asset.propertyNumber) ? asset.propertyNumber : 'N/A'}">
+                </td>
+                <td
+                    th:text="${documentNoMap[asset.assetTag] != null and !#strings.isEmpty(documentNoMap[asset.assetTag]) ? documentNoMap[asset.assetTag] : 'N/A'}">
                 </td>
                 <td>
                     <span class="asset-category-info" tabindex="0"

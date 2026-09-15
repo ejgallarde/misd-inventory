@@ -12,6 +12,7 @@ import ph.gov.phlpost.inventory.misddashboard.repository.FleetVehicleRepository;
 import ph.gov.phlpost.inventory.misddashboard.repository.PersonnelRepository;
 import ph.gov.phlpost.inventory.misddashboard.repository.SurveyAssetRepository;
 import ph.gov.phlpost.inventory.misddashboard.repository.SurveyEquipmentCatalogRepository;
+import ph.gov.phlpost.inventory.misddashboard.service.AssetHistoryService;
 import ph.gov.phlpost.inventory.misddashboard.service.RegistryService;
 import ph.gov.phlpost.inventory.misddashboard.util.TextUtils;
 
@@ -46,6 +47,7 @@ public class MainDashboardController {
         private final FleetVehicleCatalogRepository fleetCatalogRepo;
         private final PersonnelRepository personnelRepo;
         private final RegistryService registryService;
+        private final AssetHistoryService assetHistoryService;
 
         @Value("#{'${inventory.categories}'.split(',')}")
         private List<String> equipmentCategories;
@@ -110,7 +112,8 @@ public class MainDashboardController {
                         EquipmentCatalogRepository catalogRepo,
                         SurveyEquipmentCatalogRepository surveyCatalogRepo,
                         FleetVehicleCatalogRepository fleetCatalogRepo,
-                        PersonnelRepository personnelRepo, RegistryService registryService) {
+                        PersonnelRepository personnelRepo, RegistryService registryService,
+                        AssetHistoryService assetHistoryService) {
                 this.dashboardRepo = dashboardRepo;
                 this.assetRepo = assetRepo;
                 this.fleetRepo = fleetRepo;
@@ -120,6 +123,7 @@ public class MainDashboardController {
                 this.fleetCatalogRepo = fleetCatalogRepo;
                 this.personnelRepo = personnelRepo;
                 this.registryService = registryService;
+                this.assetHistoryService = assetHistoryService;
         }
 
         @GetMapping("/")
@@ -201,6 +205,7 @@ public class MainDashboardController {
                 model.addAttribute("departmentMap", registryService.getDepartmentMap());
                 model.addAttribute("divisionMap", registryService.getDivisionMap());
                 model.addAttribute("personnelLocationMap", registryService.getPersonnelLocationMap());
+                model.addAttribute("documentNoMap", assetHistoryService.getLatestDocumentNoMap());
                 model.addAttribute("equipmentCategories", equipmentCategories.stream()
                                 .sorted(String.CASE_INSENSITIVE_ORDER)
                                 .toList());

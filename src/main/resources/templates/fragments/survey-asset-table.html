@@ -8,6 +8,7 @@
             <tr>
                 <th>Survey Asset ID</th>
                 <th>Property Number</th>
+                <th>PAR/PTR/ICS No.</th>
                 <th>System Tag / Serial</th>
                 <th>Custodian</th>
                 <th>Type</th>
@@ -36,6 +37,9 @@
                 </td>
                 <td
                     th:text="${surveyAsset.propertyNumber != null and !#strings.isEmpty(surveyAsset.propertyNumber) ? surveyAsset.propertyNumber : 'N/A'}">
+                </td>
+                <td
+                    th:text="${documentNoMap['SURVEYASSET-' + surveyAsset.surveyAssetID] != null and !#strings.isEmpty(documentNoMap['SURVEYASSET-' + surveyAsset.surveyAssetID]) ? documentNoMap['SURVEYASSET-' + surveyAsset.surveyAssetID] : 'N/A'}">
                 </td>
                 <td class="fw-bold">
                     <a href="#"

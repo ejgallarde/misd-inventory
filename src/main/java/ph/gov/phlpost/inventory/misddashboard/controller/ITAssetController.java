@@ -90,6 +90,7 @@ public class ITAssetController {
         model.addAttribute("departmentMap", registryService.getDepartmentMap());
         model.addAttribute("divisionMap", registryService.getDivisionMap());
         model.addAttribute("personnelLocationMap", registryService.getPersonnelLocationMap());
+        model.addAttribute("documentNoMap", assetHistoryService.getLatestDocumentNoMap());
         model.addAttribute("documentUploadMaxSizeMb", documentUploadMaxSizeMb);
         model.addAttribute("documentUploadAllowedExtensions", documentUploadAllowedExtensions);
         model.addAttribute("itDocumentUploadCategories", TextUtils.splitCsv(itDocumentUploadCategoriesCsv).stream()

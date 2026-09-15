@@ -3,7 +3,9 @@ package ph.gov.phlpost.inventory.misddashboard.service;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,6 +43,22 @@ public class AssetHistoryService {
                                 entry -> entry.transactionDate(),
                                 Comparator.nullsLast(Comparator.reverseOrder())));
                 return List.copyOf(history);
+        }
+
+        /**
+         * The PAR/PTR/ICS number backing each asset's/vehicle's/survey-asset's most
+         * recent assignment transaction, for display as a column on the table
+         * views (one query for all three domains - see
+         * {@link AssetAssignmentLogRepository#findLatestDocumentNoPerAssetTag()}).
+         * Absent from the map (or blank) when the latest transaction has none.
+         */
+        @Transactional(readOnly = true)
+        public Map<String, String> getLatestDocumentNoMap() {
+                Map<String, String> map = new LinkedHashMap<>();
+                for (Object[] row : assignmentLogRepository.findLatestDocumentNoPerAssetTag()) {
+                        map.put((String) row[0], (String) row[1]);
+                }
+                return map;
         }
 
         public record AssetHistoryEntry(

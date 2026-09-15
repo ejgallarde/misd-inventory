@@ -82,6 +82,7 @@ public class SurveyAssetController {
         model.addAttribute("allSurveyAssets", surveyAssetRepo.findAll());
         model.addAttribute("filter", filter);
         model.addAttribute("employeeMap", registryService.getEmployeeNameMap());
+        model.addAttribute("documentNoMap", assetHistoryService.getLatestDocumentNoMap());
         model.addAttribute("documentUploadMaxSizeMb", documentUploadMaxSizeMb);
         model.addAttribute("documentUploadAllowedExtensions", documentUploadAllowedExtensions);
         model.addAttribute("surveyAssetDocumentUploadCategories",

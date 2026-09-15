@@ -8,6 +8,7 @@
             <tr>
                 <th>Vehicle ID</th>
                 <th>Property Number</th>
+                <th>PAR/PTR/ICS No.</th>
                 <th>Plate No.</th>
                 <th>Accountable Owner</th>
                 <th>Type</th>
@@ -35,6 +36,9 @@
                 </td>
                 <td
                     th:text="${vehicle.propertyNumber != null and !#strings.isEmpty(vehicle.propertyNumber) ? vehicle.propertyNumber : 'N/A'}">
+                </td>
+                <td
+                    th:text="${documentNoMap['VEHICLE-' + vehicle.vehicleID] != null and !#strings.isEmpty(documentNoMap['VEHICLE-' + vehicle.vehicleID]) ? documentNoMap['VEHICLE-' + vehicle.vehicleID] : 'N/A'}">
                 </td>
                 <td class="fw-bold">
                     <a href="#" th:if="${vehicle.plateNumber != null and !#strings.isEmpty(vehicle.plateNumber)}"
