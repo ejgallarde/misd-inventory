@@ -384,7 +384,7 @@ class Migration:
         self._dup_counter = {'assets_serial': 0, 'fleet_plate': 0, 'survey_serial': 0}
 
     # ---------------- personnel ----------------
-    def get_or_create_person(self, raw_name, designation=None, office=None):
+    def get_or_create_person(self, raw_name, designation=None, office=None, location_id=None):
         if not raw_name:
             return None
         key = norm_upper(raw_name)
@@ -394,6 +394,11 @@ class Migration:
                 p['JobTitle'] = norm(designation)
             if office and not p['Department']:
                 p['Department'] = title_case_place(office)
+            # First occurrence wins, same as JobTitle/Department above: a person
+            # named on multiple rows (possibly across different provinces) keeps
+            # the location recorded the first time they were seen.
+            if location_id and not p['BaseLocationID']:
+                p['BaseLocationID'] = location_id
             return p['EmployeeID']
         self._personnel_seq += 1
         emp_id = f"PERS-{self._personnel_seq:05d}"
@@ -409,6 +414,7 @@ class Migration:
             'EmployeeID': emp_id, 'FirstName': first[:50], 'LastName': last[:50],
             'JobTitle': norm(designation)[:100] if designation else None,
             'Department': title_case_place(office)[:100] if office else None,
+            'BaseLocationID': location_id,
             'RawName': name,
         }
         return emp_id
@@ -519,7 +525,7 @@ class Migration:
     # different people (e.g. a COS worker uses an asset day-to-day but carries
     # no formal accountability; their supervisor is accountable and is who a
     # PAR/ICS would name).
-    def _resolve_person_field(self, raw_val, is_struck, field_label, row):
+    def _resolve_person_field(self, raw_val, is_struck, field_label, row, location_id):
         """Resolves a single named-person column. A struck-through cell is
         never trusted for its own value: the field is left None and the raw
         value is preserved in Remarks with a manual-review flag, rather than
@@ -535,21 +541,21 @@ class Migration:
         if not names:
             return None, addenda
         primary = names[0]
-        emp_id = self.get_or_create_person(primary, row['designation'], row['office'])
+        emp_id = self.get_or_create_person(primary, row['designation'], row['office'], location_id)
         if len(names) > 1:
             addenda.append(f"Also associated ({field_label}): {', '.join(names[1:])}")
         return emp_id, addenda
 
-    def resolve_accountable(self, row):
+    def resolve_accountable(self, row, location_id):
         """Accountable person - from ISSUED TO (MATERIAL REQUISITION) only."""
         return self._resolve_person_field(
-            row['issued_to'], COL_ISSUEDTO in row['struck'], 'ISSUED TO', row)
+            row['issued_to'], COL_ISSUEDTO in row['struck'], 'ISSUED TO', row, location_id)
 
-    def resolve_end_user(self, row):
+    def resolve_end_user(self, row, location_id):
         """Day-to-day end user - from NAME OF END USER only. May differ from
         the accountable person; never inferred from ISSUED TO."""
         return self._resolve_person_field(
-            row['end_user'], COL_ENDUSER in row['struck'], 'NAME OF END USER', row)
+            row['end_user'], COL_ENDUSER in row['struck'], 'NAME OF END USER', row, location_id)
 
     # ---------------- accessory extraction ----------------
     def extract_accessories(self, remarks):
@@ -612,8 +618,8 @@ class Migration:
         cost = parse_cost(row['unit_cost'])
         propnum = norm(row['property_number'])
         location_id = self.get_or_create_location(row['region'] or sn, row['province'], row['office'])
-        emp_id, accountable_addenda = self.resolve_accountable(row)
-        end_user_id, end_user_addenda = self.resolve_end_user(row)
+        emp_id, accountable_addenda = self.resolve_accountable(row, location_id)
+        end_user_id, end_user_addenda = self.resolve_end_user(row, location_id)
         acquisition_date = derive_acquisition_date(propnum)
         status_word = self.map_status(row['status'])
 
@@ -765,11 +771,20 @@ def build_sql(m: Migration):
     out.append("")
 
     out.append("-- ===================== personnel =====================")
+    out.append("-- BaseLocationID is looked up by (Area,Province) since the real AUTO_INCREMENT")
+    out.append("-- id on your server depends on what already existed there (same reasoning as")
+    out.append("-- the CatalogID lookups below).")
     for p in m.personnel.values():
+        loc_id = p.get('BaseLocationID')
+        if loc_id:
+            area, province = _loc_lookup(m, loc_id)
+            loc_expr = f"(SELECT LocationID FROM locations WHERE Area={sql_str(area)} AND Province={sql_str(province)} LIMIT 1)"
+        else:
+            loc_expr = 'NULL'
         out.append(
-            f"INSERT INTO `personnel` (`EmployeeID`,`FirstName`,`LastName`,`JobTitle`,`Department`) VALUES "
+            f"INSERT INTO `personnel` (`EmployeeID`,`FirstName`,`LastName`,`JobTitle`,`Department`,`BaseLocationID`) VALUES "
             f"({sql_str(p['EmployeeID'])},{sql_str(p['FirstName'])},{sql_str(p['LastName'])},"
-            f"{sql_str(p['JobTitle'])},{sql_str(p['Department'])}) "
+            f"{sql_str(p['JobTitle'])},{sql_str(p['Department'])},{loc_expr}) "
             f"ON DUPLICATE KEY UPDATE `EmployeeID`=`EmployeeID`;"
         )
     out.append("")
@@ -870,6 +885,13 @@ def _cat_lookup(m, table, catalog_id):
         if v['CatalogID'] == catalog_id:
             return v['Category'], v['Manufacturer'], v['ModelName']
     return ('Unspecified', 'Unspecified', 'Unspecified')
+
+
+def _loc_lookup(m, location_id):
+    for key, v in m.locations.items():
+        if v['LocationID'] == location_id:
+            return v['Area'], v['Province']
+    return (None, None)
 
 
 # ======================================================================
