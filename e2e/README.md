@@ -22,7 +22,7 @@ npm test                          # boots the app on :8090 if it isn't running
 - `npm run report` opens the HTML report. Failures keep a trace, a screenshot and a video.
 - `npm run db:reset` returns the database to the seed state. The suite can be re-run without a reset, but a reset gives a known baseline.
 
-The app is started by `scripts/start-app.mjs` with throwaway credentials (demo user `admin@phlpost.gov.ph` / `e2e-password`). Override any of `E2E_PORT`, `SPRING_DATASOURCE_URL`, `MISD_DB_*` or `MISD_DEMO_USER_PASSWORD` through the environment.
+The app is started by `scripts/start-app.mjs` with throwaway credentials (demo accounts `admin@`, `clerk@`, `finance@` and `viewer@phlpost.gov.ph`, all with password `e2e-password`; most specs run as admin, and `roles.spec.ts` signs in as each role). Override any of `E2E_PORT`, `SPRING_DATASOURCE_URL`, `MISD_DB_*` or `MISD_DEMO_USER_PASSWORD` through the environment.
 
 ## Layout
 
@@ -31,8 +31,8 @@ The app is started by `scripts/start-app.mjs` with throwaway credentials (demo u
 | `docker-compose.yml` | MySQL with `lower_case_table_names=1` (the dumps are lowercase, the entities are not) |
 | `db/01-schema.sh` | Loads `src/main/resources/db/misd_inventory_*.sql` |
 | `db/02-seed.sql` | Deterministic `E2E-*` records covering each module and status |
-| `tests/support/app.ts` | Shared helpers: table rows, row actions, Select2 picking, toasts |
-| `tests/*.spec.ts` | Auth, dashboard, IT assets, fleet, properties, API/security |
+| `tests/support/app.ts` | Shared helpers: table rows, row actions, Tom Select picking, direct form posts, toasts |
+| `tests/*.spec.ts` | Auth, dashboard, IT assets, fleet, properties, API/security, roles |
 
 ## Known-bug tests
 

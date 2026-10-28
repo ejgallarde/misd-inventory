@@ -50,6 +50,9 @@ class PropertiesControllerTest {
     @InjectMocks
     private PropertiesController controller;
 
+    private static final org.springframework.security.core.Authentication ADMIN =
+            user("admin@phlpost.gov.ph", "ROLE_ADMIN");
+
     @Test
     void landIntakeForcesLotTypeAndClearsFloorArea() {
         RealEstateProperty land = validLand();
@@ -125,11 +128,11 @@ class PropertiesControllerTest {
         submitted.setPropertyID(9);
         submitted.setPropertyTaxStatus("Paid (Current Year)");
 
-        ResponseEntity<String> response = controller.updateProperty(submitted, null);
+        ResponseEntity<String> response = controller.updateProperty(submitted, ADMIN);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(existing.getPropertyTaxStatus()).isEqualTo("Paid (Current Year)");
-        verify(auditService).logLifecycleEvent(eq("PROP-9"), eq("SYSTEM"), eq("Property Status Updated"),
+        verify(auditService).logLifecycleEvent(eq("PROP-9"), eq("admin@phlpost.gov.ph"), eq("Property Status Updated"),
                 org.mockito.ArgumentMatchers.contains("Tax: Pending"));
     }
 
@@ -143,7 +146,7 @@ class PropertiesControllerTest {
         submitted.setPropertyID(4);
         submitted.setZipCode("1001");
 
-        controller.updateProperty(submitted, null);
+        controller.updateProperty(submitted, ADMIN);
 
         verify(auditService).logLifecycleEvent(eq("PROP-4"), anyString(), eq("Property Details Updated"), anyString());
     }
@@ -159,10 +162,54 @@ class PropertiesControllerTest {
         submitted.setTitleNumber("TCT-CHANGED");
         submitted.setPropertyName("Renamed");
 
-        controller.updateProperty(submitted, null);
+        controller.updateProperty(submitted, ADMIN);
 
         assertThat(existing.getTitleNumber()).isEqualTo("TCT-1");
         assertThat(existing.getPropertyName()).isEqualTo("Central Lot");
+    }
+
+    @Test
+    void clerkEditCannotChangeTaxStatusOrAssessedValue() {
+        RealEstateProperty existing = validLand();
+        existing.setPropertyID(20);
+        existing.setPropertyTaxStatus("Overdue");
+        existing.setAssessedValue(new BigDecimal("1000000.00"));
+        when(propertyRepo.findById(20)).thenReturn(Optional.of(existing));
+
+        RealEstateProperty submitted = validLand();
+        submitted.setPropertyID(20);
+        submitted.setPropertyTaxStatus("Paid (Current Year)");
+        submitted.setAssessedValue(new BigDecimal("1.00"));
+        submitted.setZipCode("1001");
+
+        controller.updateProperty(submitted, user("clerk@phlpost.gov.ph", "ROLE_CLERK"));
+
+        assertThat(existing.getPropertyTaxStatus()).isEqualTo("Overdue");
+        assertThat(existing.getAssessedValue()).isEqualByComparingTo("1000000.00");
+        assertThat(existing.getZipCode()).isEqualTo("1001");
+    }
+
+    @Test
+    void financeEditChangesOnlyTaxStatusAndAssessedValue() {
+        RealEstateProperty existing = validLand();
+        existing.setPropertyID(21);
+        existing.setAssessedValue(new BigDecimal("1000000.00"));
+        when(propertyRepo.findById(21)).thenReturn(Optional.of(existing));
+
+        RealEstateProperty submitted = validLand();
+        submitted.setPropertyID(21);
+        submitted.setPropertyTaxStatus("Paid (Current Year)");
+        submitted.setAssessedValue(new BigDecimal("1250000.00"));
+        submitted.setOperationalStatus("Vacant/Idle");
+
+        controller.updateProperty(submitted, user("finance@phlpost.gov.ph", "ROLE_FINANCE"));
+
+        assertThat(existing.getPropertyTaxStatus()).isEqualTo("Paid (Current Year)");
+        assertThat(existing.getAssessedValue()).isEqualByComparingTo("1250000.00");
+        assertThat(existing.getOperationalStatus()).isEqualTo("Active/In Use");
+        verify(auditService).logLifecycleEvent(eq("PROP-21"), eq("finance@phlpost.gov.ph"),
+                eq("Property Status Updated"),
+                org.mockito.ArgumentMatchers.endsWith("; Assessed value: 1000000.00 -> 1250000.00"));
     }
 
     @Test
@@ -203,8 +250,8 @@ class PropertiesControllerTest {
                 "Custodian: None -> E-7; Notes: Handover");
     }
 
-    private static org.springframework.security.core.Authentication user(String name) {
-        return new org.springframework.security.authentication.TestingAuthenticationToken(name, null);
+    private static org.springframework.security.core.Authentication user(String name, String... authorities) {
+        return new org.springframework.security.authentication.TestingAuthenticationToken(name, null, authorities);
     }
 
     @Test

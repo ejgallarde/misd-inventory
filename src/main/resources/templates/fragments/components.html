@@ -3,6 +3,10 @@
 
 <body>
 
+    <!-- Role flags for page scripts (MISDCommon.permissions). Display only: the
+         server enforces every rule regardless (config/SecurityConfig). -->
+    <meta th:fragment="permissionsMeta" name="misd-permissions" th:content="${perm.metaContent()}">
+
     <!-- Flash toasts for redirect-after-POST outcomes. Every page that can be a
          redirect target must include both: the standalone pages used to render
          only the success toast, so a rejected action reloaded with no message. -->
@@ -50,7 +54,11 @@
                             th:text="${userDisplayName != null ? userDisplayName : 'User'}">User</span>
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userProfileMenuButton">
-                        <li>
+                        <li th:if="${perm != null and !#strings.isEmpty(perm.roleLabel())}">
+                            <span class="dropdown-item-text small text-muted" id="userRoleLabel"
+                                th:text="${'Role: ' + perm.roleLabel()}">Role</span>
+                        </li>
+                        <li th:if="${perm != null and perm.admin()}">
                             <a class="dropdown-item" href="/admin/locations">Manage PSGC Data</a>
                         </li>
                         <li>

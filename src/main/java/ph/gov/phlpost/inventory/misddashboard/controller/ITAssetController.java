@@ -1,5 +1,6 @@
 package ph.gov.phlpost.inventory.misddashboard.controller;
 
+import ph.gov.phlpost.inventory.misddashboard.config.UserPermissions;
 import ph.gov.phlpost.inventory.misddashboard.model.Asset;
 import ph.gov.phlpost.inventory.misddashboard.model.EquipmentCatalog;
 import ph.gov.phlpost.inventory.misddashboard.model.Personnel;
@@ -315,15 +316,19 @@ public class ITAssetController {
         if (updatedAsset.getAssetTag() == null || !assetRepo.existsById(updatedAsset.getAssetTag())) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Asset not found."));
         }
+        // FINANCE may change only the purchase price, CLERK everything but it.
+        UserPermissions permissions = UserPermissions.of(authentication);
         normalizeBlankOptionalFields(updatedAsset);
-        applyStatusTransitions(updatedAsset);
-        String invalidStatus = findUnconfiguredStatus(updatedAsset);
-        if (invalidStatus != null) {
-            return ResponseEntity.badRequest().body(Map.of("error", invalidStatus));
+        if (permissions.operate()) {
+            applyStatusTransitions(updatedAsset);
+            String invalidStatus = findUnconfiguredStatus(updatedAsset);
+            if (invalidStatus != null) {
+                return ResponseEntity.badRequest().body(Map.of("error", invalidStatus));
+            }
         }
         String performedBy = AuditActor.of(authentication);
         try {
-            assetService.updateAsset(updatedAsset, performedBy);
+            assetService.updateAsset(updatedAsset, performedBy, permissions.operate(), permissions.financial());
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }

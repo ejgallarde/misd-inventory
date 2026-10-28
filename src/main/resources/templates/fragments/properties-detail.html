@@ -169,7 +169,7 @@
                     <tbody id="propertyDocumentsTableBody"></tbody>
                 </table>
 
-                <div class="mt-3 property-detail-edit-only d-none">
+                <div th:if="${perm.operate()}" class="mt-3 property-detail-edit-only d-none">
                     <label class="form-label fw-bold text-muted small text-uppercase">Upload Additional
                         Documents</label>
                     <input type="file" id="propertyDetailDocumentFiles" class="form-control js-detail-document-input"
@@ -193,7 +193,7 @@
 
                 <div class="d-grid gap-2 d-md-flex justify-content-md-end">
                     <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="offcanvas">Close</button>
-                    <button type="button" id="enablePropertyEditBtn" class="btn btn-outline-secondary w-100">Enable
+                    <button th:if="${perm.operate() or perm.financial()}" type="button" id="enablePropertyEditBtn" class="btn btn-outline-secondary w-100">Enable
                         Edit Mode</button>
                     <button type="button" id="cancelPropertyEditBtn" class="btn btn-outline-danger w-100 d-none">Cancel
                         Edit</button>

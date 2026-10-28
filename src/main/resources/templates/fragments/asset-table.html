@@ -72,7 +72,7 @@
                             data-bs-toggle="dropdown" aria-expanded="false">Actions</button>
                         <ul class="dropdown-menu shadow-sm">
                             <th:block
-                                th:if="${@assetHelper.hasActions(asset.lifecycleStatus) and !@assetHelper.isUnserviceable(asset.maintenanceHealthStatus)}">
+                                th:if="${perm.operate() and @assetHelper.hasActions(asset.lifecycleStatus) and !@assetHelper.isUnserviceable(asset.maintenanceHealthStatus)}">
                                 <li th:if="${@assetHelper.canAssign(asset.deploymentStatus)}"><a
                                         class="dropdown-item action-btn" href="#" data-bs-toggle="modal"
                                         data-bs-target="#assignModal" th:data-assettag="${asset.assetTag}">Assign
@@ -86,7 +86,7 @@
                                     data-bs-target="#assetHistoryModal" th:data-assettag="${asset.assetTag}">View Asset
                                     History</a></li>
                             <th:block
-                                th:if="${@assetHelper.hasActions(asset.lifecycleStatus) and !@assetHelper.isUnserviceable(asset.maintenanceHealthStatus)}">
+                                th:if="${perm.operate() and @assetHelper.hasActions(asset.lifecycleStatus) and !@assetHelper.isUnserviceable(asset.maintenanceHealthStatus)}">
                                 <li th:if="${@assetHelper.canReturn(asset.deploymentStatus)}"><a
                                         class="dropdown-item action-btn" href="#" data-bs-toggle="modal"
                                         data-bs-target="#returnModal" th:data-assettag="${asset.assetTag}">Return to
@@ -113,7 +113,7 @@
                                         data-bs-toggle="modal" data-bs-target="#unserviceableModal"
                                         th:data-assettag="${asset.assetTag}">Mark Unserviceable</a></li>
                             </th:block>
-                            <li th:if="${@assetHelper.hasActions(asset.lifecycleStatus)}"><a
+                            <li th:if="${perm.operate() and @assetHelper.hasActions(asset.lifecycleStatus)}"><a
                                     class="dropdown-item text-danger action-btn fw-bold" href="#" data-bs-toggle="modal"
                                     data-bs-target="#retireModal" th:data-assettag="${asset.assetTag}">Dispose /
                                     Retire</a></li>

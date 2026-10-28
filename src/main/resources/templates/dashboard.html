@@ -6,6 +6,7 @@
     <meta name="_csrf" th:content="${_csrf.token}">
     <meta name="_csrf_header" th:content="${_csrf.headerName}">
     <title>MISD - Master Asset Registry</title>
+    <meta th:replace="~{fragments/components :: permissionsMeta}">
     <th:block th:replace="~{fragments/vendor :: styles}"></th:block>
     <link th:href="@{/css/app-theme.css}" rel="stylesheet" />
 </head>
@@ -54,7 +55,7 @@
             <div class="tab-pane fade show active" id="it-equipment" role="tabpanel">
 
                 <!-- Tab Specific Actions -->
-                <div class="d-flex justify-content-end mb-3 gap-2">
+                <div th:if="${perm.operate()}" class="d-flex justify-content-end mb-3 gap-2">
                     <button class="btn btn-primary shadow-sm" type="button" data-bs-toggle="offcanvas"
                         data-bs-target="#receiveAssetOffcanvas">+ Receive Asset</button>
                     <button class="btn btn-success shadow-sm" type="button" data-bs-toggle="offcanvas"
@@ -169,7 +170,7 @@
             <div class="tab-pane fade" id="fleet" role="tabpanel">
 
                 <!-- Tab Specific Actions -->
-                <div class="d-flex justify-content-end mb-3 gap-2">
+                <div th:if="${perm.operate()}" class="d-flex justify-content-end mb-3 gap-2">
                     <button class="btn btn-success shadow-sm" type="button" data-bs-toggle="offcanvas"
                         data-bs-target="#addVehicleOffcanvas">+ Register Vehicle</button>
                 </div>
@@ -292,7 +293,7 @@
             <div class="tab-pane fade" id="land-assets" role="tabpanel">
 
                 <!-- Tab Specific Actions -->
-                <div class="d-flex justify-content-end mb-3 gap-2">
+                <div th:if="${perm.operate()}" class="d-flex justify-content-end mb-3 gap-2">
                     <button class="btn btn-success shadow-sm" type="button" data-bs-toggle="offcanvas"
                         data-bs-target="#addPropertyOffcanvas" data-property-form-context="LAND" id="addLandAssetBtn">+
                         Add Land Asset</button>
@@ -431,7 +432,7 @@
             <div class="tab-pane fade" id="buildings-facilities" role="tabpanel">
 
                 <!-- Tab Specific Actions -->
-                <div class="d-flex justify-content-end mb-3 gap-2">
+                <div th:if="${perm.operate()}" class="d-flex justify-content-end mb-3 gap-2">
                     <button class="btn btn-success shadow-sm" type="button" data-bs-toggle="offcanvas"
                         data-bs-target="#addPropertyOffcanvas" data-property-form-context="BUILDING_FACILITY"
                         id="addBuildingFacilityBtn">+ Add Building or Facility</button>

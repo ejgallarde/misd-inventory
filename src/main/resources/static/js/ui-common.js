@@ -32,6 +32,23 @@ window.MISDCommon = (function (jqueryGlobal) {
         }
     }
 
+    /**
+     * The signed-in user's role flags from <meta name="misd-permissions">
+     * (fragments/components :: permissionsMeta). Used only to decide what to
+     * show or enable; the server enforces every rule regardless.
+     */
+    function readPermissions() {
+        const meta = document.querySelector('meta[name="misd-permissions"]');
+        const flags = (meta ? meta.getAttribute('content') || '' : '').split(/\s+/);
+        return Object.freeze({
+            operate: flags.includes('operate'),
+            financial: flags.includes('financial'),
+            admin: flags.includes('admin')
+        });
+    }
+
+    const permissions = readPermissions();
+
     function showToast(toastId, delay = 3000) {
         const toastEl = document.getElementById(toastId);
         if (!toastEl || typeof bootstrap === 'undefined') {
@@ -1066,9 +1083,9 @@ window.MISDCommon = (function (jqueryGlobal) {
                             <button type="button" class="btn doc-action-btn doc-action-btn--print js-doc-print ${printButtonClass}" data-doc-id="${doc.documentId}" title="Print" aria-label="Print document">
                                 <img src="/icons/print.svg" alt="" class="doc-action-icon" aria-hidden="true">
                             </button>
-                            <button type="button" class="btn btn-outline-danger doc-action-btn doc-action-btn--delete js-doc-delete ${deleteButtonClass}" data-doc-id="${doc.documentId}" title="Remove" aria-label="Remove document">
+                            ${permissions.admin ? `<button type="button" class="btn btn-outline-danger doc-action-btn doc-action-btn--delete js-doc-delete ${deleteButtonClass}" data-doc-id="${doc.documentId}" title="Remove" aria-label="Remove document">
                                 <img src="/icons/delete.svg" alt="" class="doc-action-icon" aria-hidden="true">
-                            </button>
+                            </button>` : ''}
                         </div>
                     </td>
                 </tr>
@@ -1395,6 +1412,7 @@ window.MISDCommon = (function (jqueryGlobal) {
 
     return {
         setupThemeToggle: setupThemeToggle,
+        permissions: permissions,
         showToast: showToast,
         initPageUI: initPageUI,
         initPersonnelPickerModals: initPersonnelPickerModals,

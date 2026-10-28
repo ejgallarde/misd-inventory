@@ -1,5 +1,6 @@
 package ph.gov.phlpost.inventory.misddashboard.controller;
 
+import ph.gov.phlpost.inventory.misddashboard.config.UserPermissions;
 import ph.gov.phlpost.inventory.misddashboard.model.FleetVehicle;
 import ph.gov.phlpost.inventory.misddashboard.repository.FleetVehicleRepository;
 import ph.gov.phlpost.inventory.misddashboard.service.AssetHistoryService;
@@ -354,7 +355,8 @@ public class FleetController {
         }
 
         String performedBy = AuditActor.of(authentication);
-        fleetService.updateVehicleDetails(updatedVehicle, performedBy);
+        UserPermissions permissions = UserPermissions.of(authentication);
+        fleetService.updateVehicleDetails(updatedVehicle, performedBy, permissions.operate(), permissions.financial());
         return ResponseEntity.ok("Fleet vehicle details updated successfully");
     }
 }

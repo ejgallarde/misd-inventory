@@ -48,7 +48,8 @@ $(document).ready(function () {
         $('.fleet-detail-edit-only').toggleClass('d-none', !enabled);
         $('#enableFleetEditBtn').toggleClass('d-none', enabled);
         $('#saveFleetEditBtn, #cancelFleetEditBtn').toggleClass('d-none', !enabled);
-        $('.fleet-field').prop('disabled', !enabled);
+        // Only CLERK/ADMIN edit the regular fields; cost is FINANCE's (below).
+        $('.fleet-field').prop('disabled', !enabled || !MISDCommon.permissions.operate);
         applyLockonceVisibility(enabled, currentFleetData);
     }
 
@@ -66,9 +67,14 @@ $(document).ready(function () {
         LOCKONCE_FIELDS.forEach(function (field) {
             const val = data[field];
             const isBlank = val === null || val === undefined || String(val).trim() === '';
-            $('[data-lockonce-view="' + field + '"]').toggleClass('d-none', isBlank);
+            // Cost is not lock-once for FINANCE, who may correct it; identifiers
+            // stay fill-once and belong to CLERK.
+            const editable = field === 'cost'
+                ? MISDCommon.permissions.financial
+                : isBlank && MISDCommon.permissions.operate;
+            $('[data-lockonce-view="' + field + '"]').toggleClass('d-none', editable);
             const $input = $('[data-lockonce-input="' + field + '"]');
-            $input.toggleClass('d-none', !isBlank).prop('disabled', !isBlank);
+            $input.toggleClass('d-none', !editable).prop('disabled', !editable);
         });
     }
 

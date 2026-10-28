@@ -46,6 +46,16 @@ $(document).ready(function () {
         $('#enablePropertyEditBtn').toggleClass('d-none', enabled);
         $('#savePropertyEditBtn, #cancelPropertyEditBtn').toggleClass('d-none', !enabled);
         $('.property-field').prop('disabled', !enabled);
+        if (enabled) {
+            // Tax status and assessed value are FINANCE's; the rest CLERK's.
+            const financialFields = '#editPropertyTaxStatus, #editPropertyAssessedValue';
+            if (!MISDCommon.permissions.operate) {
+                $('.property-field').not(financialFields).prop('disabled', true);
+            }
+            if (!MISDCommon.permissions.financial) {
+                $(financialFields).prop('disabled', true);
+            }
+        }
     }
 
     function statusBadgeHtml(value, variant = 'secondary') {

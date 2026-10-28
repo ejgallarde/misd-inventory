@@ -191,14 +191,34 @@ class FleetServiceTest {
         submitted.setCost(new BigDecimal("1500000.00"));
         submitted.setRemarks("Updated");
 
-        service.updateVehicleDetails(submitted, "clerk@phlpost.gov.ph");
+        service.updateVehicleDetails(submitted, "clerk@phlpost.gov.ph", true, false);
 
         assertThat(stored.getPlateNumber()).isEqualTo("NEW-123");
         assertThat(stored.getEngineNumber()).isEqualTo("ENG-ORIGINAL");
-        assertThat(stored.getCost()).isEqualByComparingTo("1500000.00");
+        assertThat(stored.getCost()).as("cost is FINANCE's, even when blank").isNull();
         assertThat(stored.getRemarks()).isEqualTo("Updated");
         verify(auditService).logLifecycleEvent(eq("VEHICLE-9"), eq("clerk@phlpost.gov.ph"),
                 eq("Vehicle Details Updated"), anyString());
+    }
+
+    @Test
+    void financeCorrectsARecordedCostAndChangesNothingElse() {
+        FleetVehicle stored = vehicle(16);
+        stored.setCost(new BigDecimal("1500000.00"));
+        when(fleetRepo.findById(16)).thenReturn(Optional.of(stored));
+
+        FleetVehicle submitted = vehicle(16);
+        submitted.setCost(new BigDecimal("1450000.00"));
+        submitted.setMaintenanceStatus("Under Repair");
+        submitted.setRemarks("Should not apply");
+
+        service.updateVehicleDetails(submitted, "finance", false, true);
+
+        assertThat(stored.getCost()).isEqualByComparingTo("1450000.00");
+        assertThat(stored.getMaintenanceStatus()).isEqualTo("Roadworthy");
+        assertThat(stored.getRemarks()).isNull();
+        verify(auditService).logLifecycleEvent(eq("VEHICLE-16"), eq("finance"), eq("Vehicle Cost Updated"),
+                org.mockito.ArgumentMatchers.endsWith("; Cost: 1500000.00 -> 1450000.00"));
     }
 
     @Test
@@ -208,7 +228,7 @@ class FleetServiceTest {
         FleetVehicle submitted = vehicle(10);
         submitted.setMaintenanceStatus("Under Repair");
 
-        service.updateVehicleDetails(submitted, "clerk");
+        service.updateVehicleDetails(submitted, "clerk", true, false);
 
         verify(auditService).logLifecycleEvent(eq("VEHICLE-10"), eq("clerk"), eq("Vehicle Status Updated"),
                 org.mockito.ArgumentMatchers.contains("Maintenance: Roadworthy"));

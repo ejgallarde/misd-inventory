@@ -207,9 +207,17 @@
         });
 
         $('#enableEditBtn').on('click', function () {
+            const allowed = MISDCommon.permissions;
             $('.it-field').not('#editAssetTag').prop('disabled', false);
             if (!serialNumberEditable) {
                 $('#editSerialNumber').prop('disabled', true);
+            }
+            // FINANCE edits only the purchase price; CLERK everything except it.
+            if (!allowed.operate) {
+                $('.it-field').not('#editPurchasePrice').prop('disabled', true);
+            }
+            if (!allowed.financial) {
+                $('#editPurchasePrice').prop('disabled', true);
             }
             $(panelSelector).addClass('asset-edit-mode-active');
             $(this).addClass('d-none');

@@ -7,7 +7,6 @@ import java.util.Locale;
 import java.util.Map;
 
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -172,41 +171,11 @@ public class GlobalExceptionHandler {
             }
         }
 
-        if ("XMLHttpRequest".equalsIgnoreCase(request.getHeader("X-Requested-With"))) {
-            return true;
-        }
-
-        String accept = request.getHeader(HttpHeaders.ACCEPT);
-        return accept != null && accept.contains(MediaType.APPLICATION_JSON_VALUE);
+        return RequestRedirects.prefersJson(request);
     }
 
-    /**
-     * Only same-origin, path-only Referer values are used as redirect targets, so
-     * a forged header cannot bounce the user off-site.
-     */
     private String safeReturnPath(HttpServletRequest request) {
-        String referer = request.getHeader(HttpHeaders.REFERER);
-        if (referer == null || referer.isBlank()) {
-            return "/";
-        }
-
-        try {
-            java.net.URI candidate = java.net.URI.create(referer);
-            String host = candidate.getHost();
-            if (host != null && !host.equalsIgnoreCase(request.getServerName())) {
-                return "/";
-            }
-
-            String path = candidate.getRawPath();
-            if (path == null || path.isBlank() || !path.startsWith("/")) {
-                return "/";
-            }
-
-            String query = candidate.getRawQuery();
-            return query == null || query.isBlank() ? path : path + "?" + query;
-        } catch (IllegalArgumentException ex) {
-            return "/";
-        }
+        return RequestRedirects.safeReturnPath(request);
     }
 
     private String rootCauseMessage(Throwable throwable) {

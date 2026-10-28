@@ -67,17 +67,17 @@
                             Actions
                         </button>
                         <ul class="dropdown-menu shadow-sm">
-                            <li>
+                            <li th:if="${perm.operate()}">
                                 <a class="dropdown-item action-btn" href="#" data-bs-toggle="modal"
                                     data-bs-target="#custodianModal" th:data-id="${p.propertyID}"
                                     th:data-name="${p.propertyName}">Assign Custodian</a>
                             </li>
-                            <li>
+                            <li th:if="${perm.financial()}">
                                 <a class="dropdown-item action-btn" href="#" data-bs-toggle="modal"
                                     data-bs-target="#taxModal" th:data-id="${p.propertyID}"
                                     th:data-name="${p.propertyName}">Update Tax Status</a>
                             </li>
-                            <li>
+                            <li th:if="${perm.operate() or perm.financial()}">
                                 <hr class="dropdown-divider">
                             </li>
                             <li>

@@ -786,3 +786,14 @@ table.dataTable thead th.dt-type-numeric div.dt-column-header,
 table.dataTable thead th.dt-type-date div.dt-column-header {
     flex-direction: row;
 }
+
+/* In edit mode, fields the signed-in role may not change (e.g. everything but
+   cost for Finance) stay disabled; make that visible, since the panels style
+   their fields bg-white for the read-only view. */
+.asset-edit-mode-active .it-field:disabled,
+.fleet-edit-mode-active .fleet-field:disabled,
+.property-edit-mode-active .property-field:disabled {
+    background-color: var(--bs-secondary-bg) !important;
+    color: var(--bs-secondary-color);
+    cursor: not-allowed;
+}

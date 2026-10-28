@@ -330,7 +330,7 @@ class ITAssetServiceTest {
         submitted.setLifecycleStatus("Active");
         submitted.setRemarks("Cracked hinge");
 
-        service.updateAsset(submitted, "clerk");
+        service.updateAsset(submitted, "clerk", true, true);
 
         verify(assetRepository).save(stored);
         assertThat(stored.getSerialNumber()).isEqualTo("SN-ORIGINAL");
@@ -345,13 +345,53 @@ class ITAssetServiceTest {
     }
 
     @Test
+    void clerkEditLeavesThePurchasePriceAlone() {
+        Asset stored = asset("TAG-CLERK");
+        stored.setPurchasePrice(new java.math.BigDecimal("1000.00"));
+        when(assetRepository.findById("TAG-CLERK")).thenReturn(Optional.of(stored));
+        Asset submitted = asset("TAG-CLERK");
+        submitted.setPurchasePrice(new java.math.BigDecimal("1.00"));
+        submitted.setRemarks("Relabelled");
+
+        service.updateAsset(submitted, "clerk", true, false);
+
+        assertThat(stored.getPurchasePrice()).isEqualByComparingTo("1000.00");
+        assertThat(stored.getRemarks()).isEqualTo("Relabelled");
+    }
+
+    @Test
+    void financeEditChangesOnlyThePurchasePriceAndRecordsBothValues() {
+        Asset stored = asset("TAG-FIN");
+        stored.setPurchasePrice(new java.math.BigDecimal("1000.00"));
+        stored.setDeploymentStatus("In Storage");
+        stored.setMaintenanceHealthStatus("Operational");
+        stored.setLifecycleStatus("Active");
+        when(assetRepository.findById("TAG-FIN")).thenReturn(Optional.of(stored));
+        Asset submitted = asset("TAG-FIN");
+        submitted.setPurchasePrice(new java.math.BigDecimal("950.00"));
+        submitted.setDeploymentStatus("Deployed");
+        submitted.setCurrentOwnerID("EMP-1");
+
+        service.updateAsset(submitted, "finance", false, true);
+
+        assertThat(stored.getPurchasePrice()).isEqualByComparingTo("950.00");
+        assertThat(stored.getDeploymentStatus()).isEqualTo("In Storage");
+        assertThat(stored.getCurrentOwnerID()).isNull();
+        verify(auditLogService).logLifecycleEvent(
+                org.mockito.ArgumentMatchers.eq("TAG-FIN"),
+                org.mockito.ArgumentMatchers.eq("finance"),
+                org.mockito.ArgumentMatchers.eq("Asset Cost Updated"),
+                org.mockito.ArgumentMatchers.endsWith("; Purchase price: 1000.00 -> 950.00"));
+    }
+
+    @Test
     void updateFillsInABlankSerialNumber() {
         Asset stored = asset("TAG-NOSN");
         when(assetRepository.findById("TAG-NOSN")).thenReturn(Optional.of(stored));
         Asset submitted = asset("TAG-NOSN");
         submitted.setSerialNumber("SN-NEW");
 
-        service.updateAsset(submitted, "clerk");
+        service.updateAsset(submitted, "clerk", true, true);
 
         assertThat(stored.getSerialNumber()).isEqualTo("SN-NEW");
     }

@@ -115,7 +115,7 @@
                         <tbody id="assetDocumentsTableBody"></tbody>
                     </table>
 
-                    <div class="mt-3 asset-detail-edit-only">
+                    <div th:if="${perm.operate()}" class="mt-3 asset-detail-edit-only">
                         <label class="form-label fw-bold text-muted small text-uppercase">Upload Additional
                             Documents</label>
                         <input type="file" id="assetDetailDocumentFiles" class="form-control js-detail-document-input"
@@ -137,7 +137,8 @@
 
                 <div class="d-grid gap-2 d-md-flex justify-content-md-end">
                     <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="offcanvas">Close</button>
-                    <button type="button" class="btn btn-outline-secondary w-100" id="enableEditBtn">Enable Edit
+                    <button th:if="${perm.operate() or perm.financial()}" type="button"
+                        class="btn btn-outline-secondary w-100" id="enableEditBtn">Enable Edit
                         Mode</button>
                     <button type="button" class="btn btn-outline-danger w-100 d-none" id="cancelEditBtn">Cancel
                         Edit</button>

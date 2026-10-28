@@ -2,6 +2,7 @@ package ph.gov.phlpost.inventory.misddashboard.service;
 
 import ph.gov.phlpost.inventory.misddashboard.model.FleetVehicle;
 import ph.gov.phlpost.inventory.misddashboard.repository.FleetVehicleRepository;
+import ph.gov.phlpost.inventory.misddashboard.util.Amounts;
 import ph.gov.phlpost.inventory.misddashboard.util.TextUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -199,60 +200,67 @@ public class FleetService {
      * &mdash; the history tab under-reported who changed what.
      */
     @Transactional
-    public void updateVehicleDetails(FleetVehicle submitted, String performedBy) {
+    public void updateVehicleDetails(FleetVehicle submitted, String performedBy, boolean operational,
+            boolean financial) {
         FleetVehicle vehicle = fleetRepo.findById(submitted.getVehicleID())
                 .orElseThrow(() -> new IllegalArgumentException("Vehicle not found."));
 
         String previousStatuses = statusSummary(vehicle);
+        java.math.BigDecimal previousCost = vehicle.getCost();
 
-        // Always-editable fields
-        vehicle.setRegistrationExpiry(submitted.getRegistrationExpiry());
-        vehicle.setInsuranceExpiry(submitted.getInsuranceExpiry());
-        vehicle.setAdminLegaltionalStatus(submitted.getAdminLegaltionalStatus());
-        vehicle.setOperationalStatus(submitted.getOperationalStatus());
-        vehicle.setMaintenanceStatus(submitted.getMaintenanceStatus());
-        vehicle.setRemarks(submitted.getRemarks());
+        // Role split (see config/AppRole): cost belongs to FINANCE and, unlike the
+        // identifiers below, may be corrected after it is recorded.
+        if (operational) {
+            // Always-editable fields
+            vehicle.setRegistrationExpiry(submitted.getRegistrationExpiry());
+            vehicle.setInsuranceExpiry(submitted.getInsuranceExpiry());
+            vehicle.setAdminLegaltionalStatus(submitted.getAdminLegaltionalStatus());
+            vehicle.setOperationalStatus(submitted.getOperationalStatus());
+            vehicle.setMaintenanceStatus(submitted.getMaintenanceStatus());
+            vehicle.setRemarks(submitted.getRemarks());
 
-        // Lock-once fields: only applied when the current database value is blank
-        if (TextUtils.isBlank(vehicle.getPlateNumber()) && !TextUtils.isBlank(submitted.getPlateNumber())) {
-            vehicle.setPlateNumber(submitted.getPlateNumber());
+            // Lock-once fields: only applied when the current database value is blank
+            if (TextUtils.isBlank(vehicle.getPlateNumber()) && !TextUtils.isBlank(submitted.getPlateNumber())) {
+                vehicle.setPlateNumber(submitted.getPlateNumber());
+            }
+            if (TextUtils.isBlank(vehicle.getMake()) && !TextUtils.isBlank(submitted.getMake())) {
+                vehicle.setMake(submitted.getMake());
+            }
+            if (TextUtils.isBlank(vehicle.getModel()) && !TextUtils.isBlank(submitted.getModel())) {
+                vehicle.setModel(submitted.getModel());
+            }
+            if (vehicle.getManufactureYear() == null && submitted.getManufactureYear() != null) {
+                vehicle.setManufactureYear(submitted.getManufactureYear());
+            }
+            if (vehicle.getAcquisitionYear() == null && submitted.getAcquisitionYear() != null) {
+                vehicle.setAcquisitionYear(submitted.getAcquisitionYear());
+            }
+            if (TextUtils.isBlank(vehicle.getBodyNumber()) && !TextUtils.isBlank(submitted.getBodyNumber())) {
+                vehicle.setBodyNumber(submitted.getBodyNumber());
+            }
+            if (TextUtils.isBlank(vehicle.getFuelType()) && !TextUtils.isBlank(submitted.getFuelType())) {
+                vehicle.setFuelType(submitted.getFuelType());
+            }
+            if (TextUtils.isBlank(vehicle.getEngineNumber()) && !TextUtils.isBlank(submitted.getEngineNumber())) {
+                vehicle.setEngineNumber(submitted.getEngineNumber());
+            }
+            if (TextUtils.isBlank(vehicle.getChassisNumberVIN()) && !TextUtils.isBlank(submitted.getChassisNumberVIN())) {
+                vehicle.setChassisNumberVIN(submitted.getChassisNumberVIN());
+            }
         }
-        if (TextUtils.isBlank(vehicle.getMake()) && !TextUtils.isBlank(submitted.getMake())) {
-            vehicle.setMake(submitted.getMake());
-        }
-        if (TextUtils.isBlank(vehicle.getModel()) && !TextUtils.isBlank(submitted.getModel())) {
-            vehicle.setModel(submitted.getModel());
-        }
-        if (vehicle.getManufactureYear() == null && submitted.getManufactureYear() != null) {
-            vehicle.setManufactureYear(submitted.getManufactureYear());
-        }
-        if (vehicle.getAcquisitionYear() == null && submitted.getAcquisitionYear() != null) {
-            vehicle.setAcquisitionYear(submitted.getAcquisitionYear());
-        }
-        if (TextUtils.isBlank(vehicle.getBodyNumber()) && !TextUtils.isBlank(submitted.getBodyNumber())) {
-            vehicle.setBodyNumber(submitted.getBodyNumber());
-        }
-        if (TextUtils.isBlank(vehicle.getFuelType()) && !TextUtils.isBlank(submitted.getFuelType())) {
-            vehicle.setFuelType(submitted.getFuelType());
-        }
-        if (TextUtils.isBlank(vehicle.getEngineNumber()) && !TextUtils.isBlank(submitted.getEngineNumber())) {
-            vehicle.setEngineNumber(submitted.getEngineNumber());
-        }
-        if (TextUtils.isBlank(vehicle.getChassisNumberVIN()) && !TextUtils.isBlank(submitted.getChassisNumberVIN())) {
-            vehicle.setChassisNumberVIN(submitted.getChassisNumberVIN());
-        }
-        if (vehicle.getCost() == null && submitted.getCost() != null) {
+        if (financial) {
             vehicle.setCost(submitted.getCost());
         }
 
         fleetRepo.save(vehicle);
+        String costNote = Amounts.changeNote("Cost", previousCost, vehicle.getCost());
 
         String currentStatuses = statusSummary(vehicle);
-        String actionType = previousStatuses.equals(currentStatuses)
-                ? "Vehicle Details Updated"
-                : "Vehicle Status Updated";
+        String actionType = !previousStatuses.equals(currentStatuses) ? "Vehicle Status Updated"
+                : !costNote.isEmpty() && !operational ? "Vehicle Cost Updated"
+                        : "Vehicle Details Updated";
         auditService.logLifecycleEvent(auditReferenceId(vehicle), performedBy, actionType,
-                previousStatuses + " -> " + currentStatuses);
+                previousStatuses + " -> " + currentStatuses + costNote);
     }
 
     private static String statusSummary(FleetVehicle vehicle) {

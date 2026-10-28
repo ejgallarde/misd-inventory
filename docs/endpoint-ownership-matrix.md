@@ -10,12 +10,14 @@ Purpose: Track controller endpoint ownership and internal callers (template form
 
 48 mappings across 8 controllers. 46 have a live internal caller.
 
+Access: every route is restricted by role in config/SecurityConfig (ADMIN, CLERK, FINANCE, VIEWER; see CLAUDE.md "Roles and authorization"). A new state-changing route is ADMIN-only until it is given a rule there.
+
 ## Main dashboard
 
 | Method | Route | Owning Controller | Internal Caller Type | Internal Callers | Status |
 |---|---|---|---|---|---|
 | GET | / | MainDashboardController | Link / redirect target | templates/assets.html, fleet.html, properties.html, location-admin.html, error.html ("Back to Dashboard"); redirect target of every registration form | Active |
-| GET | /api/personnel/search | MainDashboardController | JS AJAX | static/js/ui-common.js (Select2 AJAX source) | Active |
+| GET | /api/personnel/search | MainDashboardController | JS AJAX | static/js/ui-common.js (Tom Select personnel picker source) | Active |
 
 ## IT assets
 

@@ -2,6 +2,7 @@ package ph.gov.phlpost.inventory.misddashboard.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -63,6 +64,10 @@ class ITAssetControllerTest {
 
     private ITAssetController controller;
 
+    private static final org.springframework.security.core.Authentication ADMIN_USER =
+            new org.springframework.security.authentication.TestingAuthenticationToken("admin@phlpost.gov.ph", null,
+                    "ROLE_ADMIN");
+
     @BeforeEach
     void setUp() {
         controller = new ITAssetController(assetRepo, catalogRepo, assetService, registryService, documentService,
@@ -81,30 +86,30 @@ class ITAssetControllerTest {
     void updatingAnUnknownAssetIsNotFoundWithAJsonError() {
         when(assetRepo.existsById("NOPE")).thenReturn(false);
 
-        ResponseEntity<?> response = controller.updateITAsset(asset("NOPE", "In Storage", "Operational", "Active"), null);
+        ResponseEntity<?> response = controller.updateITAsset(asset("NOPE", "In Storage", "Operational", "Active"), ADMIN_USER);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
         assertThat(response.getBody()).isEqualTo(Map.of("error", "Asset not found."));
-        verify(assetService, never()).updateAsset(any(Asset.class), anyString());
+        verify(assetService, never()).updateAsset(any(Asset.class), anyString(), anyBoolean(), anyBoolean());
     }
 
     @Test
     void statusOutsideTheConfiguredDropdownIsRejected() {
         ResponseEntity<?> response = controller.updateITAsset(asset("TAG-6", "On the moon", "Operational", "Active"),
-                null);
+                ADMIN_USER);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         assertThat(response.getBody()).isEqualTo(Map.of("error", "Unknown deployment status: On the moon"));
-        verify(assetService, never()).updateAsset(any(Asset.class), anyString());
+        verify(assetService, never()).updateAsset(any(Asset.class), anyString(), anyBoolean(), anyBoolean());
     }
 
     @Test
     void serviceRejectionBecomesABadRequestRatherThanA500() {
         doThrow(new IllegalArgumentException("Owner is not a known employee."))
-                .when(assetService).updateAsset(any(Asset.class), anyString());
+                .when(assetService).updateAsset(any(Asset.class), anyString(), anyBoolean(), anyBoolean());
 
         ResponseEntity<?> response = controller.updateITAsset(asset("TAG-7", "In Storage", "Operational", "Active"),
-                null);
+                ADMIN_USER);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         assertThat(response.getBody()).isEqualTo(Map.of("error", "Owner is not a known employee."));
@@ -117,7 +122,7 @@ class ITAssetControllerTest {
         submitted.setCurrentOwnerID("");
         submitted.setRemarks("");
 
-        controller.updateITAsset(submitted, null);
+        controller.updateITAsset(submitted, ADMIN_USER);
 
         Asset saved = capturedUpdate();
         assertThat(saved.getSerialNumber()).isNull();
@@ -127,7 +132,7 @@ class ITAssetControllerTest {
 
     @Test
     void berHealthForcesEndOfLife() {
-        controller.updateITAsset(asset("TAG-2", "In Storage", "Beyond Economic Repair (BER)", "Active"), null);
+        controller.updateITAsset(asset("TAG-2", "In Storage", "Beyond Economic Repair (BER)", "Active"), ADMIN_USER);
 
         assertThat(capturedUpdate().getLifecycleStatus()).isEqualTo("End of Life (EOL)");
     }
@@ -137,7 +142,7 @@ class ITAssetControllerTest {
         Asset submitted = asset("TAG-3", "Deployed", "Operational", "Disposed");
         submitted.setCurrentOwnerID("E-1");
 
-        controller.updateITAsset(submitted, null);
+        controller.updateITAsset(submitted, ADMIN_USER);
 
         Asset saved = capturedUpdate();
         assertThat(saved.getCurrentOwnerID()).isNull();
@@ -149,16 +154,40 @@ class ITAssetControllerTest {
         Asset submitted = asset("TAG-4", "Deployed", "Operational", "Procured / Pre-Deployment");
         submitted.setCurrentOwnerID("E-1");
 
-        controller.updateITAsset(submitted, null);
+        controller.updateITAsset(submitted, ADMIN_USER);
 
         assertThat(capturedUpdate().getLifecycleStatus()).isEqualTo("Active");
     }
 
     @Test
-    void updateIsAttributedToTheSignedInUserOrSystem() {
-        controller.updateITAsset(asset("TAG-5", "In Storage", "Operational", "Active"), null);
+    void adminUpdatesEverythingAndIsRecordedByName() {
+        controller.updateITAsset(asset("TAG-5", "In Storage", "Operational", "Active"), ADMIN_USER);
 
-        verify(assetService).updateAsset(org.mockito.ArgumentMatchers.any(Asset.class), eq("SYSTEM"));
+        verify(assetService).updateAsset(any(Asset.class), eq("admin@phlpost.gov.ph"), eq(true), eq(true));
+    }
+
+    @Test
+    void financeMayChangeOnlyTheCostAndSkipsStatusRules() {
+        var finance = new org.springframework.security.authentication.TestingAuthenticationToken(
+                "finance@phlpost.gov.ph", null, "ROLE_FINANCE");
+        // Statuses are ignored for FINANCE, so even an unconfigured value is not rejected.
+        Asset submitted = asset("TAG-8", "Anything", "Beyond Economic Repair (BER)", "Active");
+
+        ResponseEntity<?> response = controller.updateITAsset(submitted, finance);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(submitted.getLifecycleStatus()).isEqualTo("Active"); // no BER -> EOL transition applied
+        verify(assetService).updateAsset(submitted, "finance@phlpost.gov.ph", false, true);
+    }
+
+    @Test
+    void clerkMayChangeEverythingButTheCost() {
+        var clerk = new org.springframework.security.authentication.TestingAuthenticationToken(
+                "clerk@phlpost.gov.ph", null, "ROLE_CLERK");
+
+        controller.updateITAsset(asset("TAG-9", "In Storage", "Operational", "Active"), clerk);
+
+        verify(assetService).updateAsset(any(Asset.class), eq("clerk@phlpost.gov.ph"), eq(true), eq(false));
     }
 
     @Test
@@ -208,7 +237,7 @@ class ITAssetControllerTest {
 
     private Asset capturedUpdate() {
         ArgumentCaptor<Asset> captor = ArgumentCaptor.forClass(Asset.class);
-        verify(assetService).updateAsset(captor.capture(), anyString());
+        verify(assetService).updateAsset(captor.capture(), anyString(), anyBoolean(), anyBoolean());
         return captor.getValue();
     }
 

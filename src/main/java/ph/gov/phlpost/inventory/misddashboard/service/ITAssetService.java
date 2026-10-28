@@ -4,6 +4,7 @@ import ph.gov.phlpost.inventory.misddashboard.model.Asset;
 import ph.gov.phlpost.inventory.misddashboard.model.Personnel;
 import ph.gov.phlpost.inventory.misddashboard.repository.AssetRepository;
 import ph.gov.phlpost.inventory.misddashboard.repository.PersonnelRepository;
+import ph.gov.phlpost.inventory.misddashboard.util.Amounts;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -287,23 +288,31 @@ public class ITAssetService {
      * in when blank but not changed afterwards.
      */
     @Transactional
-    public void updateAsset(Asset submitted, String performedBy) {
+    public void updateAsset(Asset submitted, String performedBy, boolean operational, boolean financial) {
         Asset existingAsset = findAsset(submitted.getAssetTag());
         String previousOwner = existingAsset.getCurrentOwnerID();
         String previousStatuses = statusSummary(existingAsset);
+        java.math.BigDecimal previousPrice = existingAsset.getPurchasePrice();
 
-        existingAsset.setCatalogID(submitted.getCatalogID());
-        existingAsset.setPurchaseDate(submitted.getPurchaseDate());
-        existingAsset.setPurchasePrice(submitted.getPurchasePrice());
-        existingAsset.setDeploymentStatus(submitted.getDeploymentStatus());
-        existingAsset.setMaintenanceHealthStatus(submitted.getMaintenanceHealthStatus());
-        existingAsset.setLifecycleStatus(submitted.getLifecycleStatus());
-        existingAsset.setCurrentOwnerID(submitted.getCurrentOwnerID());
-        existingAsset.setRemarks(submitted.getRemarks());
-        if (existingAsset.getSerialNumber() == null || existingAsset.getSerialNumber().isBlank()) {
-            existingAsset.setSerialNumber(submitted.getSerialNumber());
+        // Role split (see config/AppRole): the purchase price belongs to FINANCE,
+        // everything else in the slideout to CLERK. ADMIN passes both flags.
+        if (operational) {
+            existingAsset.setCatalogID(submitted.getCatalogID());
+            existingAsset.setPurchaseDate(submitted.getPurchaseDate());
+            existingAsset.setDeploymentStatus(submitted.getDeploymentStatus());
+            existingAsset.setMaintenanceHealthStatus(submitted.getMaintenanceHealthStatus());
+            existingAsset.setLifecycleStatus(submitted.getLifecycleStatus());
+            existingAsset.setCurrentOwnerID(submitted.getCurrentOwnerID());
+            existingAsset.setRemarks(submitted.getRemarks());
+            if (existingAsset.getSerialNumber() == null || existingAsset.getSerialNumber().isBlank()) {
+                existingAsset.setSerialNumber(submitted.getSerialNumber());
+            }
+        }
+        if (financial) {
+            existingAsset.setPurchasePrice(submitted.getPurchasePrice());
         }
         assetRepo.save(existingAsset);
+        String costNote = Amounts.changeNote("Purchase price", previousPrice, existingAsset.getPurchasePrice());
 
         if (!java.util.Objects.equals(previousOwner, existingAsset.getCurrentOwnerID())) {
             String auditOwner = existingAsset.getCurrentOwnerID() != null
@@ -315,9 +324,11 @@ public class ITAssetService {
         }
 
         String currentStatuses = statusSummary(existingAsset);
-        String actionType = previousStatuses.equals(currentStatuses) ? "Asset Details Updated" : "Asset Status Updated";
+        String actionType = !previousStatuses.equals(currentStatuses) ? "Asset Status Updated"
+                : !costNote.isEmpty() && !operational ? "Asset Cost Updated"
+                        : "Asset Details Updated";
         auditService.logLifecycleEvent(existingAsset.getAssetTag(), performedBy, actionType,
-                previousStatuses + " -> " + currentStatuses);
+                previousStatuses + " -> " + currentStatuses + costNote);
     }
 
     private Asset findAsset(String assetTag) {

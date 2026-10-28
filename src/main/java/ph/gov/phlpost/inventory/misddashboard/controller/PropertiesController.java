@@ -1,12 +1,14 @@
 package ph.gov.phlpost.inventory.misddashboard.controller;
 
+import ph.gov.phlpost.inventory.misddashboard.config.UserPermissions;
 import ph.gov.phlpost.inventory.misddashboard.model.RealEstateProperty;
 import ph.gov.phlpost.inventory.misddashboard.repository.RealEstatePropertyRepository;
 import ph.gov.phlpost.inventory.misddashboard.service.AssetHistoryService;
 import ph.gov.phlpost.inventory.misddashboard.service.AuditLogService;
-import ph.gov.phlpost.inventory.misddashboard.util.AuditActor;
 import ph.gov.phlpost.inventory.misddashboard.service.DocumentService;
 import ph.gov.phlpost.inventory.misddashboard.service.RegistryService;
+import ph.gov.phlpost.inventory.misddashboard.util.Amounts;
+import ph.gov.phlpost.inventory.misddashboard.util.AuditActor;
 import ph.gov.phlpost.inventory.misddashboard.util.TextUtils;
 
 import java.util.List;
@@ -367,21 +369,30 @@ public class PropertiesController {
         }
 
         String performedBy = AuditActor.of(authentication);
+        // Tax status and assessed value belong to FINANCE, the rest to CLERK.
+        UserPermissions permissions = UserPermissions.of(authentication);
 
         return propertyRepo.findById(propertyId)
                 .map(existing -> {
                     String previousStatuses = statusSummary(existing);
+                    java.math.BigDecimal previousAssessedValue = existing.getAssessedValue();
 
-                    existing.setAssessedValue(updatedProp.getAssessedValue());
-                    existing.setPropertyTaxStatus(updatedProp.getPropertyTaxStatus());
-                    existing.setLegalTitlingStatus(updatedProp.getLegalTitlingStatus());
-                    existing.setOperationalStatus(updatedProp.getOperationalStatus());
-                    existing.setConditionStatus(updatedProp.getConditionStatus());
-                    existing.setZipCode(updatedProp.getZipCode());
-                    existing.setLotAreaSqm(updatedProp.getLotAreaSqm());
-                    existing.setFloorAreaSqm(updatedProp.getFloorAreaSqm());
-                    existing.setPropertyDetails(updatedProp.getPropertyDetails());
+                    if (permissions.financial()) {
+                        existing.setAssessedValue(updatedProp.getAssessedValue());
+                        existing.setPropertyTaxStatus(updatedProp.getPropertyTaxStatus());
+                    }
+                    if (permissions.operate()) {
+                        existing.setLegalTitlingStatus(updatedProp.getLegalTitlingStatus());
+                        existing.setOperationalStatus(updatedProp.getOperationalStatus());
+                        existing.setConditionStatus(updatedProp.getConditionStatus());
+                        existing.setZipCode(updatedProp.getZipCode());
+                        existing.setLotAreaSqm(updatedProp.getLotAreaSqm());
+                        existing.setFloorAreaSqm(updatedProp.getFloorAreaSqm());
+                        existing.setPropertyDetails(updatedProp.getPropertyDetails());
+                    }
                     propertyRepo.save(existing);
+                    String valueNote = Amounts.changeNote("Assessed value", previousAssessedValue,
+                            existing.getAssessedValue());
 
                     // Edits made here previously left no audit entry, while the
                     // Update Tax modal did — so the history tab showed only part
@@ -391,7 +402,7 @@ public class PropertiesController {
                             ? "Property Details Updated"
                             : "Property Status Updated";
                     auditService.logLifecycleEvent(resolveReferenceId(existing), performedBy, actionType,
-                            previousStatuses + " -> " + currentStatuses);
+                            previousStatuses + " -> " + currentStatuses + valueNote);
 
                     return ResponseEntity.ok("Property updated successfully");
                 })

@@ -6,6 +6,7 @@
     <meta name="_csrf" th:content="${_csrf.token}">
     <meta name="_csrf_header" th:content="${_csrf.headerName}">
     <title>Properties Registry - MISD</title>
+    <meta th:replace="~{fragments/components :: permissionsMeta}">
     <th:block th:replace="~{fragments/vendor :: styles}"></th:block>
     <link th:href="@{/css/app-theme.css}" rel="stylesheet" />
 </head>
