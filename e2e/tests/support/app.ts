@@ -22,7 +22,7 @@ export function tableRow(page: Page, tableId: string, text: string): Locator {
 
 /** Searches a DataTable through its own search box so the row is on the visible page. */
 export async function searchTable(page: Page, tableId: string, text: string): Promise<void> {
-  await page.locator(`#${tableId}_filter input[type=search]`).fill(text);
+  await page.locator(`#${tableId}_wrapper .dt-search input[type=search]`).fill(text);
 }
 
 /** Opens a row's Actions dropdown and clicks one of its items. */
@@ -35,11 +35,11 @@ export async function chooseRowAction(row: Locator, action: string | RegExp): Pr
   await menu.getByRole('link', { name: action }).or(menu.getByRole('button', { name: action })).click();
 }
 
-/** Picks a person in a Select2 personnel search inside an open modal. */
+/** Picks a person in a Tom Select personnel search (select.personnel-picker) inside an open modal. */
 export async function pickPersonnel(modal: Locator, search: string, optionText: string | RegExp): Promise<void> {
-  await modal.locator('.select2-selection').click();
-  await modal.page().locator('.select2-container--open .select2-search__field').fill(search);
-  await modal.page().locator('.select2-results__option', { hasText: optionText }).click();
+  await modal.locator('.ts-control').click();
+  await modal.locator('.ts-control input').pressSequentially(search, { delay: 30 });
+  await modal.locator('.ts-dropdown .option', { hasText: optionText }).click();
 }
 
 export async function expectSuccessToast(page: Page, text: string | RegExp): Promise<void> {

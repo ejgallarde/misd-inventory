@@ -110,7 +110,7 @@ $(document).ready(function () {
             themeToggleId: 'themeToggleBtn',
             successToastId: 'successToast',
             errorToastId: 'errorToast',
-            initializeSelect2Modals: true
+            initializePersonnelPickers: true
         });
     }
 
@@ -132,7 +132,7 @@ $(document).ready(function () {
         }));
 
         MISDCommon.attachDataTableClearButton({
-            filterContainerSelector: `${selector}_filter`,
+            table: table,
             buttonId: clearButtonId,
             ariaLabel: 'Clear properties table search',
             onClear: function () {

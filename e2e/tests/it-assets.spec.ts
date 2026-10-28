@@ -118,6 +118,18 @@ test.describe('IT assets module', () => {
     expect((await details.json()).deploymentStatus).toBe('In Storage');
   });
 
+  test('technician picker lists technicians as soon as it opens', async ({ page }) => {
+    await page.goto('/assets');
+    await searchTable(page, 'assetsTable', 'E2E-ASSET-STORAGE');
+    await chooseRowAction(tableRow(page, 'assetsTable', 'E2E-ASSET-STORAGE'), 'For MISD Maintenance');
+
+    const modal = page.locator('#misdMaintenanceModal');
+    await modal.locator('.ts-control').click();
+    // Nothing typed: the list must already hold the seeded technician, and only technicians.
+    await expect(modal.locator('.ts-dropdown .option', { hasText: 'Garcia, Leo' })).toBeVisible();
+    await expect(modal.locator('.ts-dropdown .option', { hasText: 'Cruz, Ana' })).toHaveCount(0);
+  });
+
   test('a failed workflow action tells the user why', async ({ page }) => {
     await page.goto('/assets');
     // A technician who is not one: the server rejects it with a flash error.

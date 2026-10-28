@@ -26,12 +26,18 @@ test.describe('dashboard hub', () => {
   });
 
   for (const path of ['/', '/assets', '/fleet', '/properties', '/admin/locations']) {
-    test(`${path} loads without browser errors`, async ({ page }) => {
+    test(`${path} loads without browser errors or third-party requests`, async ({ page, baseURL }) => {
       const errors = trackBrowserErrors(page);
+      // Front-end libraries are self-hosted under /vendor; nothing may come from a CDN.
+      const external: string[] = [];
+      page.on('request', (request) => {
+        if (!request.url().startsWith(baseURL!)) external.push(request.url());
+      });
       const response = await page.goto(path);
       expect(response?.status()).toBe(200);
       await page.waitForLoadState('networkidle');
       expect(errors).toEqual([]);
+      expect(external).toEqual([]);
     });
   }
 });

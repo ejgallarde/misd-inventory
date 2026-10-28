@@ -771,3 +771,18 @@ body[data-theme="dark"] .login-content::before {
     position: relative;
     z-index: 1;
 }
+
+/* DataTables 2 right-aligns columns it detects as numeric or date. The
+   registry has always shown IDs and dates left-aligned like the rest of the
+   row, so keep that layout (and the sort arrows on the right of each header). */
+table.dataTable th.dt-type-numeric,
+table.dataTable th.dt-type-date,
+table.dataTable td.dt-type-numeric,
+table.dataTable td.dt-type-date {
+    text-align: left;
+}
+
+table.dataTable thead th.dt-type-numeric div.dt-column-header,
+table.dataTable thead th.dt-type-date div.dt-column-header {
+    flex-direction: row;
+}

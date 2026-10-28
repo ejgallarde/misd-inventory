@@ -6,7 +6,7 @@ $(document).ready(function () {
         themeToggleId: 'themeToggleBtn',
         successToastId: 'successToast',
         errorToastId: 'errorToast',
-        initializeSelect2Modals: true
+        initializePersonnelPickers: true
     });
 
     document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function (element) {

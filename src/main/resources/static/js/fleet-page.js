@@ -128,7 +128,7 @@ $(document).ready(function () {
             themeToggleId: 'themeToggleBtn',
             successToastId: 'successToast',
             errorToastId: 'errorToast',
-            initializeSelect2Modals: true
+            initializePersonnelPickers: true
         });
     }
 
@@ -312,7 +312,7 @@ $(document).ready(function () {
         });
 
         MISDCommon.attachDataTableClearButton({
-            filterContainerSelector: '#fleetTable_filter',
+            table: fleetTable,
             buttonId: 'clearFleetFiltersBtn',
             ariaLabel: 'Clear fleet table search',
             onClear: function () {

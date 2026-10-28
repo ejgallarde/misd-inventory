@@ -49,9 +49,9 @@ window.MISDCommon = (function (jqueryGlobal) {
         successToastId = null,
         errorToastId = null,
         errorToastDelay = 4000,
-        initializeSelect2Modals = false,
-        select2ModalSelector = '.modal',
-        select2DropdownSelector = '.select2-dropdown'
+        initializePersonnelPickers = false,
+        personnelPickerModalSelector = '.modal',
+        personnelPickerSelector = '.personnel-picker'
     } = {}) {
         if (setupTheme && themeToggleId) {
             setupThemeToggle(themeToggleId);
@@ -65,8 +65,8 @@ window.MISDCommon = (function (jqueryGlobal) {
             showToast(errorToastId, errorToastDelay);
         }
 
-        if (initializeSelect2Modals) {
-            initSelect2Modals(select2ModalSelector, select2DropdownSelector);
+        if (initializePersonnelPickers) {
+            initPersonnelPickerModals(personnelPickerModalSelector, personnelPickerSelector);
         }
 
         initAssetTableInteractions();
@@ -314,59 +314,82 @@ window.MISDCommon = (function (jqueryGlobal) {
         });
     }
 
-    function initSelect2Modals(modalSelector = '.modal', dropdownSelector = '.select2-dropdown') {
-        if (!$) {
+    /**
+     * Turns each `select.personnel-picker` inside a modal into a Tom Select
+     * search over /api/personnel/search while the modal is open.
+     *
+     * Replaces Select2 4.1.0-rc.0, an unmaintained release candidate. A select
+     * with data-personnel-job-title (the technician picker) lists matches as
+     * soon as it is focused; any other needs two typed characters. The
+     * instance is destroyed when the modal closes so a reopened modal starts
+     * from an empty selection.
+     */
+    function initPersonnelPickerModals(modalSelector = '.modal', pickerSelector = '.personnel-picker') {
+        if (typeof TomSelect === 'undefined') {
             return;
         }
 
-        $(document).on('shown.bs.modal', modalSelector, function () {
-            const $modal = $(this);
-            const $dropdowns = $modal.find(dropdownSelector);
-
-            if (!$dropdowns.length) {
+        document.addEventListener('shown.bs.modal', function (event) {
+            const modal = event.target;
+            if (!modal.matches(modalSelector)) {
                 return;
             }
 
-            $dropdowns.each(function () {
-                const $dropdown = $(this);
-                const jobTitle = $dropdown.attr('data-personnel-job-title');
+            modal.querySelectorAll(pickerSelector).forEach(function (select) {
+                if (select.tomselect) {
+                    return;
+                }
+                const jobTitle = select.getAttribute('data-personnel-job-title');
 
-                $dropdown.select2({
-                    theme: 'bootstrap-5',
-                    dropdownParent: $modal,
+                new TomSelect(select, {
+                    valueField: 'id',
+                    labelField: 'text',
+                    searchField: ['text'],
                     placeholder: jobTitle ? 'Select a technician...' : 'Type a name to search...',
-                    minimumInputLength: jobTitle ? 0 : 2,
-                    ajax: {
-                        url: '/api/personnel/search',
-                        dataType: 'json',
-                        delay: 250,
-                        data: function (params) {
-                            const requestData = {
-                                q: params.term || '',
-                                page: (params.page || 1) - 1
-                            };
-                            if (jobTitle) {
-                                requestData.jobTitle = jobTitle;
-                            }
-                            return requestData;
-                        },
-                        processResults: function (data) {
-                            return {
-                                results: data.results,
-                                pagination: { more: data.pagination.more }
-                            };
-                        },
-                        cache: true
+                    preload: jobTitle ? 'focus' : false,
+                    loadThrottle: 250,
+                    maxOptions: 50,
+                    // The server already filtered; keep every row it returned.
+                    score: function () {
+                        return function () {
+                            return 1;
+                        };
+                    },
+                    shouldLoad: function (query) {
+                        return jobTitle ? true : query.length >= 2;
+                    },
+                    load: function (query, callback) {
+                        const params = new URLSearchParams({ q: query, size: '50' });
+                        if (jobTitle) {
+                            params.set('jobTitle', jobTitle);
+                        }
+                        fetch('/api/personnel/search?' + params.toString(), { headers: { Accept: 'application/json' } })
+                            .then(function (response) {
+                                return response.ok ? response.json() : { results: [] };
+                            })
+                            .then(function (data) {
+                                callback(data.results || []);
+                            })
+                            .catch(function () {
+                                callback();
+                            });
+                    },
+                    render: {
+                        no_results: function () {
+                            return '<div class="no-results">No matching personnel.</div>';
+                        }
                     }
                 });
             });
         });
 
-        $(document).on('hidden.bs.modal', modalSelector, function () {
-            $(this).find(dropdownSelector).each(function () {
-                const $dropdown = $(this);
-                if ($dropdown.hasClass('select2-hidden-accessible')) {
-                    $dropdown.select2('destroy');
+        document.addEventListener('hidden.bs.modal', function (event) {
+            if (!event.target.matches(modalSelector)) {
+                return;
+            }
+            event.target.querySelectorAll(pickerSelector).forEach(function (select) {
+                if (select.tomselect) {
+                    select.tomselect.destroy();
                 }
             });
         });
@@ -846,14 +869,16 @@ window.MISDCommon = (function (jqueryGlobal) {
     function clearDataTableFilters(table, {
         stateKey = null,
         searchParam = 'search',
-        pageParam = 'page',
-        searchInputSelector = '.dataTables_filter input'
+        pageParam = 'page'
     } = {}) {
         table.search('');
         table.columns().search('');
         table.page(0).draw();
 
-        document.querySelectorAll(searchInputSelector).forEach(input => {
+        // Only this table's box: the old page-wide selector also blanked the
+        // other table's search on Properties without clearing its filter.
+        const searchContainer = getDataTableSearchContainer(table);
+        searchContainer?.querySelectorAll('input').forEach(input => {
             input.value = '';
             input.dispatchEvent(new Event('keyup', { bubbles: true }));
         });
@@ -868,8 +893,17 @@ window.MISDCommon = (function (jqueryGlobal) {
         });
     }
 
+    /**
+     * The search box a DataTable rendered. Looked up through the table's own
+     * container rather than by id: DataTables 2 no longer emits the
+     * "#<table>_filter" ids and "dataTables_filter" class that 1.x did.
+     */
+    function getDataTableSearchContainer(table) {
+        return table.table().container().querySelector('.dt-search');
+    }
+
     function attachDataTableClearButton({
-        filterContainerSelector,
+        table,
         buttonId,
         onClear,
         buttonLabel = 'Clear',
@@ -877,7 +911,7 @@ window.MISDCommon = (function (jqueryGlobal) {
         ariaLabel = 'Clear table search',
         searchInputClass = 'me-2'
     }) {
-        const filterContainer = document.querySelector(filterContainerSelector);
+        const filterContainer = getDataTableSearchContainer(table);
         if (!filterContainer) {
             return null;
         }
@@ -1363,7 +1397,7 @@ window.MISDCommon = (function (jqueryGlobal) {
         setupThemeToggle: setupThemeToggle,
         showToast: showToast,
         initPageUI: initPageUI,
-        initSelect2Modals: initSelect2Modals,
+        initPersonnelPickerModals: initPersonnelPickerModals,
         bindClick: bindClick,
         bindModalShow: bindModalShow,
         populateModalFields: populateModalFields,

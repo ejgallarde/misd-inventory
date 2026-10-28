@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<!--
+    Third-party front-end libraries, self-hosted under static/vendor/ (versions
+    in static/vendor/README.md). Every page includes these fragments instead of
+    listing CDN URLs itself: the CDN links were copied into seven templates,
+    had drifted apart (Properties never loaded Bootstrap Icons), carried no
+    integrity hashes, and needed internet access from the office network.
+
+    Usage, in <head>:      <th:block th:replace="~{fragments/vendor :: styles}"></th:block>
+    Before page scripts:   <th:block th:replace="~{fragments/vendor :: scripts}"></th:block>
+    Pages without tables use stylesCore / scriptsCore.
+-->
+
+<head>
+    <th:block th:fragment="stylesCore">
+        <link th:href="@{/vendor/bootstrap/bootstrap.min.css}" rel="stylesheet">
+        <link th:href="@{/vendor/bootstrap-icons/bootstrap-icons.min.css}" rel="stylesheet">
+    </th:block>
+
+    <th:block th:fragment="styles">
+        <link th:href="@{/vendor/bootstrap/bootstrap.min.css}" rel="stylesheet">
+        <link th:href="@{/vendor/bootstrap-icons/bootstrap-icons.min.css}" rel="stylesheet">
+        <link th:href="@{/vendor/datatables/dataTables.bootstrap5.min.css}" rel="stylesheet">
+        <link th:href="@{/vendor/datatables/buttons.bootstrap5.min.css}" rel="stylesheet">
+        <link th:href="@{/vendor/tom-select/tom-select.bootstrap5.min.css}" rel="stylesheet">
+    </th:block>
+</head>
+
+<body>
+    <th:block th:fragment="scriptsCore">
+        <script th:src="@{/vendor/jquery/jquery.min.js}"></script>
+        <script th:src="@{/vendor/bootstrap/bootstrap.bundle.min.js}"></script>
+    </th:block>
+
+    <th:block th:fragment="scripts">
+        <script th:src="@{/vendor/jquery/jquery.min.js}"></script>
+        <script th:src="@{/vendor/bootstrap/bootstrap.bundle.min.js}"></script>
+        <script th:src="@{/vendor/datatables/dataTables.min.js}"></script>
+        <script th:src="@{/vendor/datatables/dataTables.bootstrap5.min.js}"></script>
+        <script th:src="@{/vendor/datatables/dataTables.buttons.min.js}"></script>
+        <script th:src="@{/vendor/datatables/buttons.bootstrap5.min.js}"></script>
+        <script th:src="@{/vendor/jszip/jszip.min.js}"></script>
+        <script th:src="@{/vendor/datatables/buttons.html5.min.js}"></script>
+        <script th:src="@{/vendor/tom-select/tom-select.complete.min.js}"></script>
+    </th:block>
+</body>
+
+</html>
