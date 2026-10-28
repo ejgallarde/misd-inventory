@@ -138,6 +138,32 @@ test.describe('fleet module', () => {
     await expect(row.getByRole('link', { name: 'Assign Driver (Accountable Owner)' })).toHaveCount(0);
   });
 
+  test('the "problematic" card filter lists the same vehicles as the dashboard', async ({ page }) => {
+    // Vehicles the server's attention list must contain, from the seed.
+    await page.goto('/');
+    const attention = await page.locator('#fleetActionRequiredTable tbody tr').allInnerTexts();
+    for (const plate of ['E2E-1002', 'E2E-1003', 'E2E-1005']) {
+      expect(attention.join('\n'), `dashboard lists ${plate}`).toContain(plate);
+    }
+
+    // The /fleet page filter applied client-side must agree.
+    await page.goto('/fleet?filter=problematic');
+    await page.locator('#fleetTable_wrapper select').first().selectOption('-1'); // show all rows
+    const rows = page.locator('#fleetTable tbody tr');
+    await expect(rows.filter({ hasText: 'E2E-1002' })).toHaveCount(1); // registration lapsed
+    await expect(rows.filter({ hasText: 'E2E-1003' })).toHaveCount(1); // past useful life
+    await expect(rows.filter({ hasText: 'E2E-1005' })).toHaveCount(1); // stolen
+    await expect(rows.filter({ hasText: 'E2E-1001' })).toHaveCount(0); // healthy
+  });
+
+  test('the legal-issues card filter includes lapsed registrations', async ({ page }) => {
+    await page.goto('/fleet?filter=admin-legal-issues');
+    const rows = page.locator('#fleetTable tbody tr');
+    await expect(rows.filter({ hasText: 'E2E-1002' })).toHaveCount(1);
+    await expect(rows.filter({ hasText: 'E2E-1005' })).toHaveCount(1); // Under Investigation
+    await expect(rows.filter({ hasText: 'E2E-1001' })).toHaveCount(0);
+  });
+
   test('unknown vehicle id returns 404 from the detail API', async ({ request }) => {
     const response = await request.get('/fleet/999999');
     expect(response.status()).toBe(404);

@@ -19,7 +19,8 @@
         </thead>
         <tbody>
             <tr th:each="vehicle : ${vehicles}" class="fleet-table-row" th:data-vehicle-id="${vehicle.vehicleID}"
-                th:data-vehicle-manufacture-year="${vehicle.manufactureYear}" th:data-vehicle-make="${vehicle.make}"
+                th:data-vehicle-manufacture-year="${vehicle.manufactureYear}"
+                th:data-vehicle-acquisition-year="${vehicle.acquisitionYear}" th:data-vehicle-make="${vehicle.make}"
                 th:data-vehicle-model="${vehicle.model}" th:data-vehicle-fuel-type="${vehicle.fuelType}"
                 th:data-admin-status="${vehicle.adminLegaltionalStatus}"
                 th:data-operational-status="${vehicle.operationalStatus}"

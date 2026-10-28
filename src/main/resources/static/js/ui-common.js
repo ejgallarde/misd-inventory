@@ -889,7 +889,11 @@ window.MISDCommon = (function (jqueryGlobal) {
         pageParam = 'page'
     } = {}) {
         table.search('');
-        table.columns().search('');
+        // Per column: in DataTables 3, columns().search(term) applies one term
+        // across the selection instead of setting each column.
+        table.columns().every(function () {
+            this.search('');
+        });
         table.page(0).draw();
 
         // Only this table's box: the old page-wide selector also blanked the

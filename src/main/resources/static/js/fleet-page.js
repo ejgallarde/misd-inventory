@@ -153,7 +153,10 @@ $(document).ready(function () {
         let activeFleetFilter = $('#fleetPageConfig').data('filter') || '';
         const terminalStatuses = ['Sold', 'Disposed', 'Decommissioned'];
         const operationalIssues = ['Grounded', 'Missing', 'Missing/Stolen', 'Stolen', 'Slated for Disposal'];
-        const maintenanceIssues = ['Under Repair', 'Beyond Economic Repair (BER)'];
+        // Kept in step with FleetVehicleRepository.PROBLEM_PREDICATE so a dashboard
+        // card and the list it opens agree.
+        const maintenanceIssues = ['Scheduled Maintenance', 'Under Repair', 'Awaiting Parts',
+            'Beyond Economic Repair (BER)'];
         const adminIssues = ['Registration Expired', 'Impounded', 'Under Investigation'];
 
         function registrationExpiresSoon(value) {
@@ -166,20 +169,34 @@ $(document).ready(function () {
             return expiry >= today && expiry <= cutoff;
         }
 
+        function registrationLapsed(value) {
+            if (!value) return false;
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            return new Date(value + 'T00:00:00') < today;
+        }
+
+        // Public API only: DataTables 3 renamed the settings internals
+        // (nTable, aoData) this used to read.
         $.fn.dataTable.ext.search.push(function (settings, _data, dataIndex) {
-            if (settings.nTable.id !== 'fleetTable' || !activeFleetFilter) return true;
-            const row = settings.aoData[dataIndex].nTr;
-            const manufactureYear = Number(row.dataset.manufactureYear);
+            const api = new $.fn.dataTable.Api(settings);
+            if (api.table().node().id !== 'fleetTable' || !activeFleetFilter) return true;
+            const row = api.row(dataIndex).node();
+            // Age from acquisition, falling back to manufacture, as the server does.
+            // This read dataset.manufactureYear, an attribute the row never had
+            // (it is data-vehicle-manufacture-year), so no vehicle was ever "old".
+            const vehicleYear = Number(row.dataset.vehicleAcquisitionYear || row.dataset.vehicleManufactureYear);
             const adminStatus = row.dataset.adminStatus || '';
             const operationalStatus = row.dataset.operationalStatus || '';
             const maintenanceStatus = row.dataset.maintenanceStatus || '';
             const isTerminal = terminalStatuses.includes(adminStatus);
-            const hasAdminIssue = adminIssues.includes(adminStatus);
+            const registrationExpired = registrationLapsed(row.dataset.registrationExpiry);
+            const hasAdminIssue = !isTerminal && (adminIssues.includes(adminStatus) || registrationExpired);
             const hasOperationalMaintenanceIssue = !isTerminal && (
                 operationalIssues.includes(operationalStatus) || maintenanceIssues.includes(maintenanceStatus)
             );
             const expiresSoon = registrationExpiresSoon(row.dataset.registrationExpiry);
-            const isOldVehicle = manufactureYear > 0 && new Date().getFullYear() - manufactureYear >= 10;
+            const isOldVehicle = vehicleYear > 0 && new Date().getFullYear() - vehicleYear >= 10;
 
             switch (activeFleetFilter) {
                 case 'current-inventory':
