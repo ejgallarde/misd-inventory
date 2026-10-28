@@ -1,6 +1,6 @@
 # Endpoint Ownership Matrix
 
-Last updated: 2026-09-01
+Last updated: 2026-10-28
 Purpose: Track controller endpoint ownership and internal callers (template forms, links, and JS AJAX) before any future cleanup.
 
 ## Scope
@@ -8,7 +8,7 @@ Purpose: Track controller endpoint ownership and internal callers (template form
 - Included: Internal callers from Thymeleaf templates and static JS.
 - Excluded: Framework-managed routes (for example Spring Security's POST /login and /logout, and /error), unless noted.
 
-48 mappings across 8 controllers. 46 have a live internal caller.
+49 mappings across 8 controllers. 47 have a live internal caller.
 
 Access: every route is restricted by role in config/SecurityConfig (ADMIN, CLERK, FINANCE, VIEWER; see CLAUDE.md "Roles and authorization"). A new state-changing route is ADMIN-only until it is given a rule there.
 
@@ -84,6 +84,7 @@ Access: every route is restricted by role in config/SecurityConfig (ADMIN, CLERK
 | GET | /login | LoginController | Browser route | Spring Security login redirect; templates/login.html | Active |
 | GET | /admin/locations | LocationAdminController | Link | fragments/components.html (user dropdown → Manage PSGC Data) | Active |
 | POST | /admin/locations/import-psgc | LocationAdminController | Form submit | templates/location-admin.html (PSGC upload form) | Active |
+| POST | /admin/locations/refresh-reference-data | LocationAdminController | Form submit | templates/location-admin.html (Personnel Reference Data -> Reload Now) | Active |
 | GET | /api/locations/provinces | LocationController | JS AJAX | static/js/location-cascade.js | Active |
 | GET | /api/locations/cities | LocationController | JS AJAX | static/js/location-cascade.js | Active |
 | GET | /api/locations/barangays | LocationController | JS AJAX | static/js/location-cascade.js | Active |

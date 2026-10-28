@@ -38,6 +38,12 @@ test.describe('dashboard hub', () => {
       await page.waitForLoadState('networkidle');
       expect(errors).toEqual([]);
       expect(external).toEqual([]);
+      // Thymeleaf injects the CSRF field into every th:action form; a second,
+      // hand-written one used to be posted alongside it.
+      const tokensPerForm = await page.locator('form[method=post]').evaluateAll((forms) =>
+        forms.map((form) => form.querySelectorAll('input[name=_csrf]').length),
+      );
+      expect(tokensPerForm.every((count) => count === 1), `CSRF fields per form: ${tokensPerForm}`).toBe(true);
     });
   }
 });

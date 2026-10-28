@@ -23,6 +23,8 @@
 -- removed: running this file against a populated database would have
 -- destroyed `fleetvehicles` and everything cascading from it, with no prompt.
 -- To recreate the table from scratch, drop it deliberately first.
+-- The duplicate UNIQUE KEY `body_number` (same column as `BodyNumber`) is omitted:
+-- migration_2026-09-01_blank-to-null.sql section 3 drops it from live databases.
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `fleetvehicles` (
@@ -49,7 +51,6 @@ CREATE TABLE `fleetvehicles` (
   UNIQUE KEY `PlateNumber` (`PlateNumber`),
   UNIQUE KEY `EngineNumber` (`EngineNumber`),
   UNIQUE KEY `ChassisNumberVIN` (`ChassisNumberVIN`),
-  UNIQUE KEY `body_number` (`BodyNumber`),
   UNIQUE KEY `BodyNumber` (`BodyNumber`),
   KEY `AssignedDriverID` (`AssignedDriverID`),
   CONSTRAINT `fleetvehicles_ibfk_1` FOREIGN KEY (`AssignedDriverID`) REFERENCES `personnel` (`EmployeeID`) ON DELETE SET NULL

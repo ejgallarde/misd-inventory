@@ -33,6 +33,17 @@ async function csrfHeader(page: Page): Promise<Record<string, string>> {
   return { 'X-CSRF-TOKEN': await page.locator('input[name=_csrf]').first().inputValue() };
 }
 
+test.describe('admin', () => {
+  test.beforeEach(async ({ page }) => signInAs(page, DEMO_USER.email));
+
+  test('reloads personnel reference data on demand', async ({ page }) => {
+    await page.getByRole('button', { name: /admin/ }).click();
+    await page.getByRole('link', { name: 'Manage PSGC Data' }).click();
+    await page.getByRole('button', { name: 'Reload Now' }).click();
+    await expect(page.getByText('Personnel reference data reloaded.')).toBeVisible();
+  });
+});
+
 test.describe('viewer', () => {
   test.beforeEach(async ({ page }) => signInAs(page, ACCOUNTS.viewer));
 

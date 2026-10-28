@@ -580,7 +580,6 @@
         </div>
         <div class="offcanvas-body">
             <form th:action="@{/catalog/add}" method="post" id="catalogForm">
-                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                 <div class="mb-3">
                     <label class="form-label fw-bold">Category <span class="required-indicator"
                             aria-hidden="true">*</span></label>
@@ -623,7 +622,6 @@
         <div class="offcanvas-body">
             <!-- Inside your Receive Asset Modal Body -->
             <form th:action="@{/assets/receive}" method="post" id="receiveAssetForm" enctype="multipart/form-data">
-                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
 
                 <div class="mb-3">
                     <label class="form-label fw-bold text-muted small text-uppercase">Equipment Model <span
@@ -708,7 +706,6 @@
         </div>
         <div class="offcanvas-body">
             <form th:action="@{/fleet/add}" method="post" id="addVehicleForm" enctype="multipart/form-data">
-                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                 <div class="row mb-3">
                     <div class="col-6"><label class="form-label fw-bold">Plate Number</label><input type="text"
                             class="form-control" name="plateNumber"></div>
@@ -830,7 +827,6 @@
         </div>
         <div class="offcanvas-body">
             <form th:action="@{/properties/add}" method="post" id="addPropertyForm" enctype="multipart/form-data">
-                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                 <input type="hidden" id="propertyRegistrationContextInput" name="propertyRegistrationContext"
                     value="LAND">
                 <div class="mb-3">

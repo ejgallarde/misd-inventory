@@ -103,7 +103,6 @@
                                 <form
                                     th:action="@{/fleet/{vehicleID}/under-maintenance(vehicleID=${vehicle.vehicleID})}"
                                     method="post" class="m-0">
-                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                                     <button type="submit" class="dropdown-item text-start">Mark as Under
                                         Maintenance</button>
                                 </form>
@@ -111,14 +110,12 @@
                             <li th:if="${perm.operate() and @fleetHelper.canMarkImpounded(vehicle.adminLegaltionalStatus)}">
                                 <form th:action="@{/fleet/{vehicleID}/impound(vehicleID=${vehicle.vehicleID})}"
                                     method="post" class="m-0">
-                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                                     <button type="submit" class="dropdown-item text-start">Mark as Impounded</button>
                                 </form>
                             </li>
                             <li th:if="${perm.operate() and @fleetHelper.canMarkBeyondEconomicRepair(vehicle.maintenanceStatus)}">
                                 <form th:action="@{/fleet/{vehicleID}/ber(vehicleID=${vehicle.vehicleID})}"
                                     method="post" class="m-0">
-                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                                     <button type="submit" class="dropdown-item text-start">Mark as Beyond Economic
                                         Repair</button>
                                 </form>
@@ -126,14 +123,12 @@
                             <li th:if="${perm.operate() and @fleetHelper.canMarkStolen(vehicle.adminLegaltionalStatus)}">
                                 <form th:action="@{/fleet/{vehicleID}/stolen(vehicleID=${vehicle.vehicleID})}"
                                     method="post" class="m-0">
-                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                                     <button type="submit" class="dropdown-item text-start">Mark as Stolen</button>
                                 </form>
                             </li>
                             <li th:if="${perm.operate() and @fleetHelper.canMarkMissing(vehicle.adminLegaltionalStatus)}">
                                 <form th:action="@{/fleet/{vehicleID}/missing(vehicleID=${vehicle.vehicleID})}"
                                     method="post" class="m-0">
-                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                                     <button type="submit" class="dropdown-item text-start">Mark as Missing</button>
                                 </form>
                             </li>

@@ -131,10 +131,6 @@ public class PropertiesController {
             newProperty.setTitleNumber(null);
         }
 
-        if (newProperty.getOperationalStatus() == null || newProperty.getOperationalStatus().isBlank()) {
-            newProperty.setOperationalStatus("Active/In Use");
-        }
-
         propertyRepo.save(newProperty);
 
         if (documentService.hasFiles(documentFiles) && newProperty.getPropertyID() != null) {

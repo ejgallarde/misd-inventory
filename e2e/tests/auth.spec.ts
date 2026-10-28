@@ -38,9 +38,6 @@ test.describe('authentication', () => {
 
   test('the login form carries a single CSRF field', async ({ page }) => {
     await page.goto('/login');
-    // login.html declares the hidden _csrf input by hand while Thymeleaf also
-    // injects one into every th:action form, so the field is posted twice.
-    test.fail(true, 'BUG-UI-03: login.html renders two _csrf hidden inputs');
     await expect(page.locator('form input[name=_csrf]')).toHaveCount(1);
   });
 });

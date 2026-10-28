@@ -34,7 +34,7 @@ public interface FleetVehicleRepository extends JpaRepository<FleetVehicle, Inte
 
         @Query(value = "SELECT COUNT(*) FROM FleetVehicles WHERE "
                         + "COALESCE(AdminLegaltionalStatus, '') NOT IN ('Sold', 'Disposed', 'Decommissioned') AND ("
-                        + "AdminLegaltionalStatus IN ('Registration Expired', 'Impounded') "
+                        + "AdminLegaltionalStatus IN ('Registration Expired', 'Impounded', 'Under Investigation') "
                         + "OR RegistrationExpiry < CURDATE())", nativeQuery = true)
         long countVehiclesWithAdminLegalIssues();
 
@@ -60,7 +60,7 @@ public interface FleetVehicleRepository extends JpaRepository<FleetVehicle, Inte
         String PROBLEM_PREDICATE = "COALESCE(AdminLegaltionalStatus, '') NOT IN ('Sold', 'Disposed', 'Decommissioned') AND ("
                         + "(YEAR(CURDATE()) - COALESCE(AcquisitionYear, ManufactureYear)) >= 10 "
                         + "OR RegistrationExpiry <= DATE_ADD(CURDATE(), INTERVAL 30 DAY) "
-                        + "OR AdminLegaltionalStatus IN ('Registration Expired', 'Impounded') "
+                        + "OR AdminLegaltionalStatus IN ('Registration Expired', 'Impounded', 'Under Investigation') "
                         + "OR OperationalStatus IN ('Grounded', 'Missing', 'Stolen', 'Missing/Stolen', 'Slated for Disposal') "
                         + "OR MaintenanceStatus IN ('Scheduled Maintenance', 'Under Repair', 'Awaiting Parts', 'Beyond Economic Repair (BER)'))";
 
