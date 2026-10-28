@@ -55,7 +55,7 @@ class ITAssetServiceTest {
         Asset asset = asset("TAG-1");
         when(assetRepository.findById("TAG-1")).thenReturn(Optional.of(asset));
 
-        service.sendForWarranty("TAG-1", "RMA-100");
+        service.sendForWarranty("TAG-1", "RMA-100", "clerk");
 
         assertThat(asset.getCurrentOwnerID()).isEqualTo("SUPPLIER");
         assertThat(asset.getDeploymentStatus()).isEqualTo("With Service Center");
@@ -80,7 +80,7 @@ class ITAssetServiceTest {
         when(technician.getEmployeeID()).thenReturn("TECH-1");
         when(technician.getJobTitle()).thenReturn(jobTitle);
 
-        service.sendForMisdMaintenance("TAG-2", "TECH-1", "Replace power supply");
+        service.sendForMisdMaintenance("TAG-2", "TECH-1", "Replace power supply", "clerk");
 
         assertThat(asset.getCurrentOwnerID()).isEqualTo("TECH-1");
         assertThat(asset.getDeploymentStatus()).isEqualTo("With MISD Technician");
@@ -89,6 +89,9 @@ class ITAssetServiceTest {
         verify(assetRepository).save(asset);
         verify(auditLogService).logAssignment(
                 "TAG-2", "TECH-1", "MISD Maintenance", "Replace power supply");
+        // The person who sent it, not the technician, is the actor.
+        verify(auditLogService).logLifecycleEvent("TAG-2", "clerk", "Sent for MISD Maintenance",
+                "Technician: TECH-1; Notes: Replace power supply");
     }
 
     @Test
@@ -96,7 +99,7 @@ class ITAssetServiceTest {
         when(personnelRepository.findById("EMP-1")).thenReturn(Optional.of(technician));
         when(technician.getJobTitle()).thenReturn("Administrative Assistant");
 
-        assertThatThrownBy(() -> service.sendForMisdMaintenance("TAG-3", "EMP-1", "Repair"))
+        assertThatThrownBy(() -> service.sendForMisdMaintenance("TAG-3", "EMP-1", "Repair", "clerk"))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Computer Maintenance Technologist");
 
@@ -112,13 +115,13 @@ class ITAssetServiceTest {
         asset.setLifecycleStatus("Active");
         when(assetRepository.findById("TAG-REASSIGN")).thenReturn(Optional.of(asset));
 
-        service.assignAsset("TAG-REASSIGN", "EMP-NEW", "Transferred to new user");
+        service.assignAsset("TAG-REASSIGN", "EMP-NEW", "Transferred to new user", "clerk");
 
         verify(auditLogService).logAssignment(
                 "TAG-REASSIGN", "EMP-NEW", "Reassignment", "Transferred to new user");
         verify(auditLogService).logLifecycleEvent(
                 org.mockito.ArgumentMatchers.eq("TAG-REASSIGN"),
-                org.mockito.ArgumentMatchers.eq("SYSTEM"),
+                org.mockito.ArgumentMatchers.eq("clerk"),
                 org.mockito.ArgumentMatchers.eq("Reassignment"),
                 org.mockito.ArgumentMatchers.contains("Deployment: Deployed"));
     }
@@ -131,11 +134,11 @@ class ITAssetServiceTest {
         asset.setLifecycleStatus("Active");
         when(assetRepository.findById("TAG-BER")).thenReturn(Optional.of(asset));
 
-        service.updateLifecycle("TAG-BER", "Unserviceable", "Marked Unserviceable", "Failed inspection");
+        service.updateLifecycle("TAG-BER", "Unserviceable", "Marked Unserviceable", "Failed inspection", "clerk");
 
         verify(auditLogService).logLifecycleEvent(
                 org.mockito.ArgumentMatchers.eq("TAG-BER"),
-                org.mockito.ArgumentMatchers.eq("SYSTEM"),
+                org.mockito.ArgumentMatchers.eq("clerk"),
                 org.mockito.ArgumentMatchers.eq("Marked Unserviceable"),
                 org.mockito.ArgumentMatchers.contains("Health: Beyond Economic Repair (BER)"));
         assertThat(asset.getLifecycleStatus()).isEqualTo("End of Life (EOL)");
@@ -154,7 +157,7 @@ class ITAssetServiceTest {
         when(assetRepository.findById("TAG-BER-DEPLOYED")).thenReturn(Optional.of(asset));
         when(personnelRepository.existsById("EMP-9")).thenReturn(true);
 
-        service.updateLifecycle("TAG-BER-DEPLOYED", "Unserviceable", "Marked Unserviceable", "Water damage");
+        service.updateLifecycle("TAG-BER-DEPLOYED", "Unserviceable", "Marked Unserviceable", "Water damage", "clerk");
 
         assertThat(asset.getCurrentOwnerID()).isNull();
         assertThat(asset.getDeploymentStatus()).isEqualTo("Unavailable");
@@ -221,7 +224,7 @@ class ITAssetServiceTest {
         when(assetRepository.findById("TAG-4")).thenReturn(Optional.of(asset));
         when(personnelRepository.existsById("TECH-1")).thenReturn(true);
 
-        service.markRepaired("TAG-4", "Passed diagnostics");
+        service.markRepaired("TAG-4", "Passed diagnostics", "clerk");
 
         assertThat(asset.getCurrentOwnerID()).isNull();
         assertThat(asset.getDeploymentStatus()).isEqualTo("In Storage");
@@ -229,7 +232,7 @@ class ITAssetServiceTest {
         assertThat(asset.getLifecycleStatus()).isEqualTo("Active");
         verify(assetRepository).save(asset);
         verify(auditLogService).logLifecycleEvent(
-                "TAG-4", "SYSTEM", "Asset Repaired", "Passed diagnostics");
+                "TAG-4", "clerk", "Asset Repaired", "Passed diagnostics");
     }
 
     @Test
@@ -241,7 +244,7 @@ class ITAssetServiceTest {
         asset.setLifecycleStatus("Inactive");
         when(assetRepository.findById("TAG-LEGACY")).thenReturn(Optional.of(asset));
 
-        service.markRepaired("TAG-LEGACY", "Passed diagnostics");
+        service.markRepaired("TAG-LEGACY", "Passed diagnostics", "clerk");
 
         assertThat(asset.getDeploymentStatus()).isEqualTo("In Storage");
         assertThat(asset.getMaintenanceHealthStatus()).isEqualTo("Operational");
@@ -252,7 +255,7 @@ class ITAssetServiceTest {
                 org.mockito.ArgumentMatchers.anyString(),
                 org.mockito.ArgumentMatchers.anyString());
         verify(auditLogService).logLifecycleEvent(
-                "TAG-LEGACY", "SYSTEM", "Asset Repaired", "Passed diagnostics");
+                "TAG-LEGACY", "clerk", "Asset Repaired", "Passed diagnostics");
     }
 
     @Test
@@ -262,7 +265,7 @@ class ITAssetServiceTest {
         asset.setMaintenanceHealthStatus("Operational");
         when(assetRepository.findById("TAG-5")).thenReturn(Optional.of(asset));
 
-        assertThatThrownBy(() -> service.markRepaired("TAG-5", "Not applicable"))
+        assertThatThrownBy(() -> service.markRepaired("TAG-5", "Not applicable", "clerk"))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("currently assigned for repair");
 
@@ -276,7 +279,7 @@ class ITAssetServiceTest {
         asset.setLifecycleStatus("Decommissioned / Retired");
         when(assetRepository.findById("TAG-RET")).thenReturn(Optional.of(asset));
 
-        assertThatThrownBy(() -> service.assignAsset("TAG-RET", "EMP-1", null))
+        assertThatThrownBy(() -> service.assignAsset("TAG-RET", "EMP-1", null, "clerk"))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageStartingWith("Cannot assign it: asset TAG-RET");
         verify(assetRepository, never()).save(asset);
@@ -290,9 +293,9 @@ class ITAssetServiceTest {
         asset.setLifecycleStatus("End of Life (EOL)");
         when(assetRepository.findById("TAG-BER2")).thenReturn(Optional.of(asset));
 
-        assertThatThrownBy(() -> service.assignAsset("TAG-BER2", "EMP-1", null))
+        assertThatThrownBy(() -> service.assignAsset("TAG-BER2", "EMP-1", null, "clerk"))
                 .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> service.sendForWarranty("TAG-BER2", null))
+        assertThatThrownBy(() -> service.sendForWarranty("TAG-BER2", null, "clerk"))
                 .isInstanceOf(IllegalArgumentException.class);
         verify(assetRepository, never()).save(asset);
     }
@@ -304,7 +307,7 @@ class ITAssetServiceTest {
         asset.setLifecycleStatus("Active");
         when(assetRepository.findById("TAG-STORED")).thenReturn(Optional.of(asset));
 
-        assertThatThrownBy(() -> service.returnAsset("TAG-STORED", null))
+        assertThatThrownBy(() -> service.returnAsset("TAG-STORED", null, "clerk"))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("return it to MISD");
     }

@@ -43,11 +43,14 @@ class FleetServiceTest {
         FleetVehicle vehicle = vehicle(1);
         when(fleetRepo.findById(1)).thenReturn(Optional.of(vehicle));
 
-        service.assignVehicle(1, "E-2", "Trip ticket 55");
+        service.assignVehicle(1, "E-2", "Trip ticket 55", "clerk");
 
         assertThat(vehicle.getAssignedDriverID()).isEqualTo("E-2");
         assertThat(vehicle.getOperationalStatus()).isEqualTo("Dispatched");
         verify(auditService).logAssignment("VEHICLE-1", "E-2", "Vehicle Checkout", "Trip ticket 55");
+        // Who dispatched it lives only in the lifecycle log.
+        verify(auditService).logLifecycleEvent("VEHICLE-1", "clerk", "Vehicle Checkout",
+                "Driver: E-2; Notes: Trip ticket 55");
     }
 
     @Test
@@ -57,26 +60,28 @@ class FleetServiceTest {
         vehicle.setOperationalStatus("Dispatched");
         when(fleetRepo.findById(2)).thenReturn(Optional.of(vehicle));
 
-        service.returnVehicle(2, "Full tank");
+        service.returnVehicle(2, "Full tank", "clerk");
 
         assertThat(vehicle.getAssignedDriverID()).isNull();
         assertThat(vehicle.getOperationalStatus()).isEqualTo("Available/Idle");
         verify(auditService).logAssignment("VEHICLE-2", "E-2", "Vehicle Returned", "Full tank");
+        verify(auditService).logLifecycleEvent("VEHICLE-2", "clerk", "Vehicle Returned",
+                "Driver: E-2; Notes: Full tank");
     }
 
     @Test
-    void returningAnUnassignedVehicleIsLoggedAsAMotorpoolEvent() {
+    void returningAnUnassignedVehicleIsAttributedToTheUser() {
         // Dispatched with no recorded driver: rows from before drivers were required.
         FleetVehicle vehicle = vehicle(3);
         vehicle.setOperationalStatus("Dispatched");
         when(fleetRepo.findById(3)).thenReturn(Optional.of(vehicle));
 
-        service.returnVehicle(3, null);
+        service.returnVehicle(3, null, "clerk");
 
         // AssetAssignments.EmployeeID is a NOT NULL foreign key, so a driverless
         // return must not be written there.
         verify(auditService, never()).logAssignment(anyString(), anyString(), anyString(), anyString());
-        verify(auditService).logLifecycleEvent("VEHICLE-3", "MOTORPOOL", "Vehicle Returned", null);
+        verify(auditService).logLifecycleEvent("VEHICLE-3", "clerk", "Vehicle Returned", "No driver on record");
     }
 
     @Test
@@ -88,9 +93,9 @@ class FleetServiceTest {
         when(fleetRepo.findById(5)).thenReturn(Optional.of(stolen));
         when(fleetRepo.findById(6)).thenReturn(Optional.of(missing));
 
-        service.markVehicleImpounded(4, null);
-        service.markVehicleStolen(5, null);
-        service.markVehicleMissing(6, null);
+        service.markVehicleImpounded(4, null, "clerk");
+        service.markVehicleStolen(5, null, "clerk");
+        service.markVehicleMissing(6, null, "clerk");
 
         assertThat(impounded.getAssignedDriverID()).isNull();
         assertThat(impounded.getAdminLegaltionalStatus()).isEqualTo("Impounded");
@@ -105,11 +110,11 @@ class FleetServiceTest {
         FleetVehicle vehicle = vehicle(7);
         when(fleetRepo.findById(7)).thenReturn(Optional.of(vehicle));
 
-        service.markVehicleUnderMaintenance(7, "Brake pads");
+        service.markVehicleUnderMaintenance(7, "Brake pads", "clerk");
 
         assertThat(vehicle.getOperationalStatus()).isEqualTo("Grounded");
         assertThat(vehicle.getMaintenanceStatus()).isEqualTo("Under Repair");
-        verify(auditService).logLifecycleEvent("VEHICLE-7", "SYSTEM", "Marked Under Maintenance", "Brake pads");
+        verify(auditService).logLifecycleEvent("VEHICLE-7", "clerk", "Marked Under Maintenance", "Brake pads");
     }
 
     @Test
@@ -117,7 +122,7 @@ class FleetServiceTest {
         FleetVehicle vehicle = dispatched(8);
         when(fleetRepo.findById(8)).thenReturn(Optional.of(vehicle));
 
-        service.retireVehicle(8, "Board resolution 12");
+        service.retireVehicle(8, "Board resolution 12", "clerk");
 
         assertThat(vehicle.getAssignedDriverID()).isNull();
         assertThat(vehicle.getAdminLegaltionalStatus()).isEqualTo("Decommissioned");
@@ -131,7 +136,7 @@ class FleetServiceTest {
         vehicle.setOperationalStatus("Stolen");
         when(fleetRepo.findById(13)).thenReturn(Optional.of(vehicle));
 
-        assertThatThrownBy(() -> service.assignVehicle(13, "E-2", null))
+        assertThatThrownBy(() -> service.assignVehicle(13, "E-2", null, "clerk"))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageStartingWith("Cannot assign a driver: vehicle PLT-13 is ");
         assertThat(vehicle.getAssignedDriverID()).isNull();
@@ -145,9 +150,9 @@ class FleetServiceTest {
         when(fleetRepo.findById(14)).thenReturn(Optional.of(vehicle));
 
         // Idle but decommissioned: the operational status alone would allow it.
-        assertThatThrownBy(() -> service.assignVehicle(14, "E-2", null)).isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> service.retireVehicle(14, null)).isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> service.markVehicleStolen(14, null)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> service.assignVehicle(14, "E-2", null, "clerk")).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> service.retireVehicle(14, null, "clerk")).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> service.markVehicleStolen(14, null, "clerk")).isInstanceOf(IllegalArgumentException.class);
         verify(fleetRepo, never()).save(vehicle);
     }
 
@@ -157,9 +162,9 @@ class FleetServiceTest {
         vehicle.setMaintenanceStatus("Under Repair");
         when(fleetRepo.findById(15)).thenReturn(Optional.of(vehicle));
 
-        assertThatThrownBy(() -> service.returnVehicle(15, null))
+        assertThatThrownBy(() -> service.returnVehicle(15, null, "clerk"))
                 .hasMessageContaining("return it to the motorpool");
-        assertThatThrownBy(() -> service.markVehicleUnderMaintenance(15, null))
+        assertThatThrownBy(() -> service.markVehicleUnderMaintenance(15, null, "clerk"))
                 .hasMessageContaining("mark it under maintenance");
     }
 
@@ -167,7 +172,7 @@ class FleetServiceTest {
     void lifecycleActionsOnUnknownVehicleRaiseNotFound() {
         when(fleetRepo.findById(404)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.markVehicleBeyondEconomicRepair(404, null))
+        assertThatThrownBy(() -> service.markVehicleBeyondEconomicRepair(404, null, "clerk"))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Vehicle not found.");
     }

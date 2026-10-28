@@ -6,6 +6,7 @@ import ph.gov.phlpost.inventory.misddashboard.model.Personnel;
 import ph.gov.phlpost.inventory.misddashboard.repository.AssetRepository;
 import ph.gov.phlpost.inventory.misddashboard.repository.EquipmentCatalogRepository;
 import ph.gov.phlpost.inventory.misddashboard.repository.PersonnelRepository;
+import ph.gov.phlpost.inventory.misddashboard.util.AuditActor;
 import ph.gov.phlpost.inventory.misddashboard.service.DocumentService;
 import ph.gov.phlpost.inventory.misddashboard.service.AssetHistoryService;
 import ph.gov.phlpost.inventory.misddashboard.service.ITAssetService;
@@ -127,7 +128,7 @@ public class ITAssetController {
             Authentication authentication,
             RedirectAttributes redirectAttributes) {
 
-        String performedBy = authentication != null ? authentication.getName() : "SYSTEM";
+        String performedBy = AuditActor.of(authentication);
         List<String> createdAssetTags;
 
         // Creation and its audit entries are one transaction in the service, so a
@@ -144,7 +145,7 @@ public class ITAssetController {
         // Document storage is deliberately outside that transaction: it writes to
         // the filesystem or MinIO, which a rollback could not undo anyway.
         if (documentService.hasFiles(documentFiles)) {
-            String uploadedBy = authentication != null ? authentication.getName() : "SystemUser";
+            String uploadedBy = AuditActor.of(authentication);
             try {
                 for (String assetTag : createdAssetTags) {
                     documentService.uploadAndSaveDocuments(
@@ -172,9 +173,10 @@ public class ITAssetController {
     @PostMapping("/assets/assign")
     public String assignAsset(@RequestParam String assetTag, @RequestParam String employeeID,
             @RequestParam(required = false) String conditionNotes, @RequestParam(value = "search", required = false) String search,
-            @RequestParam(value = "page", required = false) Integer page, RedirectAttributes redirectAttributes) {
+            @RequestParam(value = "page", required = false) Integer page, Authentication authentication,
+            RedirectAttributes redirectAttributes) {
         try {
-            assetService.assignAsset(assetTag, employeeID, conditionNotes);
+            assetService.assignAsset(assetTag, employeeID, conditionNotes, AuditActor.of(authentication));
             redirectAttributes.addFlashAttribute("successMessage", "Asset assigned successfully.");
         } catch (IllegalArgumentException e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
@@ -185,9 +187,10 @@ public class ITAssetController {
     @PostMapping("/assets/return")
     public String returnAsset(@RequestParam String assetTag, @RequestParam(required = false) String conditionNotes,
             @RequestParam(value = "search", required = false) String search,
-            @RequestParam(value = "page", required = false) Integer page, RedirectAttributes redirectAttributes) {
+            @RequestParam(value = "page", required = false) Integer page, Authentication authentication,
+            RedirectAttributes redirectAttributes) {
         try {
-            assetService.returnAsset(assetTag, conditionNotes);
+            assetService.returnAsset(assetTag, conditionNotes, AuditActor.of(authentication));
             redirectAttributes.addFlashAttribute("successMessage", "Asset returned to MISD.");
         } catch (IllegalArgumentException e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
@@ -198,9 +201,11 @@ public class ITAssetController {
     @PostMapping("/assets/unserviceable")
     public String markUnserviceable(@RequestParam String assetTag, @RequestParam(required = false) String conditionNotes,
             @RequestParam(value = "search", required = false) String search,
-            @RequestParam(value = "page", required = false) Integer page, RedirectAttributes redirectAttributes) {
+            @RequestParam(value = "page", required = false) Integer page, Authentication authentication,
+            RedirectAttributes redirectAttributes) {
         try {
-            assetService.updateLifecycle(assetTag, "Unserviceable", "Marked Unserviceable", conditionNotes);
+            assetService.updateLifecycle(assetTag, "Unserviceable", "Marked Unserviceable", conditionNotes,
+                    AuditActor.of(authentication));
             redirectAttributes.addFlashAttribute("successMessage", "Asset marked unserviceable.");
         } catch (IllegalArgumentException e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
@@ -211,9 +216,10 @@ public class ITAssetController {
     @PostMapping("/assets/warranty")
     public String markForWarranty(@RequestParam String assetTag, @RequestParam(required = false) String conditionNotes,
             @RequestParam(value = "search", required = false) String search,
-            @RequestParam(value = "page", required = false) Integer page, RedirectAttributes redirectAttributes) {
+            @RequestParam(value = "page", required = false) Integer page, Authentication authentication,
+            RedirectAttributes redirectAttributes) {
         try {
-            assetService.sendForWarranty(assetTag, conditionNotes);
+            assetService.sendForWarranty(assetTag, conditionNotes, AuditActor.of(authentication));
             redirectAttributes.addFlashAttribute("successMessage", "Asset flagged for warranty.");
         } catch (IllegalArgumentException e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
@@ -224,9 +230,11 @@ public class ITAssetController {
     @PostMapping("/assets/misd-maintenance")
     public String sendForMisdMaintenance(@RequestParam String assetTag, @RequestParam String technicianID,
             @RequestParam(required = false) String conditionNotes, @RequestParam(value = "search", required = false) String search,
-            @RequestParam(value = "page", required = false) Integer page, RedirectAttributes redirectAttributes) {
+            @RequestParam(value = "page", required = false) Integer page, Authentication authentication,
+            RedirectAttributes redirectAttributes) {
         try {
-            assetService.sendForMisdMaintenance(assetTag, technicianID, conditionNotes);
+            assetService.sendForMisdMaintenance(assetTag, technicianID, conditionNotes,
+                    AuditActor.of(authentication));
             redirectAttributes.addFlashAttribute("successMessage", "Asset sent for MISD maintenance.");
         } catch (IllegalArgumentException e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
@@ -237,9 +245,10 @@ public class ITAssetController {
     @PostMapping("/assets/repaired")
     public String markAssetRepaired(@RequestParam String assetTag, @RequestParam(required = false) String conditionNotes,
             @RequestParam(value = "search", required = false) String search,
-            @RequestParam(value = "page", required = false) Integer page, RedirectAttributes redirectAttributes) {
+            @RequestParam(value = "page", required = false) Integer page, Authentication authentication,
+            RedirectAttributes redirectAttributes) {
         try {
-            assetService.markRepaired(assetTag, conditionNotes);
+            assetService.markRepaired(assetTag, conditionNotes, AuditActor.of(authentication));
             redirectAttributes.addFlashAttribute("successMessage", "Asset marked as repaired and returned to storage.");
         } catch (IllegalArgumentException e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
@@ -250,9 +259,11 @@ public class ITAssetController {
     @PostMapping("/assets/retire")
     public String retireAsset(@RequestParam String assetTag, @RequestParam(required = false) String conditionNotes,
             @RequestParam(value = "search", required = false) String search,
-            @RequestParam(value = "page", required = false) Integer page, RedirectAttributes redirectAttributes) {
+            @RequestParam(value = "page", required = false) Integer page, Authentication authentication,
+            RedirectAttributes redirectAttributes) {
         try {
-            assetService.updateLifecycle(assetTag, "Retired", "Asset Retired", conditionNotes);
+            assetService.updateLifecycle(assetTag, "Retired", "Asset Retired", conditionNotes,
+                    AuditActor.of(authentication));
             redirectAttributes.addFlashAttribute("successMessage", "Asset retired.");
         } catch (IllegalArgumentException e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
@@ -310,7 +321,7 @@ public class ITAssetController {
         if (invalidStatus != null) {
             return ResponseEntity.badRequest().body(Map.of("error", invalidStatus));
         }
-        String performedBy = authentication != null ? authentication.getName() : "SYSTEM";
+        String performedBy = AuditActor.of(authentication);
         try {
             assetService.updateAsset(updatedAsset, performedBy);
         } catch (IllegalArgumentException e) {

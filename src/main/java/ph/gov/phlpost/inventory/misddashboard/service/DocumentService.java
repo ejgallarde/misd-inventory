@@ -5,6 +5,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.multipart.MultipartFile;
 
+import ph.gov.phlpost.inventory.misddashboard.util.AuditActor;
 import ph.gov.phlpost.inventory.misddashboard.model.Document;
 import ph.gov.phlpost.inventory.misddashboard.model.RealEstateProperty;
 import ph.gov.phlpost.inventory.misddashboard.repository.DocumentRepository;
@@ -164,7 +165,7 @@ public class DocumentService {
         validateCategoryForReferenceType(normalizedReferenceType, category);
 
         String uploadedByValue = uploadedBy == null || uploadedBy.isBlank()
-                ? "SystemUser"
+                ? AuditActor.SYSTEM
                 : uploadedBy.trim();
 
         String storageEntityId = resolveStorageEntityId(normalizedReferenceType, normalizedReferenceId);

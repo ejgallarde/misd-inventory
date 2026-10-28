@@ -11,6 +11,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import ph.gov.phlpost.inventory.misddashboard.util.AuditActor;
 import ph.gov.phlpost.inventory.misddashboard.model.Document;
 import ph.gov.phlpost.inventory.misddashboard.service.DocumentService;
 
@@ -52,7 +53,7 @@ public class DocumentController {
             @RequestParam(value = "documentCategories", required = false) String[] documentCategories,
             Authentication authentication) {
         try {
-            String uploadedBy = authentication != null ? authentication.getName() : "SystemUser";
+            String uploadedBy = AuditActor.of(authentication);
             documentService.uploadAndSaveDocuments(documentFiles, refType, refId, documentCategories, uploadedBy);
             return ResponseEntity.ok(Map.of("message", "Document(s) uploaded successfully."));
         } catch (IllegalArgumentException e) {

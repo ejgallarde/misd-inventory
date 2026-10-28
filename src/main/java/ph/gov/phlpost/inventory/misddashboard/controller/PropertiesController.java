@@ -4,6 +4,7 @@ import ph.gov.phlpost.inventory.misddashboard.model.RealEstateProperty;
 import ph.gov.phlpost.inventory.misddashboard.repository.RealEstatePropertyRepository;
 import ph.gov.phlpost.inventory.misddashboard.service.AssetHistoryService;
 import ph.gov.phlpost.inventory.misddashboard.service.AuditLogService;
+import ph.gov.phlpost.inventory.misddashboard.util.AuditActor;
 import ph.gov.phlpost.inventory.misddashboard.service.DocumentService;
 import ph.gov.phlpost.inventory.misddashboard.service.RegistryService;
 import ph.gov.phlpost.inventory.misddashboard.util.TextUtils;
@@ -135,7 +136,7 @@ public class PropertiesController {
         propertyRepo.save(newProperty);
 
         if (documentService.hasFiles(documentFiles) && newProperty.getPropertyID() != null) {
-            String uploadedBy = authentication != null ? authentication.getName() : "SystemUser";
+            String uploadedBy = AuditActor.of(authentication);
             try {
                 documentService.uploadAndSaveDocuments(
                         documentFiles,
@@ -251,13 +252,19 @@ public class PropertiesController {
     @PostMapping("/assign-custodian")
     @Transactional
     public String assignCustodian(@RequestParam Integer propertyID, @RequestParam String employeeID,
-            @RequestParam(required = false) String conditionNotes, RedirectAttributes redirectAttributes) {
+            @RequestParam(required = false) String conditionNotes, Authentication authentication,
+            RedirectAttributes redirectAttributes) {
         RealEstateProperty property = propertyRepo.findById(propertyID).orElse(null);
         if (property != null) {
+            String previousCustodian = property.getCustodianID();
             property.setCustodianID(employeeID);
             propertyRepo.save(property);
             String refId = resolveReferenceId(property);
             auditService.logAssignment(refId, employeeID, "Custodian Assigned", conditionNotes);
+            // The assignment row names the custodian, not who designated them.
+            auditService.logLifecycleEvent(refId, AuditActor.of(authentication), "Custodian Assigned",
+                    "Custodian: " + displayValue(previousCustodian) + " -> " + employeeID
+                            + (TextUtils.isBlank(conditionNotes) ? "" : "; Notes: " + conditionNotes.trim()));
             redirectAttributes.addFlashAttribute("successMessage", "Custodian assigned.");
         } else {
             redirectAttributes.addFlashAttribute("errorMessage", "Property not found.");
@@ -277,7 +284,7 @@ public class PropertiesController {
             String refId = resolveReferenceId(property);
             // Previously the literal "FINANCE", so the history never said who
             // changed a property's tax standing.
-            String performedBy = authentication != null ? authentication.getName() : "SYSTEM";
+            String performedBy = AuditActor.of(authentication);
             auditService.logLifecycleEvent(refId, performedBy, "Tax Status Updated: " + taxStatus, conditionNotes);
             redirectAttributes.addFlashAttribute("successMessage", "Tax status updated.");
         } else {
@@ -359,7 +366,7 @@ public class PropertiesController {
             return ResponseEntity.badRequest().body("Property ID is required.");
         }
 
-        String performedBy = authentication != null ? authentication.getName() : "SYSTEM";
+        String performedBy = AuditActor.of(authentication);
 
         return propertyRepo.findById(propertyId)
                 .map(existing -> {

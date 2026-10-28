@@ -1,5 +1,6 @@
 import { test, expect, type Locator, type Page } from '@playwright/test';
 import {
+  DEMO_USER,
   chooseRowAction,
   expectSuccessToast,
   pickPersonnel,
@@ -107,6 +108,15 @@ test.describe('fleet module', () => {
     await returnToMotorpool(page, row);
     await searchTable(page, 'fleetTable', 'E2E-1004');
     await expect(tableRow(page, 'fleetTable', 'E2E-1004')).toContainText('Operational: Available/Idle');
+
+    // Both steps are attributed to the signed-in user (previously "SYSTEM"/"MOTORPOOL" or not at all).
+    const history: Array<{ logType: string; actionType: string; recordedBy: string }> = await (
+      await page.request.get('/fleet/4/history')
+    ).json();
+    for (const action of ['Vehicle Checkout', 'Vehicle Returned']) {
+      const entry = history.find((e) => e.logType === 'Lifecycle' && e.actionType === action);
+      expect(entry?.recordedBy, action).toBe(DEMO_USER.email);
+    }
   });
 
   test('a stolen vehicle cannot be dispatched even by a direct request', async ({ page }) => {

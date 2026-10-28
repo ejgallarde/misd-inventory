@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import {
+  DEMO_USER,
   chooseRowAction,
   expectSuccessToast,
   pickPersonnel,
@@ -87,6 +88,13 @@ test.describe('IT assets module', () => {
     await searchTable(page, 'assetsTable', 'E2E-ASSET-ASSIGN');
     await expect(tableRow(page, 'assetsTable', 'E2E-ASSET-ASSIGN')).toContainText('Cruz, Ana');
     await expect(tableRow(page, 'assetsTable', 'E2E-ASSET-ASSIGN')).toContainText('Deployment: Deployed');
+
+    // Attributed to the signed-in user, not "SYSTEM".
+    const history: Array<{ logType: string; actionType: string; recordedBy: string }> = await (
+      await page.request.get('/api/assets/E2E-ASSET-ASSIGN/history')
+    ).json();
+    const lifecycle = history.find((entry) => entry.logType === 'Lifecycle' && /Checkout|Reassignment/.test(entry.actionType));
+    expect(lifecycle?.recordedBy).toBe(DEMO_USER.email);
   });
 
   test('BER assets offer no deployment actions', async ({ page }) => {

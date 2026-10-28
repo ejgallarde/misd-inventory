@@ -181,7 +181,7 @@ class PropertiesControllerTest {
         when(propertyRepo.findById(77)).thenReturn(Optional.empty());
         var flash = new RedirectAttributesModelMap();
 
-        String view = controller.assignCustodian(77, "E-1", null, flash);
+        String view = controller.assignCustodian(77, "E-1", null, null, flash);
 
         assertThat(view).isEqualTo("redirect:/properties");
         assertThat(flash.getFlashAttributes().get("errorMessage")).isEqualTo("Property not found.");
@@ -194,10 +194,17 @@ class PropertiesControllerTest {
         property.setPropertyID(12);
         when(propertyRepo.findById(12)).thenReturn(Optional.of(property));
 
-        controller.assignCustodian(12, "E-7", "Handover", new RedirectAttributesModelMap());
+        controller.assignCustodian(12, "E-7", "Handover", user("clerk@phlpost.gov.ph"),
+                new RedirectAttributesModelMap());
 
         assertThat(property.getCustodianID()).isEqualTo("E-7");
         verify(auditService).logAssignment("PROP-12", "E-7", "Custodian Assigned", "Handover");
+        verify(auditService).logLifecycleEvent("PROP-12", "clerk@phlpost.gov.ph", "Custodian Assigned",
+                "Custodian: None -> E-7; Notes: Handover");
+    }
+
+    private static org.springframework.security.core.Authentication user(String name) {
+        return new org.springframework.security.authentication.TestingAuthenticationToken(name, null);
     }
 
     @Test

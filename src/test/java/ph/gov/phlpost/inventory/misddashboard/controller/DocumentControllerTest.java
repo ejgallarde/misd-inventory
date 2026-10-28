@@ -47,7 +47,7 @@ class DocumentControllerTest {
                                 eq("IT_EQUIPMENT"),
                                 eq("TAG-1"),
                                 any(String[].class),
-                                eq("SystemUser"));
+                                eq("SYSTEM"));
 
                 MockMultipartFile file = new MockMultipartFile(
                                 "documentFiles",

@@ -164,10 +164,10 @@ class ITAssetControllerTest {
     @Test
     void validationFailureOnAssignIsFlashedAndKeepsTheSearch() {
         org.mockito.Mockito.doThrow(new IllegalArgumentException("Asset not found."))
-                .when(assetService).assignAsset("NOPE", "E-1", null);
+                .when(assetService).assignAsset("NOPE", "E-1", null, "SYSTEM");
         var flash = new RedirectAttributesModelMap();
 
-        String view = controller.assignAsset("NOPE", "E-1", null, "laptop & dock", 2, flash);
+        String view = controller.assignAsset("NOPE", "E-1", null, "laptop & dock", 2, null, flash);
 
         assertThat(view).isEqualTo("redirect:/assets?search=laptop%20%26%20dock&page=2");
         assertThat(flash.getFlashAttributes().get("errorMessage")).isEqualTo("Asset not found.");

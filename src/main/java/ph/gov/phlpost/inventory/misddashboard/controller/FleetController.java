@@ -3,6 +3,7 @@ package ph.gov.phlpost.inventory.misddashboard.controller;
 import ph.gov.phlpost.inventory.misddashboard.model.FleetVehicle;
 import ph.gov.phlpost.inventory.misddashboard.repository.FleetVehicleRepository;
 import ph.gov.phlpost.inventory.misddashboard.service.AssetHistoryService;
+import ph.gov.phlpost.inventory.misddashboard.util.AuditActor;
 import ph.gov.phlpost.inventory.misddashboard.service.DocumentService;
 import ph.gov.phlpost.inventory.misddashboard.service.FleetService;
 import ph.gov.phlpost.inventory.misddashboard.service.RegistryService;
@@ -113,7 +114,7 @@ public class FleetController {
         fleetRepo.save(newVehicle);
 
         if (documentService.hasFiles(documentFiles) && newVehicle.getVehicleID() != null) {
-            String uploadedBy = authentication != null ? authentication.getName() : "SystemUser";
+            String uploadedBy = AuditActor.of(authentication);
             try {
                 documentService.uploadAndSaveDocuments(
                         documentFiles,
@@ -173,9 +174,10 @@ public class FleetController {
 
     @PostMapping("/assign")
     public String assignVehicle(@RequestParam Integer vehicleID, @RequestParam String employeeID,
-            @RequestParam(required = false) String conditionNotes, RedirectAttributes redirectAttributes) {
+            @RequestParam(required = false) String conditionNotes,
+            Authentication authentication, RedirectAttributes redirectAttributes) {
         try {
-            fleetService.assignVehicle(vehicleID, employeeID, conditionNotes);
+            fleetService.assignVehicle(vehicleID, employeeID, conditionNotes, AuditActor.of(authentication));
             redirectAttributes.addFlashAttribute("successMessage", "Success! Vehicle assigned.");
         } catch (IllegalArgumentException e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
@@ -186,9 +188,9 @@ public class FleetController {
     @PostMapping("/{vehicleID}/under-maintenance")
     public String markUnderMaintenance(@PathVariable Integer vehicleID,
             @RequestParam(required = false) String conditionNotes,
-            RedirectAttributes redirectAttributes) {
+            Authentication authentication, RedirectAttributes redirectAttributes) {
         try {
-            fleetService.markVehicleUnderMaintenance(vehicleID, conditionNotes);
+            fleetService.markVehicleUnderMaintenance(vehicleID, conditionNotes, AuditActor.of(authentication));
             redirectAttributes.addFlashAttribute("successMessage", "Vehicle marked under maintenance.");
         } catch (IllegalArgumentException e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
@@ -199,9 +201,9 @@ public class FleetController {
     @PostMapping("/{vehicleID}/impound")
     public String markImpounded(@PathVariable Integer vehicleID,
             @RequestParam(required = false) String conditionNotes,
-            RedirectAttributes redirectAttributes) {
+            Authentication authentication, RedirectAttributes redirectAttributes) {
         try {
-            fleetService.markVehicleImpounded(vehicleID, conditionNotes);
+            fleetService.markVehicleImpounded(vehicleID, conditionNotes, AuditActor.of(authentication));
             redirectAttributes.addFlashAttribute("successMessage", "Vehicle marked impounded.");
         } catch (IllegalArgumentException e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
@@ -212,9 +214,9 @@ public class FleetController {
     @PostMapping("/{vehicleID}/ber")
     public String markBeyondEconomicRepair(@PathVariable Integer vehicleID,
             @RequestParam(required = false) String conditionNotes,
-            RedirectAttributes redirectAttributes) {
+            Authentication authentication, RedirectAttributes redirectAttributes) {
         try {
-            fleetService.markVehicleBeyondEconomicRepair(vehicleID, conditionNotes);
+            fleetService.markVehicleBeyondEconomicRepair(vehicleID, conditionNotes, AuditActor.of(authentication));
             redirectAttributes.addFlashAttribute("successMessage", "Vehicle marked beyond economic repair.");
         } catch (IllegalArgumentException e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
@@ -225,9 +227,9 @@ public class FleetController {
     @PostMapping("/{vehicleID}/stolen")
     public String markStolen(@PathVariable Integer vehicleID,
             @RequestParam(required = false) String conditionNotes,
-            RedirectAttributes redirectAttributes) {
+            Authentication authentication, RedirectAttributes redirectAttributes) {
         try {
-            fleetService.markVehicleStolen(vehicleID, conditionNotes);
+            fleetService.markVehicleStolen(vehicleID, conditionNotes, AuditActor.of(authentication));
             redirectAttributes.addFlashAttribute("successMessage", "Vehicle marked stolen.");
         } catch (IllegalArgumentException e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
@@ -238,9 +240,9 @@ public class FleetController {
     @PostMapping("/{vehicleID}/missing")
     public String markMissing(@PathVariable Integer vehicleID,
             @RequestParam(required = false) String conditionNotes,
-            RedirectAttributes redirectAttributes) {
+            Authentication authentication, RedirectAttributes redirectAttributes) {
         try {
-            fleetService.markVehicleMissing(vehicleID, conditionNotes);
+            fleetService.markVehicleMissing(vehicleID, conditionNotes, AuditActor.of(authentication));
             redirectAttributes.addFlashAttribute("successMessage", "Vehicle marked missing.");
         } catch (IllegalArgumentException e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
@@ -256,9 +258,9 @@ public class FleetController {
      */
     @PostMapping("/return")
     public String returnVehicle(@RequestParam Integer vehicleID, @RequestParam(required = false) String conditionNotes,
-            RedirectAttributes redirectAttributes) {
+            Authentication authentication, RedirectAttributes redirectAttributes) {
         try {
-            fleetService.returnVehicle(vehicleID, conditionNotes);
+            fleetService.returnVehicle(vehicleID, conditionNotes, AuditActor.of(authentication));
             redirectAttributes.addFlashAttribute("successMessage", "Vehicle returned to motorpool.");
         } catch (IllegalArgumentException e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
@@ -268,9 +270,9 @@ public class FleetController {
 
     @PostMapping("/retire")
     public String retireVehicle(@RequestParam Integer vehicleID, @RequestParam(required = false) String conditionNotes,
-            RedirectAttributes redirectAttributes) {
+            Authentication authentication, RedirectAttributes redirectAttributes) {
         try {
-            fleetService.retireVehicle(vehicleID, conditionNotes);
+            fleetService.retireVehicle(vehicleID, conditionNotes, AuditActor.of(authentication));
             redirectAttributes.addFlashAttribute("successMessage", "Vehicle retired.");
         } catch (IllegalArgumentException e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
@@ -351,7 +353,7 @@ public class FleetController {
             return ResponseEntity.notFound().build();
         }
 
-        String performedBy = authentication != null ? authentication.getName() : "SYSTEM";
+        String performedBy = AuditActor.of(authentication);
         fleetService.updateVehicleDetails(updatedVehicle, performedBy);
         return ResponseEntity.ok("Fleet vehicle details updated successfully");
     }

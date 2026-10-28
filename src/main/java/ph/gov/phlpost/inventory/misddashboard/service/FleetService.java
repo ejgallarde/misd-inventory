@@ -40,7 +40,7 @@ public class FleetService {
     }
 
     @Transactional
-    public void assignVehicle(Integer vehicleId, String employeeId, String notes) {
+    public void assignVehicle(Integer vehicleId, String employeeId, String notes, String performedBy) {
         FleetVehicle vehicle = fleetRepo.findById(vehicleId)
                 .orElseThrow(() -> new IllegalArgumentException("Vehicle not found."));
         requireAllowed(workflow.canAssignDriver(vehicle.getOperationalStatus())
@@ -49,11 +49,19 @@ public class FleetService {
         vehicle.setAssignedDriverID(employeeId);
         vehicle.setOperationalStatus("Dispatched");
         fleetRepo.save(vehicle);
+        // The assignment row names the driver; only the lifecycle row can record
+        // who dispatched the vehicle.
         auditService.logAssignment(auditReferenceId(vehicle), employeeId, "Vehicle Checkout", notes);
+        auditService.logLifecycleEvent(auditReferenceId(vehicle), performedBy, "Vehicle Checkout",
+                "Driver: " + employeeId + appendNotes(notes));
+    }
+
+    private static String appendNotes(String notes) {
+        return TextUtils.isBlank(notes) ? "" : "; Notes: " + notes.trim();
     }
 
     @Transactional
-    public void returnVehicle(Integer vehicleId, String notes) {
+    public void returnVehicle(Integer vehicleId, String notes, String performedBy) {
         FleetVehicle vehicle = fleetRepo.findById(vehicleId)
                 .orElseThrow(() -> new IllegalArgumentException("Vehicle not found."));
         requireAllowed(workflow.canReturnToMotorpool(vehicle.getOperationalStatus()),
@@ -66,13 +74,13 @@ public class FleetService {
 
         if (previousDriver != null) {
             auditService.logAssignment(auditReferenceId(vehicle), previousDriver, "Vehicle Returned", notes);
-        } else {
-            auditService.logLifecycleEvent(auditReferenceId(vehicle), "MOTORPOOL", "Vehicle Returned", notes);
         }
+        auditService.logLifecycleEvent(auditReferenceId(vehicle), performedBy, "Vehicle Returned",
+                (previousDriver == null ? "No driver on record" : "Driver: " + previousDriver) + appendNotes(notes));
     }
 
     @Transactional
-    public void markVehicleUnderMaintenance(Integer vehicleId, String notes) {
+    public void markVehicleUnderMaintenance(Integer vehicleId, String notes, String performedBy) {
         FleetVehicle vehicle = fleetRepo.findById(vehicleId)
                 .orElseThrow(() -> new IllegalArgumentException("Vehicle not found."));
         requireAllowed(workflow.hasActions(vehicle.getAdminLegaltionalStatus())
@@ -82,11 +90,11 @@ public class FleetService {
         vehicle.setOperationalStatus("Grounded");
         vehicle.setMaintenanceStatus("Under Repair");
         fleetRepo.save(vehicle);
-        auditService.logLifecycleEvent(auditReferenceId(vehicle), "SYSTEM", "Marked Under Maintenance", notes);
+        auditService.logLifecycleEvent(auditReferenceId(vehicle), performedBy, "Marked Under Maintenance", notes);
     }
 
     @Transactional
-    public void markVehicleImpounded(Integer vehicleId, String notes) {
+    public void markVehicleImpounded(Integer vehicleId, String notes, String performedBy) {
         FleetVehicle vehicle = fleetRepo.findById(vehicleId)
                 .orElseThrow(() -> new IllegalArgumentException("Vehicle not found."));
         requireAllowed(workflow.canMarkImpounded(vehicle.getAdminLegaltionalStatus()),
@@ -97,11 +105,11 @@ public class FleetService {
         vehicle.setOperationalStatus("Grounded");
         vehicle.setMaintenanceStatus("Not Applicable");
         fleetRepo.save(vehicle);
-        auditService.logLifecycleEvent(auditReferenceId(vehicle), "SYSTEM", "Marked Impounded", notes);
+        auditService.logLifecycleEvent(auditReferenceId(vehicle), performedBy, "Marked Impounded", notes);
     }
 
     @Transactional
-    public void markVehicleBeyondEconomicRepair(Integer vehicleId, String notes) {
+    public void markVehicleBeyondEconomicRepair(Integer vehicleId, String notes, String performedBy) {
         FleetVehicle vehicle = fleetRepo.findById(vehicleId)
                 .orElseThrow(() -> new IllegalArgumentException("Vehicle not found."));
         requireAllowed(workflow.hasActions(vehicle.getAdminLegaltionalStatus())
@@ -111,11 +119,11 @@ public class FleetService {
         vehicle.setOperationalStatus("Slated for Disposal");
         vehicle.setMaintenanceStatus("Beyond Economic Repair (BER)");
         fleetRepo.save(vehicle);
-        auditService.logLifecycleEvent(auditReferenceId(vehicle), "SYSTEM", "Marked BER", notes);
+        auditService.logLifecycleEvent(auditReferenceId(vehicle), performedBy, "Marked BER", notes);
     }
 
     @Transactional
-    public void markVehicleStolen(Integer vehicleId, String notes) {
+    public void markVehicleStolen(Integer vehicleId, String notes, String performedBy) {
         FleetVehicle vehicle = fleetRepo.findById(vehicleId)
                 .orElseThrow(() -> new IllegalArgumentException("Vehicle not found."));
         requireAllowed(workflow.canMarkStolen(vehicle.getAdminLegaltionalStatus()),
@@ -126,11 +134,11 @@ public class FleetService {
         vehicle.setOperationalStatus("Stolen");
         vehicle.setMaintenanceStatus("Not Applicable");
         fleetRepo.save(vehicle);
-        auditService.logLifecycleEvent(auditReferenceId(vehicle), "SYSTEM", "Marked Stolen", notes);
+        auditService.logLifecycleEvent(auditReferenceId(vehicle), performedBy, "Marked Stolen", notes);
     }
 
     @Transactional
-    public void markVehicleMissing(Integer vehicleId, String notes) {
+    public void markVehicleMissing(Integer vehicleId, String notes, String performedBy) {
         FleetVehicle vehicle = fleetRepo.findById(vehicleId)
                 .orElseThrow(() -> new IllegalArgumentException("Vehicle not found."));
         requireAllowed(workflow.canMarkMissing(vehicle.getAdminLegaltionalStatus()),
@@ -141,11 +149,11 @@ public class FleetService {
         vehicle.setOperationalStatus("Missing");
         vehicle.setMaintenanceStatus("Not Applicable");
         fleetRepo.save(vehicle);
-        auditService.logLifecycleEvent(auditReferenceId(vehicle), "SYSTEM", "Marked Missing", notes);
+        auditService.logLifecycleEvent(auditReferenceId(vehicle), performedBy, "Marked Missing", notes);
     }
 
     @Transactional
-    public void retireVehicle(Integer vehicleId, String notes) {
+    public void retireVehicle(Integer vehicleId, String notes, String performedBy) {
         FleetVehicle vehicle = fleetRepo.findById(vehicleId)
                 .orElseThrow(() -> new IllegalArgumentException("Vehicle not found."));
         requireAllowed(workflow.hasActions(vehicle.getAdminLegaltionalStatus()),
@@ -156,7 +164,7 @@ public class FleetService {
         vehicle.setOperationalStatus("Slated for Disposal");
         vehicle.setMaintenanceStatus("Beyond Economic Repair (BER)");
         fleetRepo.save(vehicle);
-        auditService.logLifecycleEvent(auditReferenceId(vehicle), "SYSTEM", "Vehicle Retired", notes);
+        auditService.logLifecycleEvent(auditReferenceId(vehicle), performedBy, "Vehicle Retired", notes);
     }
 
     /**

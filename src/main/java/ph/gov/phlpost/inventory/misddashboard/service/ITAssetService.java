@@ -60,7 +60,7 @@ public class ITAssetService {
     }
 
     @Transactional
-    public void assignAsset(String assetTag, String employeeId, String notes) {
+    public void assignAsset(String assetTag, String employeeId, String notes, String performedBy) {
         Asset asset = assetRepo.findById(assetTag).orElseThrow(() -> new IllegalArgumentException("Asset not found."));
         requireAllowed(isWorkable(asset) && (workflow.canAssign(asset.getDeploymentStatus())
                 || workflow.canReassign(asset.getDeploymentStatus())), asset, "assign it");
@@ -78,12 +78,12 @@ public class ITAssetService {
         assetRepo.save(asset);
         String actionType = previousOwner == null || previousOwner.isBlank() ? "Checkout" : "Reassignment";
         auditService.logAssignment(assetTag, employeeId, actionType, notes);
-        auditService.logLifecycleEvent(assetTag, "SYSTEM", actionType,
+        auditService.logLifecycleEvent(assetTag, performedBy, actionType,
                 statusSummary(asset) + appendNotes(notes));
     }
 
     @Transactional
-    public void returnAsset(String assetTag, String notes) {
+    public void returnAsset(String assetTag, String notes, String performedBy) {
         Asset asset = assetRepo.findById(assetTag).orElseThrow(() -> new IllegalArgumentException("Asset not found."));
         requireAllowed(isWorkable(asset) && workflow.canReturn(asset.getDeploymentStatus()), asset,
                 "return it to MISD");
@@ -95,12 +95,12 @@ public class ITAssetService {
         }
         assetRepo.save(asset);
         logAssignmentForExistingOwner(assetTag, prevOwner, "Return", notes);
-        auditService.logLifecycleEvent(assetTag, "SYSTEM", "Returned to MISD",
+        auditService.logLifecycleEvent(assetTag, performedBy, "Returned to MISD",
                 statusSummary(asset) + appendNotes(notes));
     }
 
     @Transactional
-    public void sendForWarranty(String assetTag, String notes) {
+    public void sendForWarranty(String assetTag, String notes, String performedBy) {
         Asset asset = findAsset(assetTag);
         requireAllowed(isWorkable(asset), asset, "send it for warranty repair");
         ensureNotUnderRepair(asset);
@@ -109,11 +109,11 @@ public class ITAssetService {
         applyRepairState(asset, "With Service Center");
         assetRepo.save(asset);
         auditService.logAssignment(assetTag, supplierOwnerId, "Warranty Repair", notes);
-        auditService.logLifecycleEvent(assetTag, "SYSTEM", "Sent for Warranty Repair", notes);
+        auditService.logLifecycleEvent(assetTag, performedBy, "Sent for Warranty Repair", notes);
     }
 
     @Transactional
-    public void sendForMisdMaintenance(String assetTag, String technicianId, String notes) {
+    public void sendForMisdMaintenance(String assetTag, String technicianId, String notes, String performedBy) {
         Personnel technician = personnelRepo.findById(technicianId)
                 .orElseThrow(() -> new IllegalArgumentException("Selected technician was not found."));
         if (!isMaintenanceTechnician(technician.getJobTitle())) {
@@ -128,11 +128,12 @@ public class ITAssetService {
         applyRepairState(asset, "With MISD Technician");
         assetRepo.save(asset);
         auditService.logAssignment(assetTag, technician.getEmployeeID(), "MISD Maintenance", notes);
-        auditService.logLifecycleEvent(assetTag, technician.getEmployeeID(), "Sent for MISD Maintenance", notes);
+        auditService.logLifecycleEvent(assetTag, performedBy, "Sent for MISD Maintenance",
+                "Technician: " + technician.getEmployeeID() + appendNotes(notes));
     }
 
     @Transactional
-    public void markRepaired(String assetTag, String notes) {
+    public void markRepaired(String assetTag, String notes, String performedBy) {
         Asset asset = findAsset(assetTag);
         if (!workflow.hasActions(asset.getLifecycleStatus())
                 || !"Under Repair".equals(asset.getMaintenanceHealthStatus())
@@ -148,11 +149,12 @@ public class ITAssetService {
         asset.setLifecycleStatus("Active");
         assetRepo.save(asset);
         logAssignmentForExistingOwner(assetTag, previousOwner, "Repair Completed", notes);
-        auditService.logLifecycleEvent(assetTag, "SYSTEM", "Asset Repaired", notes);
+        auditService.logLifecycleEvent(assetTag, performedBy, "Asset Repaired", notes);
     }
 
     @Transactional
-    public void updateLifecycle(String assetTag, String status, String actionType, String notes) {
+    public void updateLifecycle(String assetTag, String status, String actionType, String notes,
+            String performedBy) {
         Asset asset = findAsset(assetTag);
         if ("Unserviceable".equals(status)) {
             requireAllowed(isWorkable(asset), asset, "mark it unserviceable");
@@ -184,7 +186,7 @@ public class ITAssetService {
         } else if ("Unserviceable".equals(status)) {
             logAssignmentForExistingOwner(assetTag, previousOwner, "Returned - Unserviceable", notes);
         }
-        auditService.logLifecycleEvent(assetTag, "SYSTEM", actionType,
+        auditService.logLifecycleEvent(assetTag, performedBy, actionType,
                 statusSummary(asset) + appendNotes(notes));
     }
 
