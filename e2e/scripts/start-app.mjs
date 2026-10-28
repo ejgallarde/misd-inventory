@@ -11,12 +11,21 @@ const repoRoot = resolve(e2eDir, '..');
 const storageRoot = process.env.MISD_STORAGE_ROOT ?? resolve(e2eDir, '.storage');
 mkdirSync(storageRoot, { recursive: true });
 
+// --demo: the sample-data database (port 3308, npm run demo:up) on port 8091,
+// signing in as the sample people from tools/sample-data.
+const demo = process.argv.includes('--demo');
+const demoUsers = 'earl.gallarde@phlpost.gov.ph:ADMIN,joshua.dejesus@phlpost.gov.ph:CLERK,'
+  + 'don.melgarejo@phlpost.gov.ph:CLERK,marigold.libuit-arroyo@phlpost.gov.ph:FINANCE';
+
 const env = {
   ...process.env,
-  SERVER_PORT: process.env.E2E_PORT ?? '8090',
+  SERVER_PORT: process.env.E2E_PORT ?? (demo ? '8091' : '8090'),
   SPRING_DATASOURCE_URL:
     process.env.SPRING_DATASOURCE_URL ??
-    'jdbc:mysql://localhost:3307/misd_inventory?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC',
+    `jdbc:mysql://localhost:${demo ? 3308 : 3307}/misd_inventory?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC`,
+  ...(demo && !process.env.SPRING_APPLICATION_JSON
+    ? { SPRING_APPLICATION_JSON: JSON.stringify({ 'app.security.demo-users': demoUsers }) }
+    : {}),
   MISD_DB_USERNAME: process.env.MISD_DB_USERNAME ?? 'root',
   MISD_DB_PASSWORD: process.env.MISD_DB_PASSWORD ?? 'e2e-root-pw',
   MISD_MINIO_ACCESS_KEY: process.env.MISD_MINIO_ACCESS_KEY ?? 'unused',

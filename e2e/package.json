@@ -9,7 +9,10 @@
     "test": "playwright test",
     "test:headed": "playwright test --headed",
     "test:ui": "playwright test --ui",
-    "report": "playwright show-report"
+    "report": "playwright show-report",
+    "demo:up": "docker compose --profile demo up -d --wait mysql-demo",
+    "demo:down": "docker compose --profile demo rm -sfv mysql-demo",
+    "demo:app": "node scripts/start-app.mjs --demo"
   },
   "devDependencies": {
     "@playwright/test": "^1.56.1"

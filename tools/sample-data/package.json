@@ -1,0 +1,12 @@
+{
+  "name": "misd-sample-data",
+  "private": true,
+  "description": "Builds a demo dataset for the MISD registry; land records are sampled from docs/LAND INVENTORY.xlsx",
+  "type": "module",
+  "scripts": {
+    "generate": "node --max-old-space-size=4096 generate.mjs"
+  },
+  "dependencies": {
+    "exceljs": "4.4.0"
+  }
+}
