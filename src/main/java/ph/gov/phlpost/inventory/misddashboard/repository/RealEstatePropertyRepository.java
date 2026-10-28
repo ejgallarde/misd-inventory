@@ -46,19 +46,30 @@ public interface RealEstatePropertyRepository extends JpaRepository<RealEstatePr
 
 
 
+        /**
+         * What makes a property "require attention". The values come from
+         * application-dropdowns.properties; this previously checked legal and
+         * condition values no dropdown offered ("No Title", "Fair", "Poor"...),
+         * so a lot "Under Dispute" or "Not Usable" was never listed. The old
+         * spellings are kept for rows written before the dropdowns changed.
+         * "Titled" and "Leased" are the only legal states that need no follow-up;
+         * a condition is a problem unless it is plain "Usable - ...".
+         */
+        String PROBLEM_PREDICATE = "("
+                        + "PropertyTaxStatus IN ('Pending', 'Overdue', 'Unpaid') "
+                        + "OR LegalTitlingStatus IN ('Tax Declared Only', 'In Process', 'Under Dispute', 'Expropriated', "
+                        + "'For Titling/Processing', 'Under Litigation/Dispute', 'No Title') "
+                        + "OR OperationalStatus IS NULL OR OperationalStatus <> 'Active/In Use' "
+                        + "OR ConditionStatus LIKE 'Not Usable%' OR ConditionStatus LIKE 'Usable with Restrictions%' "
+                        + "OR ConditionStatus IN ('Fair', 'Poor', 'Condemned'))";
+
         @Query(value = "SELECT * FROM RealEstateProperties WHERE " +
-                        "UPPER(COALESCE(PropertyType, '')) = UPPER(:propertyType) AND (" +
-                        "PropertyTaxStatus IN ('Pending', 'Overdue', 'Unpaid') " +
-                        "OR LegalTitlingStatus IN ('For Titling/Processing', 'Under Litigation/Dispute', 'No Title') " +
-                        "OR OperationalStatus IS NULL OR OperationalStatus <> 'Active/In Use' " +
-                        "OR ConditionStatus IN ('Fair', 'Poor', 'Condemned'))", nativeQuery = true)
+                        "UPPER(COALESCE(PropertyType, '')) = UPPER(:propertyType) AND " + PROBLEM_PREDICATE,
+                        nativeQuery = true)
         List<RealEstateProperty> findProblematicPropertiesByType(@Param("propertyType") String propertyType);
 
         @Query(value = "SELECT * FROM RealEstateProperties WHERE " +
-                        "UPPER(COALESCE(PropertyType, '')) <> UPPER(:propertyType) AND (" +
-                        "PropertyTaxStatus IN ('Pending', 'Overdue', 'Unpaid') " +
-                        "OR LegalTitlingStatus IN ('For Titling/Processing', 'Under Litigation/Dispute', 'No Title') " +
-                        "OR OperationalStatus IS NULL OR OperationalStatus <> 'Active/In Use' " +
-                        "OR ConditionStatus IN ('Fair', 'Poor', 'Condemned'))", nativeQuery = true)
+                        "UPPER(COALESCE(PropertyType, '')) <> UPPER(:propertyType) AND " + PROBLEM_PREDICATE,
+                        nativeQuery = true)
         List<RealEstateProperty> findProblematicPropertiesByTypeExcluding(@Param("propertyType") String propertyType);
 }

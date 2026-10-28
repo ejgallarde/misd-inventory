@@ -268,13 +268,17 @@ public class PropertiesController {
     @PostMapping("/update-tax")
     @Transactional
     public String updatePropertyTax(@RequestParam Integer propertyID, @RequestParam String taxStatus,
-            @RequestParam(required = false) String conditionNotes, RedirectAttributes redirectAttributes) {
+            @RequestParam(required = false) String conditionNotes, Authentication authentication,
+            RedirectAttributes redirectAttributes) {
         RealEstateProperty property = propertyRepo.findById(propertyID).orElse(null);
         if (property != null) {
             property.setPropertyTaxStatus(taxStatus);
             propertyRepo.save(property);
             String refId = resolveReferenceId(property);
-            auditService.logLifecycleEvent(refId, "FINANCE", "Tax Status Updated: " + taxStatus, conditionNotes);
+            // Previously the literal "FINANCE", so the history never said who
+            // changed a property's tax standing.
+            String performedBy = authentication != null ? authentication.getName() : "SYSTEM";
+            auditService.logLifecycleEvent(refId, performedBy, "Tax Status Updated: " + taxStatus, conditionNotes);
             redirectAttributes.addFlashAttribute("successMessage", "Tax status updated.");
         } else {
             redirectAttributes.addFlashAttribute("errorMessage", "Property not found.");

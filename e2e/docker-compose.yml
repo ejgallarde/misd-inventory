@@ -1,0 +1,26 @@
+# Disposable MySQL for the Playwright suite. Runs on port 3307 so it never
+# collides with a developer's own MySQL on 3306.
+#
+# lower_case_table_names=1 is required: the reference dumps create lowercase
+# tables, while the entities and native queries use "Assets", "FleetVehicles",
+# etc. Windows MySQL folds case by default; Linux MySQL does not.
+services:
+  mysql-e2e:
+    image: mysql:8.4
+    container_name: misd-mysql-e2e
+    command: ["--lower-case-table-names=1", "--sql-mode=STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION"]
+    environment:
+      MYSQL_ROOT_PASSWORD: e2e-root-pw
+      MYSQL_DATABASE: misd_inventory
+    ports:
+      - "3307:3306"
+    volumes:
+      - ../src/main/resources/db:/schema:ro
+      - ./db:/docker-entrypoint-initdb.d:ro
+    tmpfs:
+      - /var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysql", "-uroot", "-pe2e-root-pw", "-e", "SELECT COUNT(*) FROM misd_inventory.Personnel"]
+      interval: 3s
+      timeout: 5s
+      retries: 40

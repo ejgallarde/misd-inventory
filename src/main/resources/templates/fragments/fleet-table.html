@@ -85,7 +85,8 @@
                         <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
                             data-bs-toggle="dropdown" aria-expanded="false">Actions</button>
                         <ul class="dropdown-menu shadow-sm">
-                            <li th:if="${@fleetHelper.canAssignDriver(vehicle.operationalStatus)}">
+                            <li
+                                th:if="${@fleetHelper.canAssignDriver(vehicle.operationalStatus) and @fleetHelper.hasActions(vehicle.adminLegaltionalStatus)}">
                                 <a class="dropdown-item action-btn" href="#" data-bs-toggle="modal"
                                     data-bs-target="#assignModal" th:data-id="${vehicle.vehicleID}"
                                     th:data-plate="${vehicle.plateNumber}">Assign Driver (Accountable Owner)</a>
@@ -139,7 +140,7 @@
                             <li>
                                 <hr class="dropdown-divider">
                             </li>
-                            <li>
+                            <li th:if="${@fleetHelper.hasActions(vehicle.adminLegaltionalStatus)}">
                                 <a class="dropdown-item text-danger action-btn fw-bold" href="#"
                                     data-bs-toggle="modal" data-bs-target="#retireModal"
                                     th:data-id="${vehicle.vehicleID}"

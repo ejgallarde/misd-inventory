@@ -16,9 +16,9 @@ import org.springframework.data.jpa.repository.Query;
  */
 public interface DashboardRepository extends Repository<Asset, String> {
 
-        @Query(value = "SELECT COUNT(*) FROM Assets " +
-                        "WHERE MaintenanceHealthStatus = 'Beyond Economic Repair (BER)' " +
-                        "AND COALESCE(LifecycleStatus, '') <> 'Decommissioned / Retired'", nativeQuery = true)
+        /** Same rows as {@link AssetRepository#findProblematicAssets()}. */
+        @Query(value = "SELECT COUNT(*) FROM Assets asset WHERE " + AssetRepository.PROBLEM_PREDICATE,
+                        nativeQuery = true)
         long countProblematicAssets();
 
         @Query(value = "SELECT COUNT(*) FROM Assets WHERE DeploymentStatus = 'Missing / Unaccounted'", nativeQuery = true)

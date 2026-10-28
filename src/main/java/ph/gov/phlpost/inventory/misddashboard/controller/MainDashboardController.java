@@ -269,6 +269,10 @@ public class MainDashboardController {
                         @RequestParam(value = "q", required = false, defaultValue = "") String q,
                         @RequestParam(value = "jobTitle", required = false) String jobTitle,
                         @PageableDefault(size = 15) Pageable pageable) {
+                // WebBindingAdvice trims a blank q to null despite the default
+                // value, and CONCAT('%', NULL, '%') matches nobody, so the
+                // technician picker, which searches on open, came up empty.
+                q = q == null ? "" : q;
                 Page<Personnel> results = jobTitle == null || jobTitle.isBlank()
                                 ? personnelRepo.findByLastNameContainingIgnoreCaseOrFirstNameContainingIgnoreCase(
                                                 q, q, pageable)

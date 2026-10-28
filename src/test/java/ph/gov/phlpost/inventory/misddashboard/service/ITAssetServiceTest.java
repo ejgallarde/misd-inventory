@@ -44,6 +44,7 @@ class ITAssetServiceTest {
                 assetRepository,
                 personnelRepository,
                 auditLogService,
+                new AssetWorkflowHelper(),
                 "SUPPLIER",
                 "Computer Maintenance Technologist",
                 100);
@@ -266,6 +267,90 @@ class ITAssetServiceTest {
                 .hasMessageContaining("currently assigned for repair");
 
         verify(assetRepository, never()).save(asset);
+    }
+
+    @Test
+    void retiredAssetCannotBeAssignedEvenByADirectRequest() {
+        Asset asset = asset("TAG-RET");
+        asset.setDeploymentStatus("In Storage");
+        asset.setLifecycleStatus("Decommissioned / Retired");
+        when(assetRepository.findById("TAG-RET")).thenReturn(Optional.of(asset));
+
+        assertThatThrownBy(() -> service.assignAsset("TAG-RET", "EMP-1", null))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageStartingWith("Cannot assign it: asset TAG-RET");
+        verify(assetRepository, never()).save(asset);
+    }
+
+    @Test
+    void berAssetCannotBeAssignedOrSentForRepair() {
+        Asset asset = asset("TAG-BER2");
+        asset.setDeploymentStatus("In Storage");
+        asset.setMaintenanceHealthStatus("Beyond Economic Repair (BER)");
+        asset.setLifecycleStatus("End of Life (EOL)");
+        when(assetRepository.findById("TAG-BER2")).thenReturn(Optional.of(asset));
+
+        assertThatThrownBy(() -> service.assignAsset("TAG-BER2", "EMP-1", null))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> service.sendForWarranty("TAG-BER2", null))
+                .isInstanceOf(IllegalArgumentException.class);
+        verify(assetRepository, never()).save(asset);
+    }
+
+    @Test
+    void returningAnAssetThatIsInStorageIsRejected() {
+        Asset asset = asset("TAG-STORED");
+        asset.setDeploymentStatus("In Storage");
+        asset.setLifecycleStatus("Active");
+        when(assetRepository.findById("TAG-STORED")).thenReturn(Optional.of(asset));
+
+        assertThatThrownBy(() -> service.returnAsset("TAG-STORED", null))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("return it to MISD");
+    }
+
+    @Test
+    void updateCopiesOnlyEditableFieldsAndKeepsARecordedSerialNumber() {
+        Asset stored = asset("TAG-EDIT");
+        stored.setSerialNumber("SN-ORIGINAL");
+        stored.setPurchasePrice(new java.math.BigDecimal("1000.00"));
+        stored.setDeploymentStatus("In Storage");
+        stored.setMaintenanceHealthStatus("Operational");
+        stored.setLifecycleStatus("Active");
+        when(assetRepository.findById("TAG-EDIT")).thenReturn(Optional.of(stored));
+
+        Asset submitted = asset("TAG-EDIT");
+        submitted.setSerialNumber("SN-TAMPERED");
+        submitted.setPurchasePrice(new java.math.BigDecimal("1200.00"));
+        submitted.setDeploymentStatus("In Storage");
+        submitted.setMaintenanceHealthStatus("Degraded");
+        submitted.setLifecycleStatus("Active");
+        submitted.setRemarks("Cracked hinge");
+
+        service.updateAsset(submitted, "clerk");
+
+        verify(assetRepository).save(stored);
+        assertThat(stored.getSerialNumber()).isEqualTo("SN-ORIGINAL");
+        assertThat(stored.getPurchasePrice()).isEqualByComparingTo("1200.00");
+        assertThat(stored.getMaintenanceHealthStatus()).isEqualTo("Degraded");
+        assertThat(stored.getRemarks()).isEqualTo("Cracked hinge");
+        verify(auditLogService).logLifecycleEvent(
+                org.mockito.ArgumentMatchers.eq("TAG-EDIT"),
+                org.mockito.ArgumentMatchers.eq("clerk"),
+                org.mockito.ArgumentMatchers.eq("Asset Status Updated"),
+                org.mockito.ArgumentMatchers.contains("Health: Operational"));
+    }
+
+    @Test
+    void updateFillsInABlankSerialNumber() {
+        Asset stored = asset("TAG-NOSN");
+        when(assetRepository.findById("TAG-NOSN")).thenReturn(Optional.of(stored));
+        Asset submitted = asset("TAG-NOSN");
+        submitted.setSerialNumber("SN-NEW");
+
+        service.updateAsset(submitted, "clerk");
+
+        assertThat(stored.getSerialNumber()).isEqualTo("SN-NEW");
     }
 
     private Asset asset(String assetTag) {

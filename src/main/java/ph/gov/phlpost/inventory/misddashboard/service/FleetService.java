@@ -15,16 +15,36 @@ public class FleetService {
 
     private final FleetVehicleRepository fleetRepo;
     private final AuditLogService auditService;
+    private final FleetWorkflowHelper workflow;
 
-    public FleetService(FleetVehicleRepository fleetRepo, AuditLogService auditService) {
+    public FleetService(FleetVehicleRepository fleetRepo, AuditLogService auditService,
+            FleetWorkflowHelper workflow) {
         this.fleetRepo = fleetRepo;
         this.auditService = auditService;
+        this.workflow = workflow;
+    }
+
+    /**
+     * Every lifecycle action re-checks, server side, the same predicate the
+     * Actions menu uses to show it. The menu was the only gate before, so a
+     * stale page or a hand-made POST could dispatch a stolen or decommissioned
+     * vehicle to a driver.
+     */
+    private static void requireAllowed(boolean allowed, FleetVehicle vehicle, String action) {
+        if (!allowed) {
+            throw new IllegalArgumentException("Cannot " + action + ": vehicle "
+                    + (TextUtils.isBlank(vehicle.getPlateNumber()) ? "#" + vehicle.getVehicleID()
+                            : vehicle.getPlateNumber())
+                    + " is " + statusSummary(vehicle) + ".");
+        }
     }
 
     @Transactional
     public void assignVehicle(Integer vehicleId, String employeeId, String notes) {
         FleetVehicle vehicle = fleetRepo.findById(vehicleId)
                 .orElseThrow(() -> new IllegalArgumentException("Vehicle not found."));
+        requireAllowed(workflow.canAssignDriver(vehicle.getOperationalStatus())
+                && workflow.hasActions(vehicle.getAdminLegaltionalStatus()), vehicle, "assign a driver");
 
         vehicle.setAssignedDriverID(employeeId);
         vehicle.setOperationalStatus("Dispatched");
@@ -36,6 +56,8 @@ public class FleetService {
     public void returnVehicle(Integer vehicleId, String notes) {
         FleetVehicle vehicle = fleetRepo.findById(vehicleId)
                 .orElseThrow(() -> new IllegalArgumentException("Vehicle not found."));
+        requireAllowed(workflow.canReturnToMotorpool(vehicle.getOperationalStatus()),
+                vehicle, "return it to the motorpool");
 
         String previousDriver = vehicle.getAssignedDriverID();
         vehicle.setAssignedDriverID(null);
@@ -53,6 +75,9 @@ public class FleetService {
     public void markVehicleUnderMaintenance(Integer vehicleId, String notes) {
         FleetVehicle vehicle = fleetRepo.findById(vehicleId)
                 .orElseThrow(() -> new IllegalArgumentException("Vehicle not found."));
+        requireAllowed(workflow.hasActions(vehicle.getAdminLegaltionalStatus())
+                && workflow.canMarkUnderMaintenance(vehicle.getMaintenanceStatus()),
+                vehicle, "mark it under maintenance");
 
         vehicle.setOperationalStatus("Grounded");
         vehicle.setMaintenanceStatus("Under Repair");
@@ -64,6 +89,8 @@ public class FleetService {
     public void markVehicleImpounded(Integer vehicleId, String notes) {
         FleetVehicle vehicle = fleetRepo.findById(vehicleId)
                 .orElseThrow(() -> new IllegalArgumentException("Vehicle not found."));
+        requireAllowed(workflow.canMarkImpounded(vehicle.getAdminLegaltionalStatus()),
+                vehicle, "mark it impounded");
 
         vehicle.setAssignedDriverID(null);
         vehicle.setAdminLegaltionalStatus("Impounded");
@@ -77,6 +104,9 @@ public class FleetService {
     public void markVehicleBeyondEconomicRepair(Integer vehicleId, String notes) {
         FleetVehicle vehicle = fleetRepo.findById(vehicleId)
                 .orElseThrow(() -> new IllegalArgumentException("Vehicle not found."));
+        requireAllowed(workflow.hasActions(vehicle.getAdminLegaltionalStatus())
+                && workflow.canMarkBeyondEconomicRepair(vehicle.getMaintenanceStatus()),
+                vehicle, "mark it beyond economic repair");
 
         vehicle.setOperationalStatus("Slated for Disposal");
         vehicle.setMaintenanceStatus("Beyond Economic Repair (BER)");
@@ -88,6 +118,8 @@ public class FleetService {
     public void markVehicleStolen(Integer vehicleId, String notes) {
         FleetVehicle vehicle = fleetRepo.findById(vehicleId)
                 .orElseThrow(() -> new IllegalArgumentException("Vehicle not found."));
+        requireAllowed(workflow.canMarkStolen(vehicle.getAdminLegaltionalStatus()),
+                vehicle, "mark it stolen");
 
         vehicle.setAssignedDriverID(null);
         vehicle.setAdminLegaltionalStatus("Under Investigation");
@@ -101,6 +133,8 @@ public class FleetService {
     public void markVehicleMissing(Integer vehicleId, String notes) {
         FleetVehicle vehicle = fleetRepo.findById(vehicleId)
                 .orElseThrow(() -> new IllegalArgumentException("Vehicle not found."));
+        requireAllowed(workflow.canMarkMissing(vehicle.getAdminLegaltionalStatus()),
+                vehicle, "mark it missing");
 
         vehicle.setAssignedDriverID(null);
         vehicle.setAdminLegaltionalStatus("Under Investigation");
@@ -114,6 +148,8 @@ public class FleetService {
     public void retireVehicle(Integer vehicleId, String notes) {
         FleetVehicle vehicle = fleetRepo.findById(vehicleId)
                 .orElseThrow(() -> new IllegalArgumentException("Vehicle not found."));
+        requireAllowed(workflow.hasActions(vehicle.getAdminLegaltionalStatus()),
+                vehicle, "retire it");
 
         vehicle.setAssignedDriverID(null);
         vehicle.setAdminLegaltionalStatus("Decommissioned");

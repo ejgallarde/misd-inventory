@@ -1,0 +1,17 @@
+{
+  "name": "misd-inventory-e2e",
+  "private": true,
+  "description": "Browser (Playwright) tests for the MISD Master Asset Registry",
+  "scripts": {
+    "db:up": "docker compose up -d --wait",
+    "db:down": "docker compose down -v",
+    "db:reset": "docker compose down -v && docker compose up -d --wait",
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:ui": "playwright test --ui",
+    "report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.56.1"
+  }
+}

@@ -23,24 +23,47 @@ public class ITAssetService {
     private final String supplierOwnerId;
     private final String maintenanceTechnicianJobTitle;
     private final int maxReceiveQuantity;
+    private final AssetWorkflowHelper workflow;
 
     private static final DateTimeFormatter ASSET_TAG_DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
     public ITAssetService(AssetRepository assetRepo, PersonnelRepository personnelRepo, AuditLogService auditService,
+            AssetWorkflowHelper workflow,
             @Value("${asset.workflow.supplier-owner-id:SUPPLIER}") String supplierOwnerId,
             @Value("${asset.workflow.maintenance-technician-job-title:Computer Maintenance Technologist}") String maintenanceTechnicianJobTitle,
             @Value("${asset.receive.max-quantity:100}") int maxReceiveQuantity) {
         this.assetRepo = assetRepo;
         this.personnelRepo = personnelRepo;
         this.auditService = auditService;
+        this.workflow = workflow;
         this.supplierOwnerId = supplierOwnerId;
         this.maintenanceTechnicianJobTitle = maintenanceTechnicianJobTitle;
         this.maxReceiveQuantity = maxReceiveQuantity;
     }
 
+    /**
+     * Server-side copy of the Actions-menu rules in asset-table.html. The menu
+     * used to be the only gate, so a stale page or a hand-made POST could, for
+     * example, deploy a retired or BER asset to an employee.
+     */
+    private void requireAllowed(boolean allowed, Asset asset, String action) {
+        if (!allowed) {
+            throw new IllegalArgumentException("Cannot " + action + ": asset " + asset.getAssetTag()
+                    + " is " + statusSummary(asset) + ".");
+        }
+    }
+
+    /** The guard every workflow action except retirement shares. */
+    private boolean isWorkable(Asset asset) {
+        return workflow.hasActions(asset.getLifecycleStatus())
+                && !workflow.isUnserviceable(asset.getMaintenanceHealthStatus());
+    }
+
     @Transactional
     public void assignAsset(String assetTag, String employeeId, String notes) {
         Asset asset = assetRepo.findById(assetTag).orElseThrow(() -> new IllegalArgumentException("Asset not found."));
+        requireAllowed(isWorkable(asset) && (workflow.canAssign(asset.getDeploymentStatus())
+                || workflow.canReassign(asset.getDeploymentStatus())), asset, "assign it");
         String previousOwner = asset.getCurrentOwnerID();
         asset.setCurrentOwnerID(employeeId);
         asset.setDeploymentStatus("Deployed");
@@ -62,6 +85,8 @@ public class ITAssetService {
     @Transactional
     public void returnAsset(String assetTag, String notes) {
         Asset asset = assetRepo.findById(assetTag).orElseThrow(() -> new IllegalArgumentException("Asset not found."));
+        requireAllowed(isWorkable(asset) && workflow.canReturn(asset.getDeploymentStatus()), asset,
+                "return it to MISD");
         String prevOwner = asset.getCurrentOwnerID();
         asset.setCurrentOwnerID(null);
         asset.setDeploymentStatus("In Storage");
@@ -77,6 +102,7 @@ public class ITAssetService {
     @Transactional
     public void sendForWarranty(String assetTag, String notes) {
         Asset asset = findAsset(assetTag);
+        requireAllowed(isWorkable(asset), asset, "send it for warranty repair");
         ensureNotUnderRepair(asset);
         ensureSupplierOwnerExists();
         asset.setCurrentOwnerID(supplierOwnerId);
@@ -96,6 +122,7 @@ public class ITAssetService {
         }
 
         Asset asset = findAsset(assetTag);
+        requireAllowed(isWorkable(asset), asset, "send it for MISD maintenance");
         ensureNotUnderRepair(asset);
         asset.setCurrentOwnerID(technician.getEmployeeID());
         applyRepairState(asset, "With MISD Technician");
@@ -107,7 +134,8 @@ public class ITAssetService {
     @Transactional
     public void markRepaired(String assetTag, String notes) {
         Asset asset = findAsset(assetTag);
-        if (!"Under Repair".equals(asset.getMaintenanceHealthStatus())
+        if (!workflow.hasActions(asset.getLifecycleStatus())
+                || !"Under Repair".equals(asset.getMaintenanceHealthStatus())
                 || !("With Service Center".equals(asset.getDeploymentStatus())
                         || "With MISD Technician".equals(asset.getDeploymentStatus()))) {
             throw new IllegalArgumentException("Only assets currently assigned for repair can be marked repaired.");
@@ -126,6 +154,11 @@ public class ITAssetService {
     @Transactional
     public void updateLifecycle(String assetTag, String status, String actionType, String notes) {
         Asset asset = findAsset(assetTag);
+        if ("Unserviceable".equals(status)) {
+            requireAllowed(isWorkable(asset), asset, "mark it unserviceable");
+        } else if ("Retired".equals(status)) {
+            requireAllowed(workflow.hasActions(asset.getLifecycleStatus()), asset, "retire it");
+        }
         String previousOwner = asset.getCurrentOwnerID();
 
         if ("Unserviceable".equals(status)) {
@@ -241,26 +274,47 @@ public class ITAssetService {
         }
     }
 
+    /**
+     * Applies an edit from the detail slideout.
+     *
+     * <p>
+     * Only the fields the slideout offers are copied onto the stored record.
+     * This used to save the submitted object as-is, so any property the client
+     * left out was written back as NULL, and any it added was accepted. The
+     * serial number is lock-once, as the slideout presents it: it can be filled
+     * in when blank but not changed afterwards.
+     */
     @Transactional
-    public void updateAsset(Asset updatedAsset, String performedBy) {
-        Asset existingAsset = findAsset(updatedAsset.getAssetTag());
+    public void updateAsset(Asset submitted, String performedBy) {
+        Asset existingAsset = findAsset(submitted.getAssetTag());
         String previousOwner = existingAsset.getCurrentOwnerID();
         String previousStatuses = statusSummary(existingAsset);
 
-        assetRepo.save(updatedAsset);
+        existingAsset.setCatalogID(submitted.getCatalogID());
+        existingAsset.setPurchaseDate(submitted.getPurchaseDate());
+        existingAsset.setPurchasePrice(submitted.getPurchasePrice());
+        existingAsset.setDeploymentStatus(submitted.getDeploymentStatus());
+        existingAsset.setMaintenanceHealthStatus(submitted.getMaintenanceHealthStatus());
+        existingAsset.setLifecycleStatus(submitted.getLifecycleStatus());
+        existingAsset.setCurrentOwnerID(submitted.getCurrentOwnerID());
+        existingAsset.setRemarks(submitted.getRemarks());
+        if (existingAsset.getSerialNumber() == null || existingAsset.getSerialNumber().isBlank()) {
+            existingAsset.setSerialNumber(submitted.getSerialNumber());
+        }
+        assetRepo.save(existingAsset);
 
-        if (!java.util.Objects.equals(previousOwner, updatedAsset.getCurrentOwnerID())) {
-            String auditOwner = updatedAsset.getCurrentOwnerID() != null
-                    ? updatedAsset.getCurrentOwnerID()
+        if (!java.util.Objects.equals(previousOwner, existingAsset.getCurrentOwnerID())) {
+            String auditOwner = existingAsset.getCurrentOwnerID() != null
+                    ? existingAsset.getCurrentOwnerID()
                     : previousOwner;
-            logAssignmentForExistingOwner(updatedAsset.getAssetTag(), auditOwner, "Assignment Updated",
+            logAssignmentForExistingOwner(existingAsset.getAssetTag(), auditOwner, "Assignment Updated",
                     "Owner changed from " + displayValue(previousOwner) + " to "
-                            + displayValue(updatedAsset.getCurrentOwnerID()) + ".");
+                            + displayValue(existingAsset.getCurrentOwnerID()) + ".");
         }
 
-        String currentStatuses = statusSummary(updatedAsset);
+        String currentStatuses = statusSummary(existingAsset);
         String actionType = previousStatuses.equals(currentStatuses) ? "Asset Details Updated" : "Asset Status Updated";
-        auditService.logLifecycleEvent(updatedAsset.getAssetTag(), performedBy, actionType,
+        auditService.logLifecycleEvent(existingAsset.getAssetTag(), performedBy, actionType,
                 previousStatuses + " -> " + currentStatuses);
     }
 

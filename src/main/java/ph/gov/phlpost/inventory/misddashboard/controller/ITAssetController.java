@@ -15,11 +15,13 @@ import ph.gov.phlpost.inventory.misddashboard.util.TextUtils;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.web.util.UriUtils;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -292,13 +294,46 @@ public class ITAssetController {
         return ResponseEntity.ok(assetHistoryService.getHistory(assetTag));
     }
 
+    /**
+     * Error bodies are {@code {"error": ...}}, the shape asset-detail.js reads.
+     * An unknown tag used to escape as an unhandled IllegalArgumentException
+     * and return a 500.
+     */
     @PostMapping("/assets/update")
-    public ResponseEntity<String> updateITAsset(@RequestBody Asset updatedAsset, Authentication authentication) {
+    public ResponseEntity<?> updateITAsset(@RequestBody Asset updatedAsset, Authentication authentication) {
+        if (updatedAsset.getAssetTag() == null || !assetRepo.existsById(updatedAsset.getAssetTag())) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Asset not found."));
+        }
         normalizeBlankOptionalFields(updatedAsset);
         applyStatusTransitions(updatedAsset);
+        String invalidStatus = findUnconfiguredStatus(updatedAsset);
+        if (invalidStatus != null) {
+            return ResponseEntity.badRequest().body(Map.of("error", invalidStatus));
+        }
         String performedBy = authentication != null ? authentication.getName() : "SYSTEM";
-        assetService.updateAsset(updatedAsset, performedBy);
+        try {
+            assetService.updateAsset(updatedAsset, performedBy);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
         return ResponseEntity.ok("Asset updated successfully");
+    }
+
+    /**
+     * The slideout's selects only offer configured values, but the endpoint
+     * accepted any string, and the dashboard counts match on exact values.
+     */
+    private String findUnconfiguredStatus(Asset asset) {
+        if (!assetDeploymentStatusOptions.contains(asset.getDeploymentStatus())) {
+            return "Unknown deployment status: " + asset.getDeploymentStatus();
+        }
+        if (!assetMaintenanceHealthStatusOptions.contains(asset.getMaintenanceHealthStatus())) {
+            return "Unknown health status: " + asset.getMaintenanceHealthStatus();
+        }
+        if (!assetLifecycleStatusOptions.contains(asset.getLifecycleStatus())) {
+            return "Unknown lifecycle status: " + asset.getLifecycleStatus();
+        }
+        return null;
     }
 
     /**

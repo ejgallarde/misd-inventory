@@ -82,3 +82,4 @@ Audit rows are keyed on **immutable primary keys**: `FleetService.auditReference
 - Controller and service tests use plain `@ExtendWith(MockitoExtension.class)` with `@Mock`/`@InjectMocks` and call methods directly — there is no `@WebMvcTest`/`MockMvc` usage in this codebase; don't introduce it without checking whether it fits the existing pattern.
 - `LoginControllerTest` shows the simplest pattern: construct the controller directly with constructor args, no mocking framework needed for simple cases.
 - Only `MisdInventoryDashboardApplicationTests` touches the real Spring context (see Local setup above for its DB requirement).
+- Browser tests live in `e2e/` (Playwright + a Dockerised, seeded MySQL on port 3307); see `e2e/README.md`. Tests wrapped in `test.fail(true, 'BUG-…')` pin known bugs. Delete that line when the bug is fixed.

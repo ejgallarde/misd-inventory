@@ -109,6 +109,7 @@ $(document).ready(function () {
         MISDCommon.initPageUI({
             themeToggleId: 'themeToggleBtn',
             successToastId: 'successToast',
+            errorToastId: 'errorToast',
             initializeSelect2Modals: true
         });
     }
