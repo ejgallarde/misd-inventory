@@ -90,3 +90,4 @@ Audit rows are keyed on **immutable primary keys**: `FleetService.auditReference
 - `LoginControllerTest` shows the simplest pattern: construct the controller directly with constructor args, no mocking framework needed for simple cases.
 - Only `MisdInventoryDashboardApplicationTests` touches the real Spring context (see Local setup above for its DB requirement).
 - Browser tests live in `e2e/` (Playwright + a Dockerised, seeded MySQL on port 3307); see `e2e/README.md`. Tests wrapped in `test.fail(true, 'BUG-…')` pin known bugs. Delete that line when the bug is fixed.
+- `DocumentStorageServiceMinioTest` round-trips a document through a real MinIO with the production client config (`MinioConfig.buildClient`). It is skipped unless `MISD_TEST_MINIO_ENDPOINT`, `MISD_TEST_MINIO_ACCESS_KEY` and `MISD_TEST_MINIO_SECRET_KEY` are set. Run it against the production MinIO version before changing the AWS SDK version.

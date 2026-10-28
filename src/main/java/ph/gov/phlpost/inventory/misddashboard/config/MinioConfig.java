@@ -25,6 +25,14 @@ public class MinioConfig {
 
     @Bean
     public S3Client s3Client() {
+        return buildClient(endpoint, accessKey, secretKey);
+    }
+
+    /**
+     * The one place the MinIO client is configured, shared with
+     * DocumentStorageServiceMinioTest so the test exercises exactly this setup.
+     */
+    public static S3Client buildClient(String endpoint, String accessKey, String secretKey) {
         return S3Client.builder()
                 .endpointOverride(URI.create(endpoint))
                 .credentialsProvider(StaticCredentialsProvider.create(
