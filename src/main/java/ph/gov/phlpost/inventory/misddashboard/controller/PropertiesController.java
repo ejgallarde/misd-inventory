@@ -3,6 +3,7 @@ package ph.gov.phlpost.inventory.misddashboard.controller;
 import ph.gov.phlpost.inventory.misddashboard.config.UserPermissions;
 import ph.gov.phlpost.inventory.misddashboard.model.RealEstateProperty;
 import ph.gov.phlpost.inventory.misddashboard.repository.RealEstatePropertyRepository;
+import ph.gov.phlpost.inventory.misddashboard.service.AccountabilityService;
 import ph.gov.phlpost.inventory.misddashboard.service.AssetHistoryService;
 import ph.gov.phlpost.inventory.misddashboard.service.AuditLogService;
 import ph.gov.phlpost.inventory.misddashboard.service.DocumentService;
@@ -34,6 +35,7 @@ public class PropertiesController {
     private final AuditLogService auditService;
     private final DocumentService documentService;
     private final AssetHistoryService assetHistoryService;
+    private final AccountabilityService accountabilityService;
 
     @Value("${document.upload.max-size-mb:15}")
     private int documentUploadMaxSizeMb;
@@ -59,12 +61,14 @@ public class PropertiesController {
     public PropertiesController(RealEstatePropertyRepository propertyRepo, RegistryService registryService,
             AuditLogService auditService,
             DocumentService documentService,
-            AssetHistoryService assetHistoryService) {
+            AssetHistoryService assetHistoryService,
+            AccountabilityService accountabilityService) {
         this.propertyRepo = propertyRepo;
         this.registryService = registryService;
         this.auditService = auditService;
         this.documentService = documentService;
         this.assetHistoryService = assetHistoryService;
+        this.accountabilityService = accountabilityService;
     }
 
     @GetMapping
@@ -254,6 +258,14 @@ public class PropertiesController {
             RedirectAttributes redirectAttributes) {
         RealEstateProperty property = propertyRepo.findById(propertyID).orElse(null);
         if (property != null) {
+            // The custodian is the accountable person for the property, so they
+            // must hold an eligible (by default regular) employment status.
+            try {
+                accountabilityService.requireEligible(employeeID, "Custodian");
+            } catch (IllegalArgumentException e) {
+                redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+                return "redirect:/properties";
+            }
             String previousCustodian = property.getCustodianID();
             property.setCustodianID(employeeID);
             propertyRepo.save(property);

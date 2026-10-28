@@ -33,4 +33,14 @@ public interface PersonnelRepository extends JpaRepository<Personnel, String> {
                         """)
         Page<Personnel> searchByJobTitle(@Param("jobTitle") String jobTitle, @Param("query") String query,
                         Pageable pageable);
+
+        /** Name search limited to employment statuses that may hold accountability (lower-case). */
+        @Query("""
+                        SELECT personnel FROM Personnel personnel
+                                    WHERE LOWER(COALESCE(personnel.employmentStatus, 'Regular')) IN :statuses
+                            AND (LOWER(personnel.lastName) LIKE LOWER(CONCAT('%', :query, '%'))
+                                OR LOWER(personnel.firstName) LIKE LOWER(CONCAT('%', :query, '%')))
+                        """)
+        Page<Personnel> searchEligibleForAccountability(@Param("statuses") java.util.Collection<String> statuses,
+                        @Param("query") String query, Pageable pageable);
 }

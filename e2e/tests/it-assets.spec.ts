@@ -84,9 +84,12 @@ test.describe('IT assets module', () => {
     await modal.locator('textarea[name=conditionNotes]').fill('Issued by Playwright');
     await modal.getByRole('button', { name: 'Complete Assignment' }).click();
 
-    await expectSuccessToast(page, 'Asset assigned successfully.');
+    // Ana Cruz is Job Order: she uses it, her regular manager is accountable.
+    await expectSuccessToast(page, 'Asset assigned to Cruz, Ana. Accountable owner: Reyes, Maria (manager of Cruz, Ana');
     await searchTable(page, 'assetsTable', 'E2E-ASSET-ASSIGN');
     await expect(tableRow(page, 'assetsTable', 'E2E-ASSET-ASSIGN')).toContainText('Cruz, Ana');
+    await expect(tableRow(page, 'assetsTable', 'E2E-ASSET-ASSIGN').locator('td').nth(2)).toHaveText('Reyes, Maria');
+    await expect(tableRow(page, 'assetsTable', 'E2E-ASSET-ASSIGN').locator('td').nth(3)).toHaveText('Cruz, Ana');
     await expect(tableRow(page, 'assetsTable', 'E2E-ASSET-ASSIGN')).toContainText('Deployment: Deployed');
 
     // Attributed to the signed-in user, not "SYSTEM".

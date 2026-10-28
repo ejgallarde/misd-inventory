@@ -380,6 +380,7 @@ $(document).ready(function () {
             $('#fleetDetailChassisVin').text(data.chassisNumberVIN || 'N/A');
             $('#fleetDetailDriver').text(data.assignedDriverName || 'Unassigned');
             $('#fleetDetailDriverManager').text(data.assignedDriverManagerName || 'N/A');
+            $('#fleetDetailAccountableOwner').text(data.accountableOwnerID ? data.accountableOwnerName : 'Unassigned');
             $('#fleetDetailRegExpiry').text(MISDCommon.formatDate(data.registrationExpiry));
             // The detail endpoint no longer rewrites the legal status when a
             // registration has lapsed; it reports the fact and the panel shows it.

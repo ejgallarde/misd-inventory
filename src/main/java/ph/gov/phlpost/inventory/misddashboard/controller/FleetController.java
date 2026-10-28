@@ -175,11 +175,14 @@ public class FleetController {
 
     @PostMapping("/assign")
     public String assignVehicle(@RequestParam Integer vehicleID, @RequestParam String employeeID,
+            @RequestParam(required = false) String accountableOwnerID,
             @RequestParam(required = false) String conditionNotes,
             Authentication authentication, RedirectAttributes redirectAttributes) {
         try {
-            fleetService.assignVehicle(vehicleID, employeeID, conditionNotes, AuditActor.of(authentication));
-            redirectAttributes.addFlashAttribute("successMessage", "Success! Vehicle assigned.");
+            var accountability = fleetService.assignVehicle(vehicleID, employeeID, accountableOwnerID,
+                    conditionNotes, AuditActor.of(authentication));
+            redirectAttributes.addFlashAttribute("successMessage",
+                    registryService.describeAccountability("Vehicle", accountability));
         } catch (IllegalArgumentException e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }
@@ -328,6 +331,9 @@ public class FleetController {
                     Map.entry("assignedDriverID", assignedDriverId == null ? "" : assignedDriverId),
                     Map.entry("assignedDriverName", assignedDriverName),
                     Map.entry("assignedDriverManagerName", assignedDriverManagerName),
+                    Map.entry("accountableOwnerID",
+                            vehicle.getAccountableOwnerID() == null ? "" : vehicle.getAccountableOwnerID()),
+                    Map.entry("accountableOwnerName", registryService.resolveDisplayName(vehicle.getAccountableOwnerID())),
                     Map.entry("adminLegaltionalStatus", vehicle.getAdminLegaltionalStatus() == null ? ""
                             : vehicle.getAdminLegaltionalStatus()),
                     Map.entry("operationalStatus",

@@ -37,6 +37,13 @@ There is no separate lint/format command configured in the pom.
 - Document storage defaults to the local filesystem (`storage.mode=filesystem`, root at `${MISD_STORAGE_ROOT}`). Set `storage.mode=minio` to switch to the MinIO/S3 client wired in `config/MinioConfig` (only activates via `@ConditionalOnProperty` when that mode is selected).
 - `app.security.demo-mode=true` by default: `SecurityConfig` provisions in-memory users from `app.security.demo-users` (`email:ROLE` pairs, one per role, all using `${MISD_DEMO_USER_PASSWORD}`) instead of real auth. Set `app.security.oauth2.enabled=true` to layer on Entra/OAuth2 login instead. Entra app roles (the `roles` claim) are mapped through `app.security.oauth2.role-mapping`, and a user with no mapped role is refused.
 
+### Assigned user vs accountable owner
+Government property accountability (PAR/ICS) can only rest with eligible personnel, configured by `asset.accountability.eligible-employment-statuses` (default `Regular`) against `Personnel.EmploymentStatus`. `service/AccountabilityService` applies the rule everywhere:
+- **IT assets:** `AssignedUserID` is who uses the asset, and `CurrentOwnerID` is the accountable owner.
+- **Vehicles:** `AssignedDriverID` is who drives it, and `AccountableOwnerID` is the accountable owner.
+
+When the assigned person is not eligible (e.g. Job Order), the nearest eligible manager up their chain becomes accountable, unless an eligible owner is chosen explicitly in the assign modal. A property custodian *is* the accountable person and must be eligible. Stolen, missing and impounded vehicles keep their accountable owner, because liability is investigated against them. Schema: `db/migration_2026-10-28_assigned-vs-accountable.sql`.
+
 ### Roles and authorization
 Four roles, defined in `config/AppRole`: **ADMIN** (everything), **CLERK** (registry operations), **FINANCE** (property tax status and assessed value, asset purchase price and vehicle cost after registration) and **VIEWER** (read-only). `SecurityConfig` is the single enforcement point, using URL rules. Any state-changing endpoint not listed there falls through to ADMIN-only, so **give a new POST/DELETE endpoint an explicit rule**.
 

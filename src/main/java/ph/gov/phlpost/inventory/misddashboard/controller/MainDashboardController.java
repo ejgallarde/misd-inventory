@@ -8,6 +8,7 @@ import ph.gov.phlpost.inventory.misddashboard.repository.EquipmentCatalogReposit
 import ph.gov.phlpost.inventory.misddashboard.repository.FleetVehicleRepository;
 import ph.gov.phlpost.inventory.misddashboard.repository.PersonnelRepository;
 import ph.gov.phlpost.inventory.misddashboard.repository.RealEstatePropertyRepository;
+import ph.gov.phlpost.inventory.misddashboard.service.AccountabilityService;
 import ph.gov.phlpost.inventory.misddashboard.service.LocationLookupService;
 import ph.gov.phlpost.inventory.misddashboard.service.RegistryService;
 import ph.gov.phlpost.inventory.misddashboard.util.TextUtils;
@@ -42,6 +43,7 @@ public class MainDashboardController {
         private final PersonnelRepository personnelRepo;
         private final RegistryService registryService;
         private final LocationLookupService locationLookupService;
+        private final AccountabilityService accountabilityService;
 
         @Value("#{'${inventory.categories}'.split(',')}")
         private List<String> equipmentCategories;
@@ -110,7 +112,7 @@ public class MainDashboardController {
                         FleetVehicleRepository fleetRepo,
                         RealEstatePropertyRepository propertyRepo, EquipmentCatalogRepository catalogRepo,
                         PersonnelRepository personnelRepo, RegistryService registryService,
-                        LocationLookupService locationLookupService) {
+                        LocationLookupService locationLookupService, AccountabilityService accountabilityService) {
                 this.dashboardRepo = dashboardRepo;
                 this.assetRepo = assetRepo;
                 this.fleetRepo = fleetRepo;
@@ -119,6 +121,7 @@ public class MainDashboardController {
                 this.personnelRepo = personnelRepo;
                 this.registryService = registryService;
                 this.locationLookupService = locationLookupService;
+                this.accountabilityService = accountabilityService;
         }
 
         @GetMapping("/")
@@ -274,22 +277,30 @@ public class MainDashboardController {
         public Map<String, Object> searchPersonnel(
                         @RequestParam(value = "q", required = false, defaultValue = "") String q,
                         @RequestParam(value = "jobTitle", required = false) String jobTitle,
+                        @RequestParam(value = "accountableOnly", required = false) boolean accountableOnly,
                         @PageableDefault(size = 15) Pageable pageable) {
                 // WebBindingAdvice trims a blank q to null despite the default
                 // value, and CONCAT('%', NULL, '%') matches nobody, so the
                 // technician picker, which searches on open, came up empty.
                 q = q == null ? "" : q;
-                Page<Personnel> results = jobTitle == null || jobTitle.isBlank()
-                                ? personnelRepo.findByLastNameContainingIgnoreCaseOrFirstNameContainingIgnoreCase(
-                                                q, q, pageable)
-                                : personnelRepo.searchByJobTitle(jobTitle.trim(), q, pageable);
+                Page<Personnel> results = accountableOnly
+                                ? personnelRepo.searchEligibleForAccountability(
+                                                accountabilityService.eligibleStatuses(), q, pageable)
+                                : jobTitle == null || jobTitle.isBlank()
+                                                ? personnelRepo.findByLastNameContainingIgnoreCaseOrFirstNameContainingIgnoreCase(
+                                                                q, q, pageable)
+                                                : personnelRepo.searchByJobTitle(jobTitle.trim(), q, pageable);
                 List<Map<String, String>> items = results.getContent().stream().map(p -> {
                         Map<String, String> map = new HashMap<>();
                         map.put("id", p.getEmployeeID());
+                        // Non-eligible staff are labelled, so the person assigning
+                        // can see accountability will fall to someone else.
+                        String status = accountabilityService.isEligible(p) ? ""
+                                        : " · " + p.getEmploymentStatus();
                         map.put("text", p.getLastName() + ", " + p.getFirstName() + " (" + p.getDepartment() +
                                         (p.getDivision() != null && !p.getDivision().isBlank() ? " / " + p.getDivision()
                                                         : "")
-                                        + ")");
+                                        + ")" + status);
                         return map;
                 }).sorted(Comparator.comparing(item -> item.get("text"), String.CASE_INSENSITIVE_ORDER))
                                 .collect(Collectors.toList());

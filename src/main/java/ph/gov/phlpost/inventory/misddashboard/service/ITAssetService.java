@@ -25,11 +25,12 @@ public class ITAssetService {
     private final String maintenanceTechnicianJobTitle;
     private final int maxReceiveQuantity;
     private final AssetWorkflowHelper workflow;
+    private final AccountabilityService accountabilityService;
 
     private static final DateTimeFormatter ASSET_TAG_DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
     public ITAssetService(AssetRepository assetRepo, PersonnelRepository personnelRepo, AuditLogService auditService,
-            AssetWorkflowHelper workflow,
+            AssetWorkflowHelper workflow, AccountabilityService accountabilityService,
             @Value("${asset.workflow.supplier-owner-id:SUPPLIER}") String supplierOwnerId,
             @Value("${asset.workflow.maintenance-technician-job-title:Computer Maintenance Technologist}") String maintenanceTechnicianJobTitle,
             @Value("${asset.receive.max-quantity:100}") int maxReceiveQuantity) {
@@ -37,6 +38,7 @@ public class ITAssetService {
         this.personnelRepo = personnelRepo;
         this.auditService = auditService;
         this.workflow = workflow;
+        this.accountabilityService = accountabilityService;
         this.supplierOwnerId = supplierOwnerId;
         this.maintenanceTechnicianJobTitle = maintenanceTechnicianJobTitle;
         this.maxReceiveQuantity = maxReceiveQuantity;
@@ -60,13 +62,22 @@ public class ITAssetService {
                 && !workflow.isUnserviceable(asset.getMaintenanceHealthStatus());
     }
 
+    /**
+     * Deploys an asset to {@code employeeId} (the user). The accountable owner is
+     * {@code accountableId} when given, otherwise the user if their employment
+     * status allows it, otherwise their nearest eligible manager
+     * ({@link AccountabilityService}).
+     */
     @Transactional
-    public void assignAsset(String assetTag, String employeeId, String notes, String performedBy) {
+    public AccountabilityService.Accountability assignAsset(String assetTag, String employeeId, String accountableId,
+            String notes, String performedBy) {
         Asset asset = assetRepo.findById(assetTag).orElseThrow(() -> new IllegalArgumentException("Asset not found."));
         requireAllowed(isWorkable(asset) && (workflow.canAssign(asset.getDeploymentStatus())
                 || workflow.canReassign(asset.getDeploymentStatus())), asset, "assign it");
-        String previousOwner = asset.getCurrentOwnerID();
-        asset.setCurrentOwnerID(employeeId);
+        AccountabilityService.Accountability accountability = accountabilityService.resolve(employeeId, accountableId);
+        String previousUser = asset.getAssignedUserID() != null ? asset.getAssignedUserID() : asset.getCurrentOwnerID();
+        asset.setAssignedUserID(accountability.assignedId());
+        asset.setCurrentOwnerID(accountability.accountableId());
         asset.setDeploymentStatus("Deployed");
         if (asset.getLifecycleStatus() == null || asset.getLifecycleStatus().isBlank()
                 || "Procured / Pre-Deployment".equals(asset.getLifecycleStatus())) {
@@ -77,10 +88,27 @@ public class ITAssetService {
             asset.setMaintenanceHealthStatus("Operational");
         }
         assetRepo.save(asset);
-        String actionType = previousOwner == null || previousOwner.isBlank() ? "Checkout" : "Reassignment";
-        auditService.logAssignment(assetTag, employeeId, actionType, notes);
+        String actionType = previousUser == null || previousUser.isBlank() ? "Checkout" : "Reassignment";
+        String accountabilityNote = accountabilityNote(accountability);
+        auditService.logAssignment(assetTag, accountability.assignedId(), actionType,
+                accountabilityNote + appendNotes(notes));
+        if (!accountability.accountableId().equals(accountability.assignedId())) {
+            // So the accountable owner's own history shows what they signed for.
+            auditService.logAssignment(assetTag, accountability.accountableId(), "Accountability Assigned",
+                    accountabilityNote + appendNotes(notes));
+        }
         auditService.logLifecycleEvent(assetTag, performedBy, actionType,
-                statusSummary(asset) + appendNotes(notes));
+                statusSummary(asset) + "; " + accountabilityNote + appendNotes(notes));
+        return accountability;
+    }
+
+    static String accountabilityNote(AccountabilityService.Accountability accountability) {
+        String basis = switch (accountability.basis()) {
+            case SELF -> "";
+            case MANAGER -> " (manager; user is not eligible)";
+            case CHOSEN -> " (chosen)";
+        };
+        return "User: " + accountability.assignedId() + "; Accountable: " + accountability.accountableId() + basis;
     }
 
     @Transactional
@@ -88,8 +116,9 @@ public class ITAssetService {
         Asset asset = assetRepo.findById(assetTag).orElseThrow(() -> new IllegalArgumentException("Asset not found."));
         requireAllowed(isWorkable(asset) && workflow.canReturn(asset.getDeploymentStatus()), asset,
                 "return it to MISD");
-        String prevOwner = asset.getCurrentOwnerID();
+        String prevOwner = asset.getAssignedUserID() != null ? asset.getAssignedUserID() : asset.getCurrentOwnerID();
         asset.setCurrentOwnerID(null);
+        asset.setAssignedUserID(null);
         asset.setDeploymentStatus("In Storage");
         if (asset.getLifecycleStatus() == null || asset.getLifecycleStatus().isBlank()) {
             asset.setLifecycleStatus("Active");
@@ -106,7 +135,9 @@ public class ITAssetService {
         requireAllowed(isWorkable(asset), asset, "send it for warranty repair");
         ensureNotUnderRepair(asset);
         ensureSupplierOwnerExists();
+        // The supplier holds custody during warranty repair; nobody uses it.
         asset.setCurrentOwnerID(supplierOwnerId);
+        asset.setAssignedUserID(null);
         applyRepairState(asset, "With Service Center");
         assetRepo.save(asset);
         auditService.logAssignment(assetTag, supplierOwnerId, "Warranty Repair", notes);
@@ -125,12 +156,18 @@ public class ITAssetService {
         Asset asset = findAsset(assetTag);
         requireAllowed(isWorkable(asset), asset, "send it for MISD maintenance");
         ensureNotUnderRepair(asset);
-        asset.setCurrentOwnerID(technician.getEmployeeID());
+        // The technician works on it; if they are not eligible to be accountable
+        // (e.g. a contractual technologist), their manager is.
+        AccountabilityService.Accountability accountability =
+                accountabilityService.resolve(technician.getEmployeeID(), null);
+        asset.setAssignedUserID(accountability.assignedId());
+        asset.setCurrentOwnerID(accountability.accountableId());
         applyRepairState(asset, "With MISD Technician");
         assetRepo.save(asset);
         auditService.logAssignment(assetTag, technician.getEmployeeID(), "MISD Maintenance", notes);
         auditService.logLifecycleEvent(assetTag, performedBy, "Sent for MISD Maintenance",
-                "Technician: " + technician.getEmployeeID() + appendNotes(notes));
+                "Technician: " + technician.getEmployeeID() + "; " + accountabilityNote(accountability)
+                        + appendNotes(notes));
     }
 
     @Transactional
@@ -143,8 +180,9 @@ public class ITAssetService {
             throw new IllegalArgumentException("Only assets currently assigned for repair can be marked repaired.");
         }
 
-        String previousOwner = asset.getCurrentOwnerID();
+        String previousOwner = asset.getAssignedUserID() != null ? asset.getAssignedUserID() : asset.getCurrentOwnerID();
         asset.setCurrentOwnerID(null);
+        asset.setAssignedUserID(null);
         asset.setDeploymentStatus("In Storage");
         asset.setMaintenanceHealthStatus("Operational");
         asset.setLifecycleStatus("Active");
@@ -162,7 +200,7 @@ public class ITAssetService {
         } else if ("Retired".equals(status)) {
             requireAllowed(workflow.hasActions(asset.getLifecycleStatus()), asset, "retire it");
         }
-        String previousOwner = asset.getCurrentOwnerID();
+        String previousOwner = asset.getAssignedUserID() != null ? asset.getAssignedUserID() : asset.getCurrentOwnerID();
 
         if ("Unserviceable".equals(status)) {
             // Declaring an asset beyond repair also returns it to MISD custody.
@@ -171,11 +209,13 @@ public class ITAssetService {
             // could have corrected that — leaving the asset stuck on someone's
             // accountability with no way off it.
             asset.setCurrentOwnerID(null);
+            asset.setAssignedUserID(null);
             asset.setDeploymentStatus("Unavailable");
             asset.setMaintenanceHealthStatus("Beyond Economic Repair (BER)");
             asset.setLifecycleStatus("End of Life (EOL)");
         } else if ("Retired".equals(status)) {
             asset.setCurrentOwnerID(null);
+            asset.setAssignedUserID(null);
             asset.setDeploymentStatus("Unavailable");
             asset.setMaintenanceHealthStatus("Not Applicable");
             asset.setLifecycleStatus("Decommissioned / Retired");
@@ -302,7 +342,13 @@ public class ITAssetService {
             existingAsset.setDeploymentStatus(submitted.getDeploymentStatus());
             existingAsset.setMaintenanceHealthStatus(submitted.getMaintenanceHealthStatus());
             existingAsset.setLifecycleStatus(submitted.getLifecycleStatus());
-            existingAsset.setCurrentOwnerID(submitted.getCurrentOwnerID());
+            // The slideout cannot assign anyone (that goes through assignAsset and
+            // its accountability rule); it can only release the asset, which it
+            // signals by submitting no owner. Releasing clears user and owner.
+            if (submitted.getCurrentOwnerID() == null) {
+                existingAsset.setCurrentOwnerID(null);
+                existingAsset.setAssignedUserID(null);
+            }
             existingAsset.setRemarks(submitted.getRemarks());
             if (existingAsset.getSerialNumber() == null || existingAsset.getSerialNumber().isBlank()) {
                 existingAsset.setSerialNumber(submitted.getSerialNumber());

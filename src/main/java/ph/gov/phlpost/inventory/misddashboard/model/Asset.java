@@ -27,8 +27,16 @@ public class Asset {
     @Column(name = "PurchasePrice")
     private BigDecimal purchasePrice;
 
+    /** The accountable owner: must hold an eligible employment status (see AccountabilityService). */
     @Column(name = "CurrentOwnerID")
     private String currentOwnerID;
+
+    /**
+     * Who actually uses the asset. May be non-regular (e.g. Job Order); the
+     * accountable owner is then usually their manager.
+     */
+    @Column(name = "AssignedUserID")
+    private String assignedUserID;
 
     @Column(name = "DeploymentStatus")
     private String deploymentStatus;
@@ -91,6 +99,14 @@ public class Asset {
 
     public void setCurrentOwnerID(String currentOwnerID) {
         this.currentOwnerID = currentOwnerID;
+    }
+
+    public String getAssignedUserID() {
+        return assignedUserID;
+    }
+
+    public void setAssignedUserID(String assignedUserID) {
+        this.assignedUserID = assignedUserID;
     }
 
     public String getDeploymentStatus() {

@@ -8,28 +8,30 @@ USE misd_inventory;
 INSERT INTO locations (LocationID, Area, Province, OfficeAddress) VALUES
   (1, 'Central Office', 'Metro Manila', 'Liwasang Bonifacio, Manila');
 
-INSERT INTO Personnel (EmployeeID, FirstName, LastName, JobTitle, Department, Division, ManagerID, BaseLocationID) VALUES
-  ('E2E-MGR',  'Maria', 'Reyes',  'Division Chief',                       'MISD',      'Systems',     NULL,      1),
-  ('E2E-001',  'Juan',  'Santos', 'Information Systems Analyst',          'MISD',      'Systems',     'E2E-MGR', 1),
-  ('E2E-002',  'Ana',   'Cruz',   'Driver',                               'Motorpool', 'Logistics',   'E2E-MGR', 1),
-  ('E2E-TECH', 'Leo',   'Garcia', 'Computer Maintenance Technologist II', 'MISD',      'Tech Support','E2E-MGR', 1);
+-- E2E-002 is Job Order: she may use and drive assets, but accountability
+-- must fall to a regular employee (her manager, E2E-MGR).
+INSERT INTO Personnel (EmployeeID, FirstName, LastName, JobTitle, EmploymentStatus, Department, Division, ManagerID, BaseLocationID) VALUES
+  ('E2E-MGR',  'Maria', 'Reyes',  'Division Chief',                       'Regular',   'MISD',      'Systems',     NULL,      1),
+  ('E2E-001',  'Juan',  'Santos', 'Information Systems Analyst',          'Regular',   'MISD',      'Systems',     'E2E-MGR', 1),
+  ('E2E-002',  'Ana',   'Cruz',   'Driver',                               'Job Order', 'Motorpool', 'Logistics',   'E2E-MGR', 1),
+  ('E2E-TECH', 'Leo',   'Garcia', 'Computer Maintenance Technologist II', 'Regular',   'MISD',      'Tech Support','E2E-MGR', 1);
 
 INSERT INTO EquipmentCatalog (CatalogID, Category, Manufacturer, ModelName, Specifications) VALUES
   (1, 'Laptop',  'Dell',  'Latitude 5440', '{"cpu":"i5-1345U","ram":"16GB","storage":"512GB SSD"}'),
   (2, 'Desktop', 'HP',    'ProDesk 400 G9', '{"cpu":"i5-12500","ram":"8GB"}'),
   (3, 'Printer', 'Epson', 'L3250', NULL);
 
-INSERT INTO Assets (AssetTag, CatalogID, SerialNumber, PurchaseDate, PurchasePrice, CurrentOwnerID, Remarks,
+INSERT INTO Assets (AssetTag, CatalogID, SerialNumber, PurchaseDate, PurchasePrice, CurrentOwnerID, AssignedUserID, Remarks,
                     DeploymentStatus, MaintenanceHealthStatus, LifecycleStatus) VALUES
-  ('E2E-ASSET-STORAGE',  1, 'SN-E2E-0001', '2025-01-15', 65000.00, NULL,      NULL,
+  ('E2E-ASSET-STORAGE',  1, 'SN-E2E-0001', '2025-01-15', 65000.00, NULL, NULL,      NULL,
    'In Storage', 'Operational', 'Procured / Pre-Deployment'),
-  ('E2E-ASSET-DEPLOYED', 1, 'SN-E2E-0002', '2024-03-10', 65000.00, 'E2E-001', 'Seeded deployed laptop',
+  ('E2E-ASSET-DEPLOYED', 1, 'SN-E2E-0002', '2024-03-10', 65000.00, 'E2E-001', 'E2E-001', 'Seeded deployed laptop',
    'Deployed', 'Operational', 'Active'),
-  ('E2E-ASSET-BER',      2, 'SN-E2E-0003', '2018-06-01', 42000.00, NULL,      NULL,
+  ('E2E-ASSET-BER',      2, 'SN-E2E-0003', '2018-06-01', 42000.00, NULL, NULL,      NULL,
    'In Storage', 'Beyond Economic Repair (BER)', 'End of Life (EOL)'),
-  ('E2E-ASSET-MISSING',  3, NULL,          '2023-02-20', 12000.00, NULL,      NULL,
+  ('E2E-ASSET-MISSING',  3, NULL,          '2023-02-20', 12000.00, NULL, NULL,      NULL,
    'Missing / Unaccounted', 'Operational', 'Active'),
-  ('E2E-ASSET-ASSIGN',   2, 'SN-E2E-0005', '2025-05-05', 42000.00, NULL,      NULL,
+  ('E2E-ASSET-ASSIGN',   2, 'SN-E2E-0005', '2025-05-05', 42000.00, NULL, NULL,      NULL,
    'In Storage', 'Operational', 'Procured / Pre-Deployment');
 
 INSERT INTO FleetVehicles (VehicleID, PlateNumber, VehicleType, Make, Model, ManufactureYear, EngineNumber, ChassisNumberVIN,

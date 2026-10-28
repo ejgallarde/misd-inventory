@@ -48,9 +48,11 @@
     }
 
     function renderAssigneeSummary(data) {
+        // assignee* describe the accountable owner; assignedUser* who uses it.
         return `<div class="d-grid gap-2">
-            <div><span class="text-muted fw-semibold">Employee ID:</span> ${escapeValue(data.assigneeEmployeeID)}</div>
-            <div><span class="text-muted fw-semibold">Full Name:</span> ${escapeValue(data.assigneeFullName)}</div>
+            <div><span class="text-muted fw-semibold">Accountable Owner:</span> ${escapeValue(data.assigneeFullName)}
+                <span class="text-muted">(${escapeValue(data.assigneeEmployeeID)})</span></div>
+            <div><span class="text-muted fw-semibold">Assigned User:</span> ${escapeValue(data.assignedUserFullName)}</div>
             <div><span class="text-muted fw-semibold">Department:</span> ${escapeValue(data.assigneeDepartment)}</div>
             <div><span class="text-muted fw-semibold">Division:</span> ${escapeValue(data.assigneeDivision)}</div>
             <div><span class="text-muted fw-semibold">Manager's Full Name:</span> ${escapeValue(data.assigneeManagerFullName)}</div>

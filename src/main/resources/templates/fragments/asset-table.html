@@ -9,6 +9,7 @@
                 <th>Asset Tag</th>
                 <th>Category</th>
                 <th>Accountable Owner</th>
+                <th>Assigned User</th>
                 <th>Location of the Accountable Owner</th>
                 <th>Department</th>
                 <th>Division</th>
@@ -34,6 +35,10 @@
                 </td>
                 <td th:classappend="${asset.currentOwnerID != null and employeeMap[asset.currentOwnerID] != null ? 'fw-bold' : ''}"
                     th:text="${asset.currentOwnerID != null and employeeMap[asset.currentOwnerID] != null ? employeeMap[asset.currentOwnerID] : 'MISD Storage'}">
+                </td>
+                <!-- Who uses it. Differs from the accountable owner when the user is
+                     not eligible to be accountable (e.g. Job Order). -->
+                <td th:text="${asset.assignedUserID != null and employeeMap[asset.assignedUserID] != null ? employeeMap[asset.assignedUserID] : '—'}">
                 </td>
                 <td
                     th:text="${asset.currentOwnerID != null and personnelLocationMap[asset.currentOwnerID] != null ? personnelLocationMap[asset.currentOwnerID] : 'MISD Storage'}">

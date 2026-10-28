@@ -47,6 +47,9 @@ class PropertiesControllerTest {
     @Mock
     private AssetHistoryService assetHistoryService;
 
+    @Mock
+    private ph.gov.phlpost.inventory.misddashboard.service.AccountabilityService accountabilityService;
+
     @InjectMocks
     private PropertiesController controller;
 

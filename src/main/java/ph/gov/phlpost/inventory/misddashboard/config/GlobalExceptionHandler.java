@@ -59,6 +59,8 @@ public class GlobalExceptionHandler {
                 "A property with this Title Number / TCT is already registered.");
         messages.put("assets_ibfk_1", "The selected catalog item no longer exists. Refresh the page and try again.");
         messages.put("assets_ibfk_2", "The selected accountable owner is not a known employee.");
+        messages.put("assets_assigned_user_fk", "The selected user is not a known employee.");
+        messages.put("fleetvehicles_accountable_owner_fk", "The selected accountable owner is not a known employee.");
         messages.put("assetassignments_ibfk_2", "The selected employee is not in the personnel registry.");
         messages.put("fleetvehicles_ibfk_1", "The selected driver is not a known employee.");
         messages.put("personnel_ibfk_1", "The selected manager is not a known employee.");

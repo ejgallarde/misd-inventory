@@ -173,12 +173,15 @@ public class ITAssetController {
 
     @PostMapping("/assets/assign")
     public String assignAsset(@RequestParam String assetTag, @RequestParam String employeeID,
+            @RequestParam(required = false) String accountableOwnerID,
             @RequestParam(required = false) String conditionNotes, @RequestParam(value = "search", required = false) String search,
             @RequestParam(value = "page", required = false) Integer page, Authentication authentication,
             RedirectAttributes redirectAttributes) {
         try {
-            assetService.assignAsset(assetTag, employeeID, conditionNotes, AuditActor.of(authentication));
-            redirectAttributes.addFlashAttribute("successMessage", "Asset assigned successfully.");
+            var accountability = assetService.assignAsset(assetTag, employeeID, accountableOwnerID, conditionNotes,
+                    AuditActor.of(authentication));
+            redirectAttributes.addFlashAttribute("successMessage",
+                    registryService.describeAccountability("Asset", accountability));
         } catch (IllegalArgumentException e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }
@@ -400,7 +403,9 @@ public class ITAssetController {
                 ownerId == null ? null : registryService.getDepartmentMap().get(ownerId),
                 ownerId == null ? null : registryService.getDivisionMap().get(ownerId),
                 resolveManagerId(personnel),
-                resolveManagerFullName(personnel));
+                resolveManagerFullName(personnel),
+                asset.getAssignedUserID(),
+                asset.getAssignedUserID() == null ? null : registryService.resolveDisplayName(asset.getAssignedUserID()));
     }
 
     private void applyStatusTransitions(Asset asset) {
@@ -509,6 +514,9 @@ public class ITAssetController {
             String assigneeDepartment,
             String assigneeDivision,
             String assigneeManagerID,
-            String assigneeManagerFullName) {
+            String assigneeManagerFullName,
+            // Who uses it; the assignee* fields above describe the accountable owner.
+            String assignedUserID,
+            String assignedUserFullName) {
     }
 }

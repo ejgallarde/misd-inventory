@@ -36,10 +36,21 @@ export async function chooseRowAction(row: Locator, action: string | RegExp): Pr
 }
 
 /** Picks a person in a Tom Select personnel search (select.personnel-picker) inside an open modal. */
-export async function pickPersonnel(modal: Locator, search: string, optionText: string | RegExp): Promise<void> {
-  await modal.locator('.ts-control').click();
-  await modal.locator('.ts-control input').pressSequentially(search, { delay: 30 });
-  await modal.locator('.ts-dropdown .option', { hasText: optionText }).click();
+export async function pickPersonnel(
+  modal: Locator,
+  search: string,
+  optionText: string | RegExp,
+  fieldName = 'employeeID',
+): Promise<void> {
+  // Tom Select renders its control right after the original <select>.
+  const picker = modal.locator(`select[name=${fieldName}] + .ts-wrapper`);
+  await picker.locator('.ts-control').click();
+  await picker.locator('.ts-control input').pressSequentially(search, { delay: 30 });
+  await picker.locator('.ts-dropdown .option', { hasText: optionText }).click();
+  // Close the dropdown before the caller clicks anything else; otherwise that
+  // first click only blurs the picker (seen as a submit that "did nothing").
+  await modal.locator('.modal-title').click();
+  await expect(picker.locator('.ts-dropdown')).toBeHidden();
 }
 
 export async function expectSuccessToast(page: Page, text: string | RegExp): Promise<void> {

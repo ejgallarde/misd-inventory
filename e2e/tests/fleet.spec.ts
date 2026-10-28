@@ -10,10 +10,10 @@ import {
   uniqueSuffix,
 } from './support/app';
 
-async function returnToMotorpool(page: Page, row: Locator): Promise<void> {
+async function returnToMotorpool(page: Page, row: Locator, vehicleId = '4'): Promise<void> {
   await chooseRowAction(row, 'Return to Motorpool');
   const modal = page.locator('#returnModal');
-  await expect(modal.locator('#returnVehicleID')).toHaveValue('4');
+  await expect(modal.locator('#returnVehicleID')).toHaveValue(vehicleId);
   await modal.locator('textarea[name=conditionNotes]').fill('Returned by Playwright'); // required
   await modal.getByRole('button', { name: 'Confirm Return' }).click();
   await expectSuccessToast(page, 'Vehicle returned to motorpool.');
@@ -99,11 +99,13 @@ test.describe('fleet module', () => {
     await expect(assign.locator('#assignVehicleID')).toHaveValue('4');
     await pickPersonnel(assign, 'Cruz', 'Cruz, Ana');
     await assign.getByRole('button', { name: 'Complete Assignment' }).click();
-    await expectSuccessToast(page, 'Vehicle assigned');
+    await expectSuccessToast(page, 'Vehicle assigned to Cruz, Ana. Accountable owner: Reyes, Maria');
 
     await searchTable(page, 'fleetTable', 'E2E-1004');
     row = tableRow(page, 'fleetTable', 'E2E-1004');
     await expect(row).toContainText('Cruz, Ana');
+    await expect(row.locator('td').nth(2)).toHaveText('Reyes, Maria'); // accountable owner
+    await expect(row.locator('td').nth(3)).toHaveText('Cruz, Ana'); // assigned driver
 
     await returnToMotorpool(page, row);
     await searchTable(page, 'fleetTable', 'E2E-1004');
@@ -176,6 +178,22 @@ test.describe('fleet module', () => {
     expect(xlsx.suggestedFilename()).toMatch(/\.xlsx$/);
     const bytes = Buffer.concat(await (await xlsx.createReadStream()).toArray());
     expect(bytes.subarray(0, 2).toString()).toBe('PK'); // a real zip-based workbook (JSZip loaded)
+  });
+
+  test('an explicitly chosen accountable owner overrides the manager default', async ({ page }) => {
+    await page.goto('/fleet');
+    await searchTable(page, 'fleetTable', 'E2E-1001');
+    await chooseRowAction(tableRow(page, 'fleetTable', 'E2E-1001'), 'Assign Driver (Accountable Owner)');
+    const assign = page.locator('#assignModal');
+    await pickPersonnel(assign, 'Cruz', /Cruz, Ana .*Job Order/);
+    // The accountable-owner picker offers regular staff only.
+    await pickPersonnel(assign, 'Santos', 'Santos, Juan', 'accountableOwnerID');
+    await assign.getByRole('button', { name: 'Complete Assignment' }).click();
+    await expectSuccessToast(page, 'Accountable owner: Santos, Juan (chosen at assignment)');
+
+    // Put it back for other tests.
+    await searchTable(page, 'fleetTable', 'E2E-1001');
+    await returnToMotorpool(page, tableRow(page, 'fleetTable', 'E2E-1001'), '1');
   });
 
   test('unknown vehicle id returns 404 from the detail API', async ({ request }) => {

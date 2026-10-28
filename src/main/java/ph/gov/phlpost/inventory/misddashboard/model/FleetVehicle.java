@@ -46,8 +46,16 @@ public class FleetVehicle {
     @Column(name = "InsuranceExpiry")
     private LocalDate insuranceExpiry;
 
+    /** Who drives the vehicle; may be non-regular (e.g. Job Order). */
     @Column(name = "AssignedDriverID")
     private String assignedDriverID;
+
+    /**
+     * Who is accountable for the vehicle: an eligible (regular) employee,
+     * usually the driver's manager when the driver is non-regular.
+     */
+    @Column(name = "AccountableOwnerID")
+    private String accountableOwnerID;
 
     @Column(name = "AdminLegaltionalStatus")
     private String adminLegaltionalStatus;
@@ -169,6 +177,14 @@ public class FleetVehicle {
 
     public void setAssignedDriverID(String assignedDriverID) {
         this.assignedDriverID = assignedDriverID;
+    }
+
+    public String getAccountableOwnerID() {
+        return accountableOwnerID;
+    }
+
+    public void setAccountableOwnerID(String accountableOwnerID) {
+        this.accountableOwnerID = accountableOwnerID;
     }
 
     public String getAdminLegaltionalStatus() {

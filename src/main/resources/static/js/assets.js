@@ -123,7 +123,7 @@ $(document).ready(function () {
     // Pre-set filter from URL param (e.g. /assets?filter=deployed).
     // When a preset filter is active, session state is NOT restored to avoid overriding it.
     function applyPresetFilter(filter) {
-        const STATUS_COL = 7;
+        const STATUS_COL = 8; // after the Assigned User column
         const FILTERS = {
             'deployed': ['Deployment: Deployed', false],
             'current-inventory': ['^(?!.*Lifecycle: Decommissioned / Retired).+$', true],

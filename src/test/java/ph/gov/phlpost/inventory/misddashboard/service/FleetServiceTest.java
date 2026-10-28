@@ -25,6 +25,10 @@ import ph.gov.phlpost.inventory.misddashboard.repository.FleetVehicleRepository;
 @ExtendWith(MockitoExtension.class)
 class FleetServiceTest {
 
+    // Default: the assigned person is accountable themselves (AccountabilityServiceTest covers the rule).
+    @Mock
+    private AccountabilityService accountabilityService;
+
     @Mock
     private FleetVehicleRepository fleetRepo;
 
@@ -35,7 +39,10 @@ class FleetServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new FleetService(fleetRepo, auditService, new FleetWorkflowHelper());
+        org.mockito.Mockito.lenient().when(accountabilityService.resolve(org.mockito.ArgumentMatchers.anyString(),
+                org.mockito.ArgumentMatchers.any())).thenAnswer(invocation -> new AccountabilityService.Accountability(
+                        invocation.getArgument(0), invocation.getArgument(0), AccountabilityService.Basis.SELF));
+        service = new FleetService(fleetRepo, auditService, new FleetWorkflowHelper(), accountabilityService);
     }
 
     @Test
@@ -43,14 +50,15 @@ class FleetServiceTest {
         FleetVehicle vehicle = vehicle(1);
         when(fleetRepo.findById(1)).thenReturn(Optional.of(vehicle));
 
-        service.assignVehicle(1, "E-2", "Trip ticket 55", "clerk");
+        service.assignVehicle(1, "E-2", null, "Trip ticket 55", "clerk");
 
         assertThat(vehicle.getAssignedDriverID()).isEqualTo("E-2");
         assertThat(vehicle.getOperationalStatus()).isEqualTo("Dispatched");
-        verify(auditService).logAssignment("VEHICLE-1", "E-2", "Vehicle Checkout", "Trip ticket 55");
+        verify(auditService).logAssignment("VEHICLE-1", "E-2", "Vehicle Checkout",
+                "Driver: E-2; Accountable: E-2; Notes: Trip ticket 55");
         // Who dispatched it lives only in the lifecycle log.
         verify(auditService).logLifecycleEvent("VEHICLE-1", "clerk", "Vehicle Checkout",
-                "Driver: E-2; Notes: Trip ticket 55");
+                "Driver: E-2; Accountable: E-2; Notes: Trip ticket 55");
     }
 
     @Test
@@ -136,7 +144,7 @@ class FleetServiceTest {
         vehicle.setOperationalStatus("Stolen");
         when(fleetRepo.findById(13)).thenReturn(Optional.of(vehicle));
 
-        assertThatThrownBy(() -> service.assignVehicle(13, "E-2", null, "clerk"))
+        assertThatThrownBy(() -> service.assignVehicle(13, "E-2", null, null, "clerk"))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageStartingWith("Cannot assign a driver: vehicle PLT-13 is ");
         assertThat(vehicle.getAssignedDriverID()).isNull();
@@ -150,7 +158,7 @@ class FleetServiceTest {
         when(fleetRepo.findById(14)).thenReturn(Optional.of(vehicle));
 
         // Idle but decommissioned: the operational status alone would allow it.
-        assertThatThrownBy(() -> service.assignVehicle(14, "E-2", null, "clerk")).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> service.assignVehicle(14, "E-2", null, null, "clerk")).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> service.retireVehicle(14, null, "clerk")).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> service.markVehicleStolen(14, null, "clerk")).isInstanceOf(IllegalArgumentException.class);
         verify(fleetRepo, never()).save(vehicle);

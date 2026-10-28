@@ -31,6 +31,14 @@ public class Personnel {
     @Column(name = "JobTitle")
     private String jobTitle;
 
+    /**
+     * Regular, Casual, Contractual, Contract of Service or Job Order. Only the
+     * statuses in asset.accountability.eligible-employment-statuses may be
+     * accountable for property (see AccountabilityService).
+     */
+    @Column(name = "EmploymentStatus")
+    private String employmentStatus;
+
     @Column(name = "ManagerID")
     private String managerID;
 
@@ -87,6 +95,14 @@ public class Personnel {
 
     public void setJobTitle(String jobTitle) {
         this.jobTitle = jobTitle;
+    }
+
+    public String getEmploymentStatus() {
+        return employmentStatus;
+    }
+
+    public void setEmploymentStatus(String employmentStatus) {
+        this.employmentStatus = employmentStatus;
     }
 
     public String getManagerID() {

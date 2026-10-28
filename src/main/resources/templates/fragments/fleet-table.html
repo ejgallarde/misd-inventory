@@ -9,6 +9,7 @@
                 <th>Vehicle ID</th>
                 <th>Plate No.</th>
                 <th>Accountable Owner</th>
+                <th>Assigned Driver</th>
                 <th>Type</th>
                 <th>Insurance Expiry</th>
                 <th>Reg. Expiry</th>
@@ -37,8 +38,12 @@
                         class="text-decoration-none fleet-detail-link"></a>
                     <span th:if="${vehicle.plateNumber == null or #strings.isEmpty(vehicle.plateNumber)}">N/A</span>
                 </td>
-                <td th:classappend="${vehicle.assignedDriverID != null ? 'fw-bold' : ''}"
-                    th:text="${vehicle.assignedDriverID != null and employeeMap[vehicle.assignedDriverID] != null ? employeeMap[vehicle.assignedDriverID] : 'Unassigned'}">
+                <td th:classappend="${vehicle.accountableOwnerID != null ? 'fw-bold' : ''}"
+                    th:text="${vehicle.accountableOwnerID != null and employeeMap[vehicle.accountableOwnerID] != null ? employeeMap[vehicle.accountableOwnerID] : 'Unassigned'}">
+                </td>
+                <!-- Who drives it; may be non-regular, in which case the accountable
+                     owner is usually their manager. -->
+                <td th:text="${vehicle.assignedDriverID != null and employeeMap[vehicle.assignedDriverID] != null ? employeeMap[vehicle.assignedDriverID] : '—'}">
                 </td>
                 <td>
                     <span class="fleet-type-info" tabindex="0"

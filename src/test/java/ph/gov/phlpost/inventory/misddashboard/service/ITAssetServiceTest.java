@@ -24,6 +24,10 @@ import ph.gov.phlpost.inventory.misddashboard.repository.PersonnelRepository;
 @ExtendWith(MockitoExtension.class)
 class ITAssetServiceTest {
 
+    // Default: the assigned person is accountable themselves (AccountabilityServiceTest covers the rule).
+    @Mock
+    private AccountabilityService accountabilityService;
+
     @Mock
     private AssetRepository assetRepository;
 
@@ -40,11 +44,15 @@ class ITAssetServiceTest {
 
     @BeforeEach
     void setUp() {
+        org.mockito.Mockito.lenient().when(accountabilityService.resolve(org.mockito.ArgumentMatchers.anyString(),
+                org.mockito.ArgumentMatchers.any())).thenAnswer(invocation -> new AccountabilityService.Accountability(
+                        invocation.getArgument(0), invocation.getArgument(0), AccountabilityService.Basis.SELF));
         service = new ITAssetService(
                 assetRepository,
                 personnelRepository,
                 auditLogService,
                 new AssetWorkflowHelper(),
+                accountabilityService,
                 "SUPPLIER",
                 "Computer Maintenance Technologist",
                 100);
@@ -91,7 +99,7 @@ class ITAssetServiceTest {
                 "TAG-2", "TECH-1", "MISD Maintenance", "Replace power supply");
         // The person who sent it, not the technician, is the actor.
         verify(auditLogService).logLifecycleEvent("TAG-2", "clerk", "Sent for MISD Maintenance",
-                "Technician: TECH-1; Notes: Replace power supply");
+                "Technician: TECH-1; User: TECH-1; Accountable: TECH-1; Notes: Replace power supply");
     }
 
     @Test
@@ -115,10 +123,11 @@ class ITAssetServiceTest {
         asset.setLifecycleStatus("Active");
         when(assetRepository.findById("TAG-REASSIGN")).thenReturn(Optional.of(asset));
 
-        service.assignAsset("TAG-REASSIGN", "EMP-NEW", "Transferred to new user", "clerk");
+        service.assignAsset("TAG-REASSIGN", "EMP-NEW", null, "Transferred to new user", "clerk");
 
         verify(auditLogService).logAssignment(
-                "TAG-REASSIGN", "EMP-NEW", "Reassignment", "Transferred to new user");
+                "TAG-REASSIGN", "EMP-NEW", "Reassignment",
+                "User: EMP-NEW; Accountable: EMP-NEW; Notes: Transferred to new user");
         verify(auditLogService).logLifecycleEvent(
                 org.mockito.ArgumentMatchers.eq("TAG-REASSIGN"),
                 org.mockito.ArgumentMatchers.eq("clerk"),
@@ -279,7 +288,7 @@ class ITAssetServiceTest {
         asset.setLifecycleStatus("Decommissioned / Retired");
         when(assetRepository.findById("TAG-RET")).thenReturn(Optional.of(asset));
 
-        assertThatThrownBy(() -> service.assignAsset("TAG-RET", "EMP-1", null, "clerk"))
+        assertThatThrownBy(() -> service.assignAsset("TAG-RET", "EMP-1", null, null, "clerk"))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageStartingWith("Cannot assign it: asset TAG-RET");
         verify(assetRepository, never()).save(asset);
@@ -293,7 +302,7 @@ class ITAssetServiceTest {
         asset.setLifecycleStatus("End of Life (EOL)");
         when(assetRepository.findById("TAG-BER2")).thenReturn(Optional.of(asset));
 
-        assertThatThrownBy(() -> service.assignAsset("TAG-BER2", "EMP-1", null, "clerk"))
+        assertThatThrownBy(() -> service.assignAsset("TAG-BER2", "EMP-1", null, null, "clerk"))
                 .isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> service.sendForWarranty("TAG-BER2", null, "clerk"))
                 .isInstanceOf(IllegalArgumentException.class);

@@ -7,6 +7,20 @@
          server enforces every rule regardless (config/SecurityConfig). -->
     <meta th:fragment="permissionsMeta" name="misd-permissions" th:content="${perm.metaContent()}">
 
+    <!-- Optional accountable owner for the IT asset and vehicle assign modals.
+         Lists only employees whose status may hold accountability
+         (asset.accountability.eligible-employment-statuses); left blank, the
+         server uses the assigned person if eligible, otherwise their manager. -->
+    <div th:fragment="accountableOwnerPicker" class="mb-3">
+        <label class="form-label fw-bold">Accountable Owner <span class="text-muted fw-normal">(optional)</span></label>
+        <select class="form-select personnel-picker" name="accountableOwnerID" data-accountable-only="true"
+            style="width: 100%;"></select>
+        <div class="form-text">
+            Leave blank to use the assigned person, or their manager if they are not a regular employee
+            (e.g. Job Order or Contract of Service).
+        </div>
+    </div>
+
     <!-- Flash toasts for redirect-after-POST outcomes. Every page that can be a
          redirect target must include both: the standalone pages used to render
          only the success toast, so a rejected action reloaded with no message. -->

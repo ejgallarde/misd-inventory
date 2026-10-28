@@ -380,6 +380,10 @@ window.MISDCommon = (function (jqueryGlobal) {
                         if (jobTitle) {
                             params.set('jobTitle', jobTitle);
                         }
+                        // Accountable-owner pickers list only eligible (regular) staff.
+                        if (select.dataset.accountableOnly === 'true') {
+                            params.set('accountableOnly', 'true');
+                        }
                         fetch('/api/personnel/search?' + params.toString(), { headers: { Accept: 'application/json' } })
                             .then(function (response) {
                                 return response.ok ? response.json() : { results: [] };

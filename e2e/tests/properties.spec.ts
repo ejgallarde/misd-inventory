@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { chooseRowAction, expectSuccessToast, searchTable, tableRow } from './support/app';
+import { chooseRowAction, expectSuccessToast, pickPersonnel, searchTable, tableRow } from './support/app';
 
 test.describe('real estate & property module', () => {
   test('splits lots and buildings into separate tables', async ({ page }) => {
@@ -105,6 +105,17 @@ test.describe('real estate & property module', () => {
     await page.goto('/properties');
     const row = page.locator('#landPropertiesTable tbody tr', { hasText: `E2E Cascade Lot ${id}` });
     await expect(row).toContainText('Manila');
+  });
+
+  test('a Job Order employee cannot be made custodian (accountable)', async ({ page }) => {
+    await page.goto('/properties');
+    await searchTable(page, 'buildingFacilitiesTable', 'E2E Overdue Building');
+    await chooseRowAction(tableRow(page, 'buildingFacilitiesTable', 'E2E Overdue Building'), 'Assign Custodian');
+    const modal = page.locator('#custodianModal');
+    await pickPersonnel(modal, 'Cruz', /Cruz, Ana .*Job Order/);
+    await modal.locator('textarea[name=conditionNotes]').fill('Designation memo 12'); // required
+    await modal.locator('button[type=submit]').click();
+    await expect(page.locator('#errorToast')).toContainText('is Job Order and cannot be the accountable owner');
   });
 
   test('province -> city -> barangay lookup API cascades', async ({ request }) => {

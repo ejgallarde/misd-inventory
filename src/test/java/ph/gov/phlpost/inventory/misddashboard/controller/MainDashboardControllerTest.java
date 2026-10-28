@@ -55,6 +55,9 @@ class MainDashboardControllerTest {
     @Mock
     private ph.gov.phlpost.inventory.misddashboard.service.LocationLookupService locationLookupService;
 
+    @Mock
+    private ph.gov.phlpost.inventory.misddashboard.service.AccountabilityService accountabilityService;
+
     @InjectMocks
     private MainDashboardController controller;
 
@@ -67,7 +70,7 @@ class MainDashboardControllerTest {
         when(personnelRepo.searchByJobTitle(eq("Computer Maintenance Technologist"), eq(""), any(Pageable.class)))
                 .thenReturn(empty);
 
-        Map<String, Object> response = controller.searchPersonnel(null, " Computer Maintenance Technologist ",
+        Map<String, Object> response = controller.searchPersonnel(null, " Computer Maintenance Technologist ", false,
                 pageable);
 
         verify(personnelRepo).searchByJobTitle("Computer Maintenance Technologist", "", pageable);
@@ -80,7 +83,7 @@ class MainDashboardControllerTest {
         when(personnelRepo.findByLastNameContainingIgnoreCaseOrFirstNameContainingIgnoreCase("", "", pageable))
                 .thenReturn(new PageImpl<>(List.of()));
 
-        controller.searchPersonnel(null, null, pageable);
+        controller.searchPersonnel(null, null, false, pageable);
 
         verify(personnelRepo).findByLastNameContainingIgnoreCaseOrFirstNameContainingIgnoreCase("", "", pageable);
     }

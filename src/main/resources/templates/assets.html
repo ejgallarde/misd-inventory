@@ -64,12 +64,13 @@
                             <input type="hidden" id="assignAssetTagInput" name="assetTag">
                         </div>
                         <div class="mb-3">
-                            <label class="form-label fw-bold">Select Employee</label>
+                            <label class="form-label fw-bold">Assigned User</label>
                             <select class="form-select personnel-picker" name="employeeID" required
                                 style="width: 100%;">
 
                             </select>
                         </div>
+                        <div th:replace="~{fragments/components :: accountableOwnerPicker}"></div>
                         <div class="mb-3">
                             <label class="form-label fw-bold">Deployment Notes</label>
                             <textarea class="form-control" name="conditionNotes" rows="2"></textarea>

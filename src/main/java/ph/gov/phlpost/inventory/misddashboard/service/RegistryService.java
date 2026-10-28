@@ -142,6 +142,18 @@ public class RegistryService {
         return getEmployeeNameMap().getOrDefault(employeeId, employeeId);
     }
 
+    /** "Assigned to X. Accountable owner: Y (…why…)." for assignment confirmations. */
+    public String describeAccountability(String subject, AccountabilityService.Accountability accountability) {
+        String user = resolveDisplayName(accountability.assignedId());
+        String accountable = resolveDisplayName(accountability.accountableId());
+        String reason = switch (accountability.basis()) {
+            case SELF -> "";
+            case MANAGER -> " (manager of " + user + ", who cannot be accountable)";
+            case CHOSEN -> " (chosen at assignment)";
+        };
+        return subject + " assigned to " + user + ". Accountable owner: " + accountable + reason + ".";
+    }
+
     public String getManagerNameByEmployeeId(String employeeId) {
         if (employeeId == null || employeeId.isBlank()) {
             return "No Manager";

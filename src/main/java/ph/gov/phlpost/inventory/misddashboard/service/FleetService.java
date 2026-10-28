@@ -17,12 +17,14 @@ public class FleetService {
     private final FleetVehicleRepository fleetRepo;
     private final AuditLogService auditService;
     private final FleetWorkflowHelper workflow;
+    private final AccountabilityService accountabilityService;
 
     public FleetService(FleetVehicleRepository fleetRepo, AuditLogService auditService,
-            FleetWorkflowHelper workflow) {
+            FleetWorkflowHelper workflow, AccountabilityService accountabilityService) {
         this.fleetRepo = fleetRepo;
         this.auditService = auditService;
         this.workflow = workflow;
+        this.accountabilityService = accountabilityService;
     }
 
     /**
@@ -40,21 +42,37 @@ public class FleetService {
         }
     }
 
+    /**
+     * Dispatches a vehicle to {@code employeeId} (the driver). The accountable
+     * owner is {@code accountableId} when given, otherwise the driver if their
+     * employment status allows it, otherwise their nearest eligible manager —
+     * drivers are often Job Order personnel ({@link AccountabilityService}).
+     */
     @Transactional
-    public void assignVehicle(Integer vehicleId, String employeeId, String notes, String performedBy) {
+    public AccountabilityService.Accountability assignVehicle(Integer vehicleId, String employeeId,
+            String accountableId, String notes, String performedBy) {
         FleetVehicle vehicle = fleetRepo.findById(vehicleId)
                 .orElseThrow(() -> new IllegalArgumentException("Vehicle not found."));
         requireAllowed(workflow.canAssignDriver(vehicle.getOperationalStatus())
                 && workflow.hasActions(vehicle.getAdminLegaltionalStatus()), vehicle, "assign a driver");
+        AccountabilityService.Accountability accountability = accountabilityService.resolve(employeeId, accountableId);
 
-        vehicle.setAssignedDriverID(employeeId);
+        vehicle.setAssignedDriverID(accountability.assignedId());
+        vehicle.setAccountableOwnerID(accountability.accountableId());
         vehicle.setOperationalStatus("Dispatched");
         fleetRepo.save(vehicle);
-        // The assignment row names the driver; only the lifecycle row can record
-        // who dispatched the vehicle.
-        auditService.logAssignment(auditReferenceId(vehicle), employeeId, "Vehicle Checkout", notes);
+        // The assignment rows name the driver and, when different, the accountable
+        // owner; only the lifecycle row can record who dispatched the vehicle.
+        String note = ITAssetService.accountabilityNote(accountability).replaceFirst("^User:", "Driver:");
+        auditService.logAssignment(auditReferenceId(vehicle), accountability.assignedId(), "Vehicle Checkout",
+                note + appendNotes(notes));
+        if (!accountability.accountableId().equals(accountability.assignedId())) {
+            auditService.logAssignment(auditReferenceId(vehicle), accountability.accountableId(),
+                    "Accountability Assigned", note + appendNotes(notes));
+        }
         auditService.logLifecycleEvent(auditReferenceId(vehicle), performedBy, "Vehicle Checkout",
-                "Driver: " + employeeId + appendNotes(notes));
+                note + appendNotes(notes));
+        return accountability;
     }
 
     private static String appendNotes(String notes) {
@@ -70,6 +88,7 @@ public class FleetService {
 
         String previousDriver = vehicle.getAssignedDriverID();
         vehicle.setAssignedDriverID(null);
+        vehicle.setAccountableOwnerID(null);
         vehicle.setOperationalStatus("Available/Idle");
         fleetRepo.save(vehicle);
 
@@ -160,7 +179,10 @@ public class FleetService {
         requireAllowed(workflow.hasActions(vehicle.getAdminLegaltionalStatus()),
                 vehicle, "retire it");
 
+        // Retirement ends accountability. (Impound, stolen and missing keep the
+        // accountable owner: liability is investigated against them.)
         vehicle.setAssignedDriverID(null);
+        vehicle.setAccountableOwnerID(null);
         vehicle.setAdminLegaltionalStatus("Decommissioned");
         vehicle.setOperationalStatus("Slated for Disposal");
         vehicle.setMaintenanceStatus("Beyond Economic Repair (BER)");
