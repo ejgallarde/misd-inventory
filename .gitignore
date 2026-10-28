@@ -44,3 +44,6 @@ docs/LAND INVENTORY.xlsx
 ### Generated sample data (built from the gitignored land inventory) ###
 tools/sample-data/out/
 tools/sample-data/node_modules/
+
+### Screenshots (local review only) ###
+screenshots/

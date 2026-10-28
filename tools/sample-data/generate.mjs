@@ -184,7 +184,9 @@ picks.forEach((lot, index) => {
   const source = `Source: LAND INVENTORY.xlsx, ${SHEET} row ${lot.sheetRow}; acquisition: ${lot.acquisition || 'not stated'}`;
   properties.push({
     id: propertyId++, type: 'Lot', name: lot.name, area: normalizeArea(lot.area), address: lot.location || lot.name,
-    province: lot.province, city: lot.location, lotArea: lot.lotAreaSqm, value: lot.totalValue,
+    // The workbook's location is one free-text field; it goes in Address Line 1 only,
+    // so the address is not shown twice. City is left for the user to pick from PSGC.
+    province: lot.province, city: null, lotArea: lot.lotAreaSqm, value: lot.totalValue,
     tax: taxStatuses[Math.floor(random() * taxStatuses.length)], legal: legalStatus(lot.acquisition),
     operational: lot.withBuilding ? 'Active/In Use' : 'Vacant/Idle', condition: 'Usable - No Known Issues',
     custodian: index % 3 === 2 ? null : 'SMP-0004', remarks: source,
@@ -193,7 +195,7 @@ picks.forEach((lot, index) => {
 picks.filter((lot) => lot.withBuilding).slice(0, BUILDING_COUNT).forEach((lot, index) => {
   properties.push({
     id: propertyId++, type: 'Facility - Branch Office', name: `${lot.name} (PPC Building)`, area: normalizeArea(lot.area),
-    address: lot.location || lot.name, province: lot.province, city: lot.location, lotArea: null, value: null,
+    address: lot.location || lot.name, province: lot.province, city: null, lotArea: null, value: null,
     tax: index === 0 ? 'Overdue' : 'Paid (Current Year)', legal: legalStatus(lot.acquisition),
     operational: 'Active/In Use', condition: index === 1 ? 'Usable - Minor Repair Needed' : 'Usable - No Known Issues',
     custodian: 'SMP-0004', remarks: `PPC building on the lot listed at ${SHEET} row ${lot.sheetRow}`,
