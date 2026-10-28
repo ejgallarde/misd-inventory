@@ -164,6 +164,20 @@ test.describe('fleet module', () => {
     await expect(rows.filter({ hasText: 'E2E-1001' })).toHaveCount(0);
   });
 
+  test('table exports download as CSV and Excel', async ({ page }) => {
+    await page.goto('/fleet');
+    await expect(page.getByRole('button', { name: 'Export to CSV' })).toBeVisible();
+
+    const [csv] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Export to CSV' }).click()]);
+    const csvText = (await (await csv.createReadStream()).toArray()).join('');
+    expect(csvText).toContain('E2E-1001');
+
+    const [xlsx] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Export to Excel' }).click()]);
+    expect(xlsx.suggestedFilename()).toMatch(/\.xlsx$/);
+    const bytes = Buffer.concat(await (await xlsx.createReadStream()).toArray());
+    expect(bytes.subarray(0, 2).toString()).toBe('PK'); // a real zip-based workbook (JSZip loaded)
+  });
+
   test('unknown vehicle id returns 404 from the detail API', async ({ request }) => {
     const response = await request.get('/fleet/999999');
     expect(response.status()).toBe(404);
