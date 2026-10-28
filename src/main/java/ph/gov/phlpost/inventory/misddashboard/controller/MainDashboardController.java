@@ -8,6 +8,7 @@ import ph.gov.phlpost.inventory.misddashboard.repository.EquipmentCatalogReposit
 import ph.gov.phlpost.inventory.misddashboard.repository.FleetVehicleRepository;
 import ph.gov.phlpost.inventory.misddashboard.repository.PersonnelRepository;
 import ph.gov.phlpost.inventory.misddashboard.repository.RealEstatePropertyRepository;
+import ph.gov.phlpost.inventory.misddashboard.service.LocationLookupService;
 import ph.gov.phlpost.inventory.misddashboard.service.RegistryService;
 import ph.gov.phlpost.inventory.misddashboard.util.TextUtils;
 
@@ -40,6 +41,7 @@ public class MainDashboardController {
         private final EquipmentCatalogRepository catalogRepo;
         private final PersonnelRepository personnelRepo;
         private final RegistryService registryService;
+        private final LocationLookupService locationLookupService;
 
         @Value("#{'${inventory.categories}'.split(',')}")
         private List<String> equipmentCategories;
@@ -107,7 +109,8 @@ public class MainDashboardController {
         public MainDashboardController(DashboardRepository dashboardRepo, AssetRepository assetRepo,
                         FleetVehicleRepository fleetRepo,
                         RealEstatePropertyRepository propertyRepo, EquipmentCatalogRepository catalogRepo,
-                        PersonnelRepository personnelRepo, RegistryService registryService) {
+                        PersonnelRepository personnelRepo, RegistryService registryService,
+                        LocationLookupService locationLookupService) {
                 this.dashboardRepo = dashboardRepo;
                 this.assetRepo = assetRepo;
                 this.fleetRepo = fleetRepo;
@@ -115,6 +118,7 @@ public class MainDashboardController {
                 this.catalogRepo = catalogRepo;
                 this.personnelRepo = personnelRepo;
                 this.registryService = registryService;
+                this.locationLookupService = locationLookupService;
         }
 
         @GetMapping("/")
@@ -259,6 +263,8 @@ public class MainDashboardController {
                 model.addAttribute("propertyLegalTitlingStatuses", propertyLegalTitlingStatuses);
                 model.addAttribute("propertyOperationalStatuses", propertyOperationalStatuses);
                 model.addAttribute("propertyConditionStatuses", propertyConditionStatuses);
+                // Province options for the Add Property pickers (fragments/location-options).
+                model.addAttribute("psgcProvinces", locationLookupService.getProvinces());
 
                 return "dashboard";
         }

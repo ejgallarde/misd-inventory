@@ -8,7 +8,7 @@ Purpose: Track controller endpoint ownership and internal callers (template form
 - Included: Internal callers from Thymeleaf templates and static JS.
 - Excluded: Framework-managed routes (for example Spring Security's POST /login and /logout, and /error), unless noted.
 
-49 mappings across 8 controllers. 47 have a live internal caller.
+52 mappings across 9 controllers. 47 have a live internal caller.
 
 Access: every route is restricted by role in config/SecurityConfig (ADMIN, CLERK, FINANCE, VIEWER; see CLAUDE.md "Roles and authorization"). A new state-changing route is ADMIN-only until it is given a rule there.
 
@@ -85,9 +85,12 @@ Access: every route is restricted by role in config/SecurityConfig (ADMIN, CLERK
 | GET | /admin/locations | LocationAdminController | Link | fragments/components.html (user dropdown → Manage PSGC Data) | Active |
 | POST | /admin/locations/import-psgc | LocationAdminController | Form submit | templates/location-admin.html (PSGC upload form) | Active |
 | POST | /admin/locations/refresh-reference-data | LocationAdminController | Form submit | templates/location-admin.html (Personnel Reference Data -> Reload Now) | Active |
-| GET | /api/locations/provinces | LocationController | JS AJAX | static/js/location-cascade.js | Active |
-| GET | /api/locations/cities | LocationController | JS AJAX | static/js/location-cascade.js | Active |
-| GET | /api/locations/barangays | LocationController | JS AJAX | static/js/location-cascade.js | Active |
+| GET | /api/locations/provinces | LocationController | None | Superseded by the htmx pickers (/locations/options/*); kept as a JSON API | Keep |
+| GET | /api/locations/cities | LocationController | None | Superseded by the htmx pickers (/locations/options/*); kept as a JSON API | Keep |
+| GET | /api/locations/barangays | LocationController | None | Superseded by the htmx pickers (/locations/options/*); kept as a JSON API | Keep |
+| GET | /locations/options/cities | LocationOptionsController | htmx | fragments/location-options.html (province select), static/js/dashboard-page.js (reset on close) | Active |
+| GET | /locations/options/barangays | LocationOptionsController | htmx | fragments/location-options.html (city select) | Active |
+| GET | /locations/options/zip | LocationOptionsController | htmx | fragments/location-options.html (barangay select) | Active |
 | POST | /api/locations/import/csv | LocationController | None | No template or JS reference | Keep (see below) |
 | POST | /api/locations/import/psgc-single | LocationController | None | No template or JS reference | Keep (see below) |
 

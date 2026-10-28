@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<!--
+    Province -> city/municipality -> barangay pickers for the Add Property form,
+    driven by htmx (no page script). Each select carries its own hx-* wiring,
+    so a select swapped in by a response keeps working:
+
+      province change  -> GET /locations/options/cities    -> new city select
+                                                              + barangay reset (out of band)
+      city change      -> GET /locations/options/barangays -> new barangay select
+      barangay change  -> GET /locations/options/zip       -> ZIP filled from PSGC
+                                                              (204 = leave it as typed)
+
+    Option values are names, which is what RealEstateProperty stores; the
+    server resolves them back to PSGC codes (LocationOptionsController).
+    Replaces static/js/location-cascade.js.
+-->
+
+<body>
+    <select th:fragment="provinceSelect(provinces)" class="form-select" id="propertyProvince" name="province"
+        required th:hx-get="@{/locations/options/cities}" hx-trigger="change" hx-target="#propertyCity"
+        hx-swap="outerHTML">
+        <option value="" selected disabled>Select province</option>
+        <option th:each="province : ${provinces}" th:value="${province.name()}" th:text="${province.name()}">
+        </option>
+    </select>
+
+    <select th:fragment="citySelect(cities)" class="form-select" id="propertyCity" name="city" required
+        th:disabled="${cities == null or #lists.isEmpty(cities)}" th:hx-get="@{/locations/options/barangays}" hx-trigger="change"
+        hx-target="#propertyBarangay" hx-swap="outerHTML" hx-include="#propertyProvince">
+        <option value="" selected disabled>Select city/municipality</option>
+        <option th:each="city : ${cities}" th:value="${city.name()}" th:text="${city.name()}"></option>
+    </select>
+
+    <select th:fragment="barangaySelect(barangays, oob)" class="form-select" id="propertyBarangay" name="barangay"
+        required th:disabled="${barangays == null or #lists.isEmpty(barangays)}" th:attr="hx-swap-oob=${oob ? 'true' : null}"
+        th:hx-get="@{/locations/options/zip}" hx-trigger="change" hx-target="#propertyZipCode"
+        hx-swap="outerHTML" hx-include="#propertyProvince, #propertyCity">
+        <option value="" selected disabled>Select barangay</option>
+        <option th:each="barangay : ${barangays}" th:value="${barangay.name()}" th:text="${barangay.name()}">
+        </option>
+    </select>
+
+    <input th:fragment="zipInput(zipCode)" type="text" class="form-control" id="propertyZipCode" name="zipCode"
+        maxlength="10" th:value="${zipCode}">
+
+    <!-- Response to a province change: the new city list, and the barangay list
+         emptied, since it belonged to the previous province. -->
+    <th:block th:fragment="cityResponse(cities)">
+        <select th:replace="~{:: citySelect(${cities})}"></select>
+        <select th:replace="~{:: barangaySelect(null, true)}"></select>
+    </th:block>
+</body>
+
+</html>

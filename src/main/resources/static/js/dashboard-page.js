@@ -489,6 +489,11 @@ $(document).ready(function () {
         if (this.id === 'addPropertyOffcanvas') {
             applyPropertyFormContext(PROPERTY_FORM_CONTEXT.LAND);
             updatePropertyIdentifierRules();
+            // form.reset() restores the province; ask for an empty city list, whose
+            // response also empties the barangay list (fragments/location-options).
+            if (window.htmx) {
+                htmx.ajax('GET', '/locations/options/cities', { target: '#propertyCity', swap: 'outerHTML' });
+            }
         }
         if (this.id === 'receiveAssetOffcanvas') {
             $('#receiveAssetTag').prop('disabled', false).attr('placeholder', 'Leave blank to auto-generate');

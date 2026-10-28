@@ -897,28 +897,24 @@
                     <div class="col-6">
                         <label class="form-label fw-bold">Province <span class="required-indicator"
                                 aria-hidden="true">*</span></label>
-                        <select class="form-select" id="propertyProvince" name="province" required>
-                            <option value="" selected disabled>Select province</option>
-                        </select>
+                        <select th:replace="~{fragments/location-options :: provinceSelect(${psgcProvinces})}"></select>
                     </div>
                     <div class="col-6">
                         <label class="form-label fw-bold">City / Municipality <span class="required-indicator"
                                 aria-hidden="true">*</span></label>
-                        <select class="form-select" id="propertyCity" name="city" required disabled>
-                            <option value="" selected disabled>Select city/municipality</option>
-                        </select>
+                        <select th:replace="~{fragments/location-options :: citySelect(null)}"></select>
                     </div>
                 </div>
                 <div class="row mb-3">
                     <div class="col-6">
                         <label class="form-label fw-bold">Barangay <span class="required-indicator"
                                 aria-hidden="true">*</span></label>
-                        <select class="form-select" id="propertyBarangay" name="barangay" required disabled>
-                            <option value="" selected disabled>Select barangay</option>
-                        </select>
+                        <select
+                            th:replace="~{fragments/location-options :: barangaySelect(null, false)}"></select>
                     </div>
-                    <div class="col-6"><label class="form-label fw-bold">Zip Code</label><input type="text"
-                            class="form-control" id="propertyZipCode" name="zipCode" maxlength="10"></div>
+                    <div class="col-6"><label class="form-label fw-bold">Zip Code</label>
+                        <input th:replace="~{fragments/location-options :: zipInput(null)}">
+                    </div>
                 </div>
                 <div class="row mb-3">
                     <div class="col-6"><label class="form-label fw-bold">Acquisition Date</label><input type="date"
@@ -1032,7 +1028,6 @@
 
     <script th:src="@{/js/ui-common.js}"></script>
     <script th:src="@{/js/csrf.js}"></script>
-    <script th:src="@{/js/location-cascade.js}"></script>
     <script th:src="@{/js/asset-detail.js}"></script>
     <script th:src="@{/js/fleet-page.js}"></script>
     <script th:src="@{/js/properties-page.js}"></script>

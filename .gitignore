@@ -37,3 +37,6 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Local data files (not for version control) ###
+docs/LAND INVENTORY.xlsx

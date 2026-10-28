@@ -52,6 +52,9 @@ class MainDashboardControllerTest {
     @Mock
     private RegistryService registryService;
 
+    @Mock
+    private ph.gov.phlpost.inventory.misddashboard.service.LocationLookupService locationLookupService;
+
     @InjectMocks
     private MainDashboardController controller;
 
