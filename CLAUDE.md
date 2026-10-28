@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project overview
 
-MISD Master Asset Registry — a Spring Boot 4.1 / Java 17 monolith (Thymeleaf + Bootstrap 5 + jQuery/DataTables/Select2) for PHLPost's MISD division to track three asset domains: **IT equipment**, **fleet vehicles**, and **real estate properties** (land + buildings/facilities), plus a document-attachment system shared across all three.
+MISD Master Asset Registry — a Spring Boot 4.1 / Java 25 monolith (Thymeleaf + Bootstrap 5 + jQuery/DataTables/Select2) for PHLPost's MISD division to track three asset domains: **IT equipment**, **fleet vehicles**, and **real estate properties** (land + buildings/facilities), plus a document-attachment system shared across all three.
 
 ## Commands
 
